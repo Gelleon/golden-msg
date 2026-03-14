@@ -346,8 +346,7 @@ function UsersManagementForm({ toast }: { toast: any }) {
                 <TableRow className="hover:bg-transparent border-none">
                   <TableHead className="pl-6 py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">Пользователь</TableHead>
                   <TableHead className="hidden md:table-cell py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">Email адрес</TableHead>
-                  <TableHead className="py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">Роль</TableHead>
-                  <TableHead className="pr-6 py-4 text-right text-[10px] font-black text-slate-900 uppercase tracking-wider">Действия</TableHead>
+                  <TableHead className="py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">Изменить роль</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -366,7 +365,6 @@ function UsersManagementForm({ toast }: { toast: any }) {
                   filteredUsers.map((user) => {
                     const currentRole = pendingChanges[user.id] || user.role
                     const isPending = !!pendingChanges[user.id]
-                    const RoleIcon = roleIcons[currentRole] || Users
                     return (
                       <TableRow key={user.id} className="group hover:bg-slate-50/50 border-slate-100 transition-colors">
                         <TableCell className="pl-6 py-4">
@@ -390,72 +388,64 @@ function UsersManagementForm({ toast }: { toast: any }) {
                           <span className="text-sm font-bold text-slate-600">{user.email}</span>
                         </TableCell>
                         <TableCell className="py-4">
-                          <div className="flex flex-col gap-1">
-                            <div className={cn(
-                              "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-wider shadow-sm transition-all duration-300",
-                              roleColors[currentRole] || roleColors.client,
-                              isPending && "ring-2 ring-amber-500/50 animate-pulse"
-                            )}>
-                              <RoleIcon className="h-3 w-3" />
-                              {roleLabels[currentRole] || "Клиент"}
-                            </div>
-                            {isPending && (
-                              <span className="text-[8px] font-black text-amber-500 uppercase tracking-tighter ml-1">
-                                Не сохранено
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="pr-6 py-4 text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-9 w-9 p-0 rounded-lg hover:bg-slate-900 hover:text-white transition-all duration-300 border border-transparent hover:border-slate-900 group/btn shadow-sm hover:shadow-lg">
-                                <MoreHorizontal className="h-5 w-5 transition-transform group-hover/btn:scale-110" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-64 rounded-2xl border border-slate-200 shadow-xl p-3 bg-white/98 backdrop-blur-2xl">
-                              <DropdownMenuLabel className="text-[9px] font-black text-slate-400 uppercase tracking-wider px-3 py-2">Выбрать новую роль</DropdownMenuLabel>
-                              <DropdownMenuSeparator className="bg-slate-100 my-1.5 h-px rounded-full" />
-                              <div className="grid gap-1">
+                          <div className="flex flex-col gap-1.5 min-w-[160px]">
+                            <Select
+                              value={currentRole}
+                              onValueChange={(value) => handleRoleSelect(user.id, value)}
+                            >
+                              <SelectTrigger className={cn(
+                                "h-10 rounded-xl border-2 font-bold text-xs transition-all duration-300",
+                                isPending 
+                                  ? "border-amber-500/50 bg-amber-500/5 ring-2 ring-amber-500/20" 
+                                  : "border-slate-200 hover:border-slate-900 bg-white"
+                              )}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="rounded-2xl border-slate-200 shadow-xl p-2 bg-white/98 backdrop-blur-2xl">
                                 {Object.entries(roleLabels).map(([role, label]) => {
                                   const Icon = roleIcons[role] || Users
-                                  const isActive = currentRole === role
                                   const isOriginal = user.role === role
                                   return (
-                                    <DropdownMenuItem 
-                                      key={role}
-                                      onClick={() => handleRoleSelect(user.id, role)}
-                                      className={cn(
-                                        "flex items-center gap-3 rounded-xl cursor-pointer transition-all py-2.5 px-3 text-sm font-bold",
-                                        isActive 
-                                          ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20" 
-                                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                                      )}
+                                    <SelectItem 
+                                      key={role} 
+                                      value={role}
+                                      className="rounded-xl py-2.5 px-3 focus:bg-slate-900 focus:text-white group transition-all"
                                     >
-                                      <div className={cn(
-                                        "p-1.5 rounded-lg border transition-colors",
-                                        isActive ? "bg-white/10 border-white/20" : "bg-slate-50 border-slate-100"
-                                      )}>
-                                        <Icon className={cn("h-4 w-4", isActive ? "text-white" : "text-slate-400")} />
-                                      </div>
-                                      <div className="flex flex-col">
-                                        <div className="flex items-center gap-2">
-                                          <span>{label}</span>
-                                          {isOriginal && !isActive && (
-                                            <span className="text-[8px] bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded-md">Тек.</span>
-                                          )}
+                                      <div className="flex items-center gap-3">
+                                        <div className={cn(
+                                          "p-1.5 rounded-lg border transition-colors",
+                                          "bg-slate-50 border-slate-100 group-focus:bg-white/10 group-focus:border-white/20"
+                                        )}>
+                                          <Icon className="h-3.5 w-3.5" />
                                         </div>
-                                        <span className={cn("text-[8px] font-black uppercase tracking-wider opacity-60", isActive ? "text-white" : "text-slate-400")}>
-                                          {role === "admin" ? "Полный доступ" : role === "manager" ? "Управление" : "Просмотр"}
-                                        </span>
+                                        <div className="flex flex-col">
+                                          <span className="font-bold text-sm">
+                                            {label}
+                                            {isOriginal && (
+                                              <span className="ml-2 text-[8px] bg-slate-100 text-slate-400 group-focus:bg-white/20 group-focus:text-white/60 px-1.5 py-0.5 rounded-md">Текущая</span>
+                                            )}
+                                          </span>
+                                          <span className="text-[8px] font-black uppercase tracking-wider opacity-60 group-focus:text-white/60">
+                                            {role === "admin" ? "Полный доступ" : role === "manager" ? "Управление" : "Просмотр"}
+                                          </span>
+                                        </div>
                                       </div>
-                                      {isActive && <Check className="h-4 w-4 ml-auto text-white" />}
-                                    </DropdownMenuItem>
+                                    </SelectItem>
                                   )
                                 })}
-                              </div>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                              </SelectContent>
+                            </Select>
+                            {isPending && (
+                              <motion.span 
+                                initial={{ opacity: 0, y: -5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-[9px] font-black text-amber-500 uppercase tracking-tighter ml-1 flex items-center gap-1"
+                              >
+                                <AlertCircle className="h-2.5 w-2.5" />
+                                Изменено (не сохранено)
+                              </motion.span>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     )
