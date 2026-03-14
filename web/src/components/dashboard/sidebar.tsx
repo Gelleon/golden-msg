@@ -556,14 +556,6 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                 <span className="font-medium">Мой профиль</span>
               </DropdownMenuItem>
             </Link>
-            {profile?.role === "admin" && (
-              <Link href="/dashboard/settings?tab=users">
-                <DropdownMenuItem className="px-3 py-2.5 rounded-xl focus:bg-white/10 focus:text-white cursor-pointer group transition-all">
-                  <Settings className="mr-3 h-4 w-4 text-slate-400 group-hover:text-amber-500" />
-                  <span className="font-medium">Настройки</span>
-                </DropdownMenuItem>
-              </Link>
-            )}
             <DropdownMenuSeparator className="bg-white/5" />
             <DropdownMenuItem 
               onClick={handleSignOut} 
