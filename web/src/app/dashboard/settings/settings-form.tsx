@@ -198,12 +198,15 @@ const roleColors: Record<string, string> = {
 function UsersManagementForm({ toast }: { toast: any }) {
   const [users, setUsers] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [pendingChanges, setPendingChanges] = useState<Record<string, string>>({})
 
   const fetchUsers = async () => {
     setIsLoading(true)
     const data = await getUsers()
     setUsers(data)
+    setPendingChanges({})
     setIsLoading(false)
   }
 
@@ -211,25 +214,72 @@ function UsersManagementForm({ toast }: { toast: any }) {
     fetchUsers()
   }, [])
 
-  const handleRoleUpdate = async (userId: string, newRole: string) => {
-    const previousUsers = [...users]
-    setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u))
+  const handleRoleSelect = (userId: string, newRole: string) => {
+    const user = users.find(u => u.id === userId)
+    if (!user) return
 
-    const result = await updateUserRole(userId, newRole)
-    if (result.success) {
-      toast({
-        title: "Роль обновлена",
-        description: "Права доступа пользователя успешно изменены.",
-      })
+    if (user.role === newRole) {
+      const newPending = { ...pendingChanges }
+      delete newPending[userId]
+      setPendingChanges(newPending)
     } else {
-      setUsers(previousUsers)
-      toast({
-        title: "Ошибка",
-        description: result.error || "Не удалось обновить роль",
-        variant: "destructive",
-      })
+      setPendingChanges(prev => ({
+        ...prev,
+        [userId]: newRole
+      }))
     }
   }
+
+  const handleSaveChanges = async () => {
+    const changesCount = Object.keys(pendingChanges).length
+    if (changesCount === 0) return
+
+    setIsSaving(true)
+    let successCount = 0
+    let lastError = ""
+
+    try {
+      for (const [userId, newRole] of Object.entries(pendingChanges)) {
+        const result = await updateUserRole(userId, newRole)
+        if (result.success) {
+          successCount++
+        } else {
+          lastError = result.error || "Не удалось обновить роль"
+        }
+      }
+
+      if (successCount === changesCount) {
+        toast({
+          title: "Изменения сохранены",
+          description: `Роли ${successCount} ${successCount === 1 ? 'пользователя' : 'пользователей'} успешно обновлены.`,
+        })
+        await fetchUsers()
+      } else if (successCount > 0) {
+        toast({
+          title: "Частичный успех",
+          description: `Обновлено ${successCount} из ${changesCount} ролей. Ошибка: ${lastError}`,
+          variant: "destructive",
+        })
+        await fetchUsers()
+      } else {
+        toast({
+          title: "Ошибка",
+          description: lastError || "Не удалось сохранить изменения",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Критическая ошибка",
+        description: "Произошла ошибка при сохранении изменений",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const hasChanges = Object.keys(pendingChanges).length > 0
 
   const filteredUsers = users.filter(user => 
     user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -250,14 +300,36 @@ function UsersManagementForm({ toast }: { toast: any }) {
               <CardDescription className="text-slate-600 text-sm font-bold">Контроль доступа и управление ролями</CardDescription>
             </div>
           </div>
-          <div className="relative group w-full md:w-72">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-900 transition-colors z-10" />
-            <Input
-              placeholder="Поиск по имени или email..."
-              className="pl-11 w-full h-11 bg-white border-2 border-slate-200 focus:border-slate-900 focus:ring-slate-900/5 rounded-xl text-sm font-bold transition-all shadow-sm placeholder:text-slate-400 placeholder:font-medium"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+            <div className="relative group w-full md:w-72">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-900 transition-colors z-10" />
+              <Input
+                placeholder="Поиск по имени или email..."
+                className="pl-11 w-full h-11 bg-white border-2 border-slate-200 focus:border-slate-900 focus:ring-slate-900/5 rounded-xl text-sm font-bold transition-all shadow-sm placeholder:text-slate-400 placeholder:font-medium"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            {hasChanges && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="w-full md:w-auto"
+              >
+                <Button 
+                  onClick={handleSaveChanges}
+                  disabled={isSaving}
+                  className="w-full md:w-auto h-11 px-6 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-xl shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2 group"
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 transition-transform group-hover:scale-110" />
+                  )}
+                  СОХРАНИТЬ ({Object.keys(pendingChanges).length})
+                </Button>
+              </motion.div>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -274,7 +346,7 @@ function UsersManagementForm({ toast }: { toast: any }) {
                 <TableRow className="hover:bg-transparent border-none">
                   <TableHead className="pl-6 py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">Пользователь</TableHead>
                   <TableHead className="hidden md:table-cell py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">Email адрес</TableHead>
-                  <TableHead className="py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">Текущая роль</TableHead>
+                  <TableHead className="py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">Роль</TableHead>
                   <TableHead className="pr-6 py-4 text-right text-[10px] font-black text-slate-900 uppercase tracking-wider">Действия</TableHead>
                 </TableRow>
               </TableHeader>
@@ -292,7 +364,9 @@ function UsersManagementForm({ toast }: { toast: any }) {
                   </TableRow>
                 ) : (
                   filteredUsers.map((user) => {
-                    const RoleIcon = roleIcons[user.role] || Users
+                    const currentRole = pendingChanges[user.id] || user.role
+                    const isPending = !!pendingChanges[user.id]
+                    const RoleIcon = roleIcons[currentRole] || Users
                     return (
                       <TableRow key={user.id} className="group hover:bg-slate-50/50 border-slate-100 transition-colors">
                         <TableCell className="pl-6 py-4">
@@ -316,12 +390,20 @@ function UsersManagementForm({ toast }: { toast: any }) {
                           <span className="text-sm font-bold text-slate-600">{user.email}</span>
                         </TableCell>
                         <TableCell className="py-4">
-                          <div className={cn(
-                            "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-wider shadow-sm",
-                            roleColors[user.role] || roleColors.client
-                          )}>
-                            <RoleIcon className="h-3 w-3" />
-                            {roleLabels[user.role] || "Клиент"}
+                          <div className="flex flex-col gap-1">
+                            <div className={cn(
+                              "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-wider shadow-sm transition-all duration-300",
+                              roleColors[currentRole] || roleColors.client,
+                              isPending && "ring-2 ring-amber-500/50 animate-pulse"
+                            )}>
+                              <RoleIcon className="h-3 w-3" />
+                              {roleLabels[currentRole] || "Клиент"}
+                            </div>
+                            {isPending && (
+                              <span className="text-[8px] font-black text-amber-500 uppercase tracking-tighter ml-1">
+                                Не сохранено
+                              </span>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="pr-6 py-4 text-right">
@@ -332,16 +414,17 @@ function UsersManagementForm({ toast }: { toast: any }) {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-64 rounded-2xl border border-slate-200 shadow-xl p-3 bg-white/98 backdrop-blur-2xl">
-                              <DropdownMenuLabel className="text-[9px] font-black text-slate-400 uppercase tracking-wider px-3 py-2">Изменить права доступа</DropdownMenuLabel>
+                              <DropdownMenuLabel className="text-[9px] font-black text-slate-400 uppercase tracking-wider px-3 py-2">Выбрать новую роль</DropdownMenuLabel>
                               <DropdownMenuSeparator className="bg-slate-100 my-1.5 h-px rounded-full" />
                               <div className="grid gap-1">
                                 {Object.entries(roleLabels).map(([role, label]) => {
                                   const Icon = roleIcons[role] || Users
-                                  const isActive = user.role === role
+                                  const isActive = currentRole === role
+                                  const isOriginal = user.role === role
                                   return (
                                     <DropdownMenuItem 
                                       key={role}
-                                      onClick={() => handleRoleUpdate(user.id, role)}
+                                      onClick={() => handleRoleSelect(user.id, role)}
                                       className={cn(
                                         "flex items-center gap-3 rounded-xl cursor-pointer transition-all py-2.5 px-3 text-sm font-bold",
                                         isActive 
@@ -356,7 +439,12 @@ function UsersManagementForm({ toast }: { toast: any }) {
                                         <Icon className={cn("h-4 w-4", isActive ? "text-white" : "text-slate-400")} />
                                       </div>
                                       <div className="flex flex-col">
-                                        <span>{label}</span>
+                                        <div className="flex items-center gap-2">
+                                          <span>{label}</span>
+                                          {isOriginal && !isActive && (
+                                            <span className="text-[8px] bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded-md">Тек.</span>
+                                          )}
+                                        </div>
                                         <span className={cn("text-[8px] font-black uppercase tracking-wider opacity-60", isActive ? "text-white" : "text-slate-400")}>
                                           {role === "admin" ? "Полный доступ" : role === "manager" ? "Управление" : "Просмотр"}
                                         </span>
