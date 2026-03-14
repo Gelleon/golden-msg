@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma-client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+model User {
+  id                 String   @id @default(uuid())
+  email              String   @unique
+  full_name          String?
+  avatar_url         String?
+  role               String   @default("client") // admin, manager, partner, client
+  preferred_language String   @default("ru") // ru, cn
+  password_hash      String   @default("") // temporary default for migration
+  created_at         DateTime @default(now())
+
+  // Relations
+  messages_sent       Message[]
+  room_participations RoomParticipant[]
+  owned_rooms         Room[]
+}
+
+model Room {
+  id         String   @id @default(uuid())
+  name       String?
+  type       String   @default("private") // private, group
+  created_by String?
+  created_at DateTime @default(now())
+
+  // Relations
+  owner        User?             @relation(fields: [created_by], references: [id])
+  participants RoomParticipant[]
+  messages     Message[]
+}
+
+model RoomParticipant {
+  id        String   @id @default(uuid())
+  room_id   String
+  user_id   String
+  role      String   @default("member") // owner, admin, member
+  joined_at DateTime @default(now())
+
+  // Relations
+  room Room @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([room_id, user_id])
+}
+
+model Message {
+  id                  String   @id @default(uuid())
+  room_id             String
+  sender_id           String
+  content             String?
+  content_translated  String?
+  message_type        String   @default("text") // text, voice, file
+  file_url            String?
+  voice_transcription String?
+  created_at          DateTime @default(now())
+  is_edited           Boolean  @default(false)
+
+  // Relations
+  room   Room @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  sender User @relation(fields: [sender_id], references: [id], onDelete: Cascade)
+}

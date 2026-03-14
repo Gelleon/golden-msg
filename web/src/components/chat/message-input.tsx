@@ -1,0 +1,220 @@
+"use client"
+
+import { useState, useRef } from "react"
+import { Mic, Paperclip, Send, X, StopCircle } from "lucide-react"
+import { uploadFile } from "@/app/actions/upload"
+
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
+import { sendMessageAction } from "@/app/actions/chat"
+
+interface MessageInputProps {
+  roomId: string
+  userId: string
+  userRole: string
+}
+
+export function MessageInput({ roomId, userId, userRole }: MessageInputProps) {
+  const [message, setMessage] = useState("")
+  const [isRecording, setIsRecording] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0])
+    }
+  }
+
+  const handleSend = async () => {
+    if ((!message.trim() && !file) || isUploading) return
+
+    setIsUploading(true)
+
+    try {
+      let fileUrl = undefined
+      let messageType: "text" | "voice" | "file" = "text"
+      let content = message
+
+      // Handle file upload
+      if (file) {
+        messageType = "file"
+        const formData = new FormData()
+        formData.append("file", file)
+        
+        const result = await uploadFile(formData)
+        if (result.error || !result.url) throw new Error(result.error || "Upload failed")
+        
+        fileUrl = result.url
+        content = file.name
+      }
+
+      // Call Server Action
+      await sendMessageAction({
+        roomId,
+        content,
+        messageType,
+        fileUrl,
+      })
+
+      setMessage("")
+      setFile(null)
+    } catch (error) {
+      console.error("Error sending message:", error)
+      alert("Failed to send message")
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+      chunksRef.current = []
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data)
+        }
+      }
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" })
+        const audioFile = new File([audioBlob], "voice-message.webm", { type: "audio/webm" })
+        
+        // Handle voice upload and send
+        setIsUploading(true)
+        try {
+          const formData = new FormData()
+          formData.append("file", audioFile)
+          
+          const result = await uploadFile(formData)
+          if (result.error || !result.url) throw new Error(result.error || "Upload failed")
+
+          await sendMessageAction({
+            roomId,
+            content: "Voice Message",
+            messageType: "voice",
+            fileUrl: result.url,
+          })
+        } catch (error) {
+          console.error("Error sending voice message:", error)
+          alert("Failed to send voice message")
+        } finally {
+          setIsUploading(false)
+          stream.getTracks().forEach(track => track.stop())
+        }
+      }
+
+      mediaRecorder.start()
+      setIsRecording(true)
+    } catch (err) {
+      console.error("Error accessing microphone:", err)
+      alert("Could not access microphone")
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+    }
+  }
+
+  return (
+    <div className="p-2 md:p-4 border-t border-slate-200 bg-white/80 backdrop-blur-md sticky bottom-0 z-10 transition-all duration-300">
+      <div className="max-w-4xl mx-auto space-y-2 md:space-y-3">
+        {file && (
+          <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs md:sm shadow-sm animate-slide-up">
+            <div className="bg-white p-1.5 md:p-2 rounded-lg border border-slate-100">
+              <Paperclip className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-500" />
+            </div>
+            <span className="flex-1 truncate font-medium text-slate-700">{file.name}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 md:h-8 md:w-8 hover:bg-slate-200 rounded-full text-slate-400 hover:text-red-500"
+              onClick={() => setFile(null)}
+            >
+              <X className="h-3.5 w-3.5 md:h-4 md:w-4" />
+            </Button>
+          </div>
+        )}
+        
+        <div className="flex items-center gap-1.5 md:gap-3">
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading || isRecording}
+            className="shrink-0 h-9 w-9 md:h-12 md:w-12 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
+          >
+            <Paperclip className="h-4 w-4 md:h-5 md:w-5" />
+          </Button>
+          
+          <div className="flex-1 relative">
+            <Input
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder={isRecording ? "Запись..." : "Сообщение..."}
+              className={cn(
+                "h-9 md:h-12 py-2 md:py-3 px-3 md:px-4 rounded-full border-slate-200 bg-slate-50 focus-visible:ring-amber-500 transition-all shadow-sm text-sm md:text-base",
+                isRecording && "border-red-500 bg-red-50 placeholder:text-red-400"
+              )}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSend()
+                }
+              }}
+              disabled={isUploading || isRecording}
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 md:gap-3 shrink-0">
+            {message.trim() || file ? (
+              <Button 
+                onClick={handleSend} 
+                disabled={isUploading || isRecording}
+                size="icon"
+                className="h-9 w-9 md:h-12 md:w-12 rounded-full bg-primary hover:bg-primary/90 text-white shadow-md transition-all hover:scale-105 active:scale-95"
+              >
+                <Send className="h-4 w-4 md:h-5 md:w-5 ml-0.5" />
+              </Button>
+            ) : (
+              <Button
+                variant={isRecording ? "destructive" : "secondary"}
+                size="icon"
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={isUploading}
+                className={cn(
+                  "h-9 w-9 md:h-12 md:w-12 rounded-full shadow-md transition-all hover:scale-105 active:scale-95",
+                  isRecording ? "bg-red-500 hover:bg-red-600 text-white animate-pulse" : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+                )}
+              >
+                {isRecording ? (
+                  <StopCircle className="h-4 w-4 md:h-5 md:w-5" />
+                ) : (
+                  <Mic className="h-4 w-4 md:h-5 md:w-5" />
+                )}
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
