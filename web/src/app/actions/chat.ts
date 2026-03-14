@@ -4,6 +4,53 @@ import prisma from "@/lib/db"
 import { openai } from "@/lib/openai"
 import { getSession } from "./auth"
 import { revalidatePath } from "next/cache"
+import fs from "fs/promises"
+import path from "path"
+
+export async function deleteMessage(messageId: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  try {
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+      include: { room: true }
+    })
+
+    if (!message) return { error: "Message not found" }
+
+    // Only sender or admin can delete
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id }
+    })
+
+    if (message.sender_id !== session.user.id && user?.role !== "admin") {
+      return { error: "Permission denied" }
+    }
+
+    // Delete file from server if it exists
+    if (message.file_url && message.file_url.startsWith("/uploads/")) {
+      try {
+        const filePath = path.join(process.cwd(), "public", message.file_url)
+        await fs.unlink(filePath)
+        console.log(`File deleted: ${filePath}`)
+      } catch (fileError) {
+        console.error("Error deleting file from server:", fileError)
+        // Continue even if file deletion fails (maybe it was already deleted)
+      }
+    }
+
+    await prisma.message.delete({
+      where: { id: messageId }
+    })
+
+    revalidatePath(`/dashboard/rooms/${message.room_id}`)
+    return { success: true }
+  } catch (error) {
+    console.error("Delete message error:", error)
+    return { error: "Failed to delete message" }
+  }
+}
 
 export async function getMessages(roomId: string) {
   const session = await getSession()

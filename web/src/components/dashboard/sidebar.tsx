@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { useRouter, usePathname } from "next/navigation"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { LogOut, Plus, Settings, User, MessageSquare, Users, Search, Building2, ChevronRight, Hash } from "lucide-react"
+import { LogOut, Plus, Settings, User, MessageSquare, Users, Search, Building2, ChevronRight, Hash, Edit } from "lucide-react"
 import { logout } from "@/app/actions/auth"
 import { getRooms, createRoom, getDMs, searchUsers, startDM } from "@/app/actions/room"
 
@@ -27,10 +27,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
+import { EditRoomDialog } from "./edit-room-dialog"
 
 interface SidebarProps {
   user: any
@@ -42,6 +49,7 @@ interface SidebarProps {
 export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [rooms, setRooms] = useState<any[]>([])
   const [dms, setDms] = useState<any[]>([])
   const [newRoomName, setNewRoomName] = useState("")
@@ -50,6 +58,8 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   const [dmSearchQuery, setDmSearchQuery] = useState("")
   const [dmSearchResults, setDmSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [editingRoom, setEditingRoom] = useState<any>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   const fetchRoomsAndDMs = async () => {
     try {
@@ -116,7 +126,13 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     }
   }
 
-  const canCreateRoom = ["admin", "manager", "partner"].includes(profile?.role)
+  const handleEditRoom = (room: any) => {
+    setEditingRoom(room)
+    setIsEditDialogOpen(true)
+  }
+
+  const canCreateRoom = ["admin", "manager"].includes(profile?.role)
+  const canEditRoom = ["admin", "manager"].includes(profile?.role)
   const canUseDM = profile?.role !== "client"
 
   return (
@@ -166,41 +182,6 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
 
       <ScrollArea className="flex-1 px-4 py-4">
         <div className="space-y-8">
-          {/* Navigation */}
-          {profile?.role === "admin" && (
-             <motion.div 
-               initial={{ x: -10, opacity: 0 }}
-               animate={{ x: 0, opacity: 1 }}
-               transition={{ delay: 0.3 }}
-               className="space-y-1"
-             >
-                <Link href="/dashboard/users" onClick={onClose}>
-                  <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
-                    <Button 
-                      variant="ghost" 
-                      className={cn(
-                        "w-full justify-start font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-300 group rounded-xl",
-                        pathname === "/dashboard/users" && "bg-white/10 text-white shadow-sm ring-1 ring-white/10"
-                      )}
-                    >
-                      <div className={cn(
-                        "p-1.5 rounded-lg mr-3 transition-colors",
-                        pathname === "/dashboard/users" ? "bg-amber-500 text-white" : "bg-slate-800 text-slate-400 group-hover:bg-slate-700"
-                      )}>
-                        <Users className="h-4 w-4" />
-                      </div>
-                      <span>Управление пользователями</span>
-                      {pathname === "/dashboard/users" && (
-                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                          <ChevronRight className="h-4 w-4 ml-auto text-amber-500" />
-                        </motion.div>
-                      )}
-                    </Button>
-                  </motion.div>
-                </Link>
-             </motion.div>
-          )}
-
           {/* Group Rooms */}
           <motion.div
             initial={{ y: 10, opacity: 0 }}
@@ -277,35 +258,50 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.2, delay: index * 0.05 }}
                   >
-                    <Link
-                      href={`/dashboard/rooms/${room.id}`}
-                      className="block"
-                      onClick={onClose}
-                    >
-                      <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
-                        <Button
-                          variant="ghost"
-                          className={cn(
-                            "w-full justify-start font-medium transition-all duration-300 group rounded-xl px-3 h-10",
-                            pathname === `/dashboard/rooms/${room.id}` 
-                              ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10" 
-                              : "text-slate-400 hover:text-white hover:bg-white/5"
-                          )}
+                    <ContextMenu>
+                      <ContextMenuTrigger asChild>
+                        <Link
+                          href={`/dashboard/rooms/${room.id}`}
+                          className="block"
+                          onClick={onClose}
                         >
-                          <div className={cn(
-                            "w-2 h-2 rounded-full mr-3 transition-all duration-300",
-                            pathname === `/dashboard/rooms/${room.id}` ? "bg-amber-500 scale-125" : "bg-slate-700 group-hover:bg-slate-500"
-                          )} />
-                          <span className="truncate flex-1 text-left">{room.name}</span>
-                          {pathname === `/dashboard/rooms/${room.id}` && (
-                            <motion.div 
-                              layoutId="activeRoomGlow"
-                              className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse ml-2" 
-                            />
-                          )}
-                        </Button>
-                      </motion.div>
-                    </Link>
+                          <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
+                            <Button
+                              variant="ghost"
+                              className={cn(
+                                "w-full justify-start font-medium transition-all duration-300 group rounded-xl px-3 h-10",
+                                pathname === `/dashboard/rooms/${room.id}` 
+                                  ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10" 
+                                  : "text-slate-400 hover:text-white hover:bg-white/5"
+                              )}
+                            >
+                              <div className={cn(
+                                "w-2 h-2 rounded-full mr-3 transition-all duration-300",
+                                pathname === `/dashboard/rooms/${room.id}` ? "bg-amber-500 scale-125" : "bg-slate-700 group-hover:bg-slate-500"
+                              )} />
+                              <span className="truncate flex-1 text-left">{room.name}</span>
+                              {pathname === `/dashboard/rooms/${room.id}` && (
+                                <motion.div 
+                                  layoutId="activeRoomGlow"
+                                  className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse ml-2" 
+                                />
+                              )}
+                            </Button>
+                          </motion.div>
+                        </Link>
+                      </ContextMenuTrigger>
+                      {canEditRoom && (
+                        <ContextMenuContent className="w-56 bg-[#1E293B] border-white/10 text-slate-200">
+                          <ContextMenuItem 
+                            onClick={() => handleEditRoom(room)}
+                            className="hover:bg-amber-500 hover:text-white focus:bg-amber-500 focus:text-white cursor-pointer"
+                          >
+                            <Edit className="mr-2 h-4 w-4" />
+                            <span>Редактировать комнату</span>
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      )}
+                    </ContextMenu>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -554,18 +550,20 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
               <p className="text-sm font-semibold truncate">{user.email}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-white/5" />
-            <Link href="/dashboard/settings">
+            <Link href="/dashboard/settings?tab=profile">
               <DropdownMenuItem className="px-3 py-2.5 rounded-xl focus:bg-white/10 focus:text-white cursor-pointer group transition-all">
                 <User className="mr-3 h-4 w-4 text-slate-400 group-hover:text-amber-500" />
                 <span className="font-medium">Мой профиль</span>
               </DropdownMenuItem>
             </Link>
-            <Link href="/dashboard/settings">
-              <DropdownMenuItem className="px-3 py-2.5 rounded-xl focus:bg-white/10 focus:text-white cursor-pointer group transition-all">
-                <Settings className="mr-3 h-4 w-4 text-slate-400 group-hover:text-amber-500" />
-                <span className="font-medium">Настройки</span>
-              </DropdownMenuItem>
-            </Link>
+            {profile?.role === "admin" && (
+              <Link href="/dashboard/settings?tab=users">
+                <DropdownMenuItem className="px-3 py-2.5 rounded-xl focus:bg-white/10 focus:text-white cursor-pointer group transition-all">
+                  <Settings className="mr-3 h-4 w-4 text-slate-400 group-hover:text-amber-500" />
+                  <span className="font-medium">Настройки</span>
+                </DropdownMenuItem>
+              </Link>
+            )}
             <DropdownMenuSeparator className="bg-white/5" />
             <DropdownMenuItem 
               onClick={handleSignOut} 
@@ -577,6 +575,15 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </motion.div>
+
+      {editingRoom && (
+        <EditRoomDialog
+          room={editingRoom}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onSuccess={fetchRoomsAndDMs}
+        />
+      )}
     </motion.div>
   )
 }

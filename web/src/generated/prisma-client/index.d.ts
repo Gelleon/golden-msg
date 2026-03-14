@@ -2225,58 +2225,100 @@ export namespace Prisma {
 
   export type AggregateRoom = {
     _count: RoomCountAggregateOutputType | null
+    _avg: RoomAvgAggregateOutputType | null
+    _sum: RoomSumAggregateOutputType | null
     _min: RoomMinAggregateOutputType | null
     _max: RoomMaxAggregateOutputType | null
+  }
+
+  export type RoomAvgAggregateOutputType = {
+    capacity: number | null
+  }
+
+  export type RoomSumAggregateOutputType = {
+    capacity: number | null
   }
 
   export type RoomMinAggregateOutputType = {
     id: string | null
     name: string | null
+    description: string | null
+    capacity: number | null
+    equipment: string | null
     type: string | null
     created_by: string | null
     created_at: Date | null
+    updated_at: Date | null
   }
 
   export type RoomMaxAggregateOutputType = {
     id: string | null
     name: string | null
+    description: string | null
+    capacity: number | null
+    equipment: string | null
     type: string | null
     created_by: string | null
     created_at: Date | null
+    updated_at: Date | null
   }
 
   export type RoomCountAggregateOutputType = {
     id: number
     name: number
+    description: number
+    capacity: number
+    equipment: number
     type: number
     created_by: number
     created_at: number
+    updated_at: number
     _all: number
   }
 
 
+  export type RoomAvgAggregateInputType = {
+    capacity?: true
+  }
+
+  export type RoomSumAggregateInputType = {
+    capacity?: true
+  }
+
   export type RoomMinAggregateInputType = {
     id?: true
     name?: true
+    description?: true
+    capacity?: true
+    equipment?: true
     type?: true
     created_by?: true
     created_at?: true
+    updated_at?: true
   }
 
   export type RoomMaxAggregateInputType = {
     id?: true
     name?: true
+    description?: true
+    capacity?: true
+    equipment?: true
     type?: true
     created_by?: true
     created_at?: true
+    updated_at?: true
   }
 
   export type RoomCountAggregateInputType = {
     id?: true
     name?: true
+    description?: true
+    capacity?: true
+    equipment?: true
     type?: true
     created_by?: true
     created_at?: true
+    updated_at?: true
     _all?: true
   }
 
@@ -2318,6 +2360,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: RoomAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RoomSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: RoomMinAggregateInputType
@@ -2348,6 +2402,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: RoomCountAggregateInputType | true
+    _avg?: RoomAvgAggregateInputType
+    _sum?: RoomSumAggregateInputType
     _min?: RoomMinAggregateInputType
     _max?: RoomMaxAggregateInputType
   }
@@ -2355,10 +2411,16 @@ export namespace Prisma {
   export type RoomGroupByOutputType = {
     id: string
     name: string | null
+    description: string | null
+    capacity: number | null
+    equipment: string | null
     type: string
     created_by: string | null
     created_at: Date
+    updated_at: Date
     _count: RoomCountAggregateOutputType | null
+    _avg: RoomAvgAggregateOutputType | null
+    _sum: RoomSumAggregateOutputType | null
     _min: RoomMinAggregateOutputType | null
     _max: RoomMaxAggregateOutputType | null
   }
@@ -2380,9 +2442,13 @@ export namespace Prisma {
   export type RoomSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    description?: boolean
+    capacity?: boolean
+    equipment?: boolean
     type?: boolean
     created_by?: boolean
     created_at?: boolean
+    updated_at?: boolean
     owner?: boolean | Room$ownerArgs<ExtArgs>
     participants?: boolean | Room$participantsArgs<ExtArgs>
     messages?: boolean | Room$messagesArgs<ExtArgs>
@@ -2392,18 +2458,26 @@ export namespace Prisma {
   export type RoomSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    description?: boolean
+    capacity?: boolean
+    equipment?: boolean
     type?: boolean
     created_by?: boolean
     created_at?: boolean
+    updated_at?: boolean
     owner?: boolean | Room$ownerArgs<ExtArgs>
   }, ExtArgs["result"]["room"]>
 
   export type RoomSelectScalar = {
     id?: boolean
     name?: boolean
+    description?: boolean
+    capacity?: boolean
+    equipment?: boolean
     type?: boolean
     created_by?: boolean
     created_at?: boolean
+    updated_at?: boolean
   }
 
   export type RoomInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2426,9 +2500,13 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       name: string | null
+      description: string | null
+      capacity: number | null
+      equipment: string | null
       type: string
       created_by: string | null
       created_at: Date
+      updated_at: Date
     }, ExtArgs["result"]["room"]>
     composites: {}
   }
@@ -2827,9 +2905,13 @@ export namespace Prisma {
   interface RoomFieldRefs {
     readonly id: FieldRef<"Room", 'String'>
     readonly name: FieldRef<"Room", 'String'>
+    readonly description: FieldRef<"Room", 'String'>
+    readonly capacity: FieldRef<"Room", 'Int'>
+    readonly equipment: FieldRef<"Room", 'String'>
     readonly type: FieldRef<"Room", 'String'>
     readonly created_by: FieldRef<"Room", 'String'>
     readonly created_at: FieldRef<"Room", 'DateTime'>
+    readonly updated_at: FieldRef<"Room", 'DateTime'>
   }
     
 
@@ -5177,9 +5259,13 @@ export namespace Prisma {
   export const RoomScalarFieldEnum: {
     id: 'id',
     name: 'name',
+    description: 'description',
+    capacity: 'capacity',
+    equipment: 'equipment',
     type: 'type',
     created_by: 'created_by',
-    created_at: 'created_at'
+    created_at: 'created_at',
+    updated_at: 'updated_at'
   };
 
   export type RoomScalarFieldEnum = (typeof RoomScalarFieldEnum)[keyof typeof RoomScalarFieldEnum]
@@ -5248,6 +5334,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Int'
+   */
+  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+  /**
    * Reference to a field of type 'Boolean'
    */
   export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
@@ -5255,9 +5348,9 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Int'
+   * Reference to a field of type 'Float'
    */
-  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
     
   /**
    * Deep Input Types
@@ -5346,9 +5439,13 @@ export namespace Prisma {
     NOT?: RoomWhereInput | RoomWhereInput[]
     id?: StringFilter<"Room"> | string
     name?: StringNullableFilter<"Room"> | string | null
+    description?: StringNullableFilter<"Room"> | string | null
+    capacity?: IntNullableFilter<"Room"> | number | null
+    equipment?: StringNullableFilter<"Room"> | string | null
     type?: StringFilter<"Room"> | string
     created_by?: StringNullableFilter<"Room"> | string | null
     created_at?: DateTimeFilter<"Room"> | Date | string
+    updated_at?: DateTimeFilter<"Room"> | Date | string
     owner?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     participants?: RoomParticipantListRelationFilter
     messages?: MessageListRelationFilter
@@ -5357,9 +5454,13 @@ export namespace Prisma {
   export type RoomOrderByWithRelationInput = {
     id?: SortOrder
     name?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    capacity?: SortOrderInput | SortOrder
+    equipment?: SortOrderInput | SortOrder
     type?: SortOrder
     created_by?: SortOrderInput | SortOrder
     created_at?: SortOrder
+    updated_at?: SortOrder
     owner?: UserOrderByWithRelationInput
     participants?: RoomParticipantOrderByRelationAggregateInput
     messages?: MessageOrderByRelationAggregateInput
@@ -5371,9 +5472,13 @@ export namespace Prisma {
     OR?: RoomWhereInput[]
     NOT?: RoomWhereInput | RoomWhereInput[]
     name?: StringNullableFilter<"Room"> | string | null
+    description?: StringNullableFilter<"Room"> | string | null
+    capacity?: IntNullableFilter<"Room"> | number | null
+    equipment?: StringNullableFilter<"Room"> | string | null
     type?: StringFilter<"Room"> | string
     created_by?: StringNullableFilter<"Room"> | string | null
     created_at?: DateTimeFilter<"Room"> | Date | string
+    updated_at?: DateTimeFilter<"Room"> | Date | string
     owner?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     participants?: RoomParticipantListRelationFilter
     messages?: MessageListRelationFilter
@@ -5382,12 +5487,18 @@ export namespace Prisma {
   export type RoomOrderByWithAggregationInput = {
     id?: SortOrder
     name?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    capacity?: SortOrderInput | SortOrder
+    equipment?: SortOrderInput | SortOrder
     type?: SortOrder
     created_by?: SortOrderInput | SortOrder
     created_at?: SortOrder
+    updated_at?: SortOrder
     _count?: RoomCountOrderByAggregateInput
+    _avg?: RoomAvgOrderByAggregateInput
     _max?: RoomMaxOrderByAggregateInput
     _min?: RoomMinOrderByAggregateInput
+    _sum?: RoomSumOrderByAggregateInput
   }
 
   export type RoomScalarWhereWithAggregatesInput = {
@@ -5396,9 +5507,13 @@ export namespace Prisma {
     NOT?: RoomScalarWhereWithAggregatesInput | RoomScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Room"> | string
     name?: StringNullableWithAggregatesFilter<"Room"> | string | null
+    description?: StringNullableWithAggregatesFilter<"Room"> | string | null
+    capacity?: IntNullableWithAggregatesFilter<"Room"> | number | null
+    equipment?: StringNullableWithAggregatesFilter<"Room"> | string | null
     type?: StringWithAggregatesFilter<"Room"> | string
     created_by?: StringNullableWithAggregatesFilter<"Room"> | string | null
     created_at?: DateTimeWithAggregatesFilter<"Room"> | Date | string
+    updated_at?: DateTimeWithAggregatesFilter<"Room"> | Date | string
   }
 
   export type RoomParticipantWhereInput = {
@@ -5635,8 +5750,12 @@ export namespace Prisma {
   export type RoomCreateInput = {
     id?: string
     name?: string | null
+    description?: string | null
+    capacity?: number | null
+    equipment?: string | null
     type?: string
     created_at?: Date | string
+    updated_at?: Date | string
     owner?: UserCreateNestedOneWithoutOwned_roomsInput
     participants?: RoomParticipantCreateNestedManyWithoutRoomInput
     messages?: MessageCreateNestedManyWithoutRoomInput
@@ -5645,9 +5764,13 @@ export namespace Prisma {
   export type RoomUncheckedCreateInput = {
     id?: string
     name?: string | null
+    description?: string | null
+    capacity?: number | null
+    equipment?: string | null
     type?: string
     created_by?: string | null
     created_at?: Date | string
+    updated_at?: Date | string
     participants?: RoomParticipantUncheckedCreateNestedManyWithoutRoomInput
     messages?: MessageUncheckedCreateNestedManyWithoutRoomInput
   }
@@ -5655,8 +5778,12 @@ export namespace Prisma {
   export type RoomUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    capacity?: NullableIntFieldUpdateOperationsInput | number | null
+    equipment?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     owner?: UserUpdateOneWithoutOwned_roomsNestedInput
     participants?: RoomParticipantUpdateManyWithoutRoomNestedInput
     messages?: MessageUpdateManyWithoutRoomNestedInput
@@ -5665,9 +5792,13 @@ export namespace Prisma {
   export type RoomUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    capacity?: NullableIntFieldUpdateOperationsInput | number | null
+    equipment?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
     created_by?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     participants?: RoomParticipantUncheckedUpdateManyWithoutRoomNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRoomNestedInput
   }
@@ -5675,24 +5806,36 @@ export namespace Prisma {
   export type RoomCreateManyInput = {
     id?: string
     name?: string | null
+    description?: string | null
+    capacity?: number | null
+    equipment?: string | null
     type?: string
     created_by?: string | null
     created_at?: Date | string
+    updated_at?: Date | string
   }
 
   export type RoomUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    capacity?: NullableIntFieldUpdateOperationsInput | number | null
+    equipment?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RoomUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    capacity?: NullableIntFieldUpdateOperationsInput | number | null
+    equipment?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
     created_by?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RoomParticipantCreateInput = {
@@ -5993,6 +6136,17 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
   export type UserNullableRelationFilter = {
     is?: UserWhereInput | null
     isNot?: UserWhereInput | null
@@ -6001,25 +6155,61 @@ export namespace Prisma {
   export type RoomCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    description?: SortOrder
+    capacity?: SortOrder
+    equipment?: SortOrder
     type?: SortOrder
     created_by?: SortOrder
     created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type RoomAvgOrderByAggregateInput = {
+    capacity?: SortOrder
   }
 
   export type RoomMaxOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    description?: SortOrder
+    capacity?: SortOrder
+    equipment?: SortOrder
     type?: SortOrder
     created_by?: SortOrder
     created_at?: SortOrder
+    updated_at?: SortOrder
   }
 
   export type RoomMinOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    description?: SortOrder
+    capacity?: SortOrder
+    equipment?: SortOrder
     type?: SortOrder
     created_by?: SortOrder
     created_at?: SortOrder
+    updated_at?: SortOrder
+  }
+
+  export type RoomSumOrderByAggregateInput = {
+    capacity?: SortOrder
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
   }
 
   export type RoomRelationFilter = {
@@ -6285,6 +6475,14 @@ export namespace Prisma {
     connect?: MessageWhereUniqueInput | MessageWhereUniqueInput[]
   }
 
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type UserUpdateOneWithoutOwned_roomsNestedInput = {
     create?: XOR<UserCreateWithoutOwned_roomsInput, UserUncheckedCreateWithoutOwned_roomsInput>
     connectOrCreate?: UserCreateOrConnectWithoutOwned_roomsInput
@@ -6520,6 +6718,33 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
   export type NestedBoolFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolFilter<$PrismaModel> | boolean
@@ -6592,8 +6817,12 @@ export namespace Prisma {
   export type RoomCreateWithoutOwnerInput = {
     id?: string
     name?: string | null
+    description?: string | null
+    capacity?: number | null
+    equipment?: string | null
     type?: string
     created_at?: Date | string
+    updated_at?: Date | string
     participants?: RoomParticipantCreateNestedManyWithoutRoomInput
     messages?: MessageCreateNestedManyWithoutRoomInput
   }
@@ -6601,8 +6830,12 @@ export namespace Prisma {
   export type RoomUncheckedCreateWithoutOwnerInput = {
     id?: string
     name?: string | null
+    description?: string | null
+    capacity?: number | null
+    equipment?: string | null
     type?: string
     created_at?: Date | string
+    updated_at?: Date | string
     participants?: RoomParticipantUncheckedCreateNestedManyWithoutRoomInput
     messages?: MessageUncheckedCreateNestedManyWithoutRoomInput
   }
@@ -6697,9 +6930,13 @@ export namespace Prisma {
     NOT?: RoomScalarWhereInput | RoomScalarWhereInput[]
     id?: StringFilter<"Room"> | string
     name?: StringNullableFilter<"Room"> | string | null
+    description?: StringNullableFilter<"Room"> | string | null
+    capacity?: IntNullableFilter<"Room"> | number | null
+    equipment?: StringNullableFilter<"Room"> | string | null
     type?: StringFilter<"Room"> | string
     created_by?: StringNullableFilter<"Room"> | string | null
     created_at?: DateTimeFilter<"Room"> | Date | string
+    updated_at?: DateTimeFilter<"Room"> | Date | string
   }
 
   export type UserCreateWithoutOwned_roomsInput = {
@@ -6861,8 +7098,12 @@ export namespace Prisma {
   export type RoomCreateWithoutParticipantsInput = {
     id?: string
     name?: string | null
+    description?: string | null
+    capacity?: number | null
+    equipment?: string | null
     type?: string
     created_at?: Date | string
+    updated_at?: Date | string
     owner?: UserCreateNestedOneWithoutOwned_roomsInput
     messages?: MessageCreateNestedManyWithoutRoomInput
   }
@@ -6870,9 +7111,13 @@ export namespace Prisma {
   export type RoomUncheckedCreateWithoutParticipantsInput = {
     id?: string
     name?: string | null
+    description?: string | null
+    capacity?: number | null
+    equipment?: string | null
     type?: string
     created_by?: string | null
     created_at?: Date | string
+    updated_at?: Date | string
     messages?: MessageUncheckedCreateNestedManyWithoutRoomInput
   }
 
@@ -6926,8 +7171,12 @@ export namespace Prisma {
   export type RoomUpdateWithoutParticipantsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    capacity?: NullableIntFieldUpdateOperationsInput | number | null
+    equipment?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     owner?: UserUpdateOneWithoutOwned_roomsNestedInput
     messages?: MessageUpdateManyWithoutRoomNestedInput
   }
@@ -6935,9 +7184,13 @@ export namespace Prisma {
   export type RoomUncheckedUpdateWithoutParticipantsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    capacity?: NullableIntFieldUpdateOperationsInput | number | null
+    equipment?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
     created_by?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     messages?: MessageUncheckedUpdateManyWithoutRoomNestedInput
   }
 
@@ -6981,8 +7234,12 @@ export namespace Prisma {
   export type RoomCreateWithoutMessagesInput = {
     id?: string
     name?: string | null
+    description?: string | null
+    capacity?: number | null
+    equipment?: string | null
     type?: string
     created_at?: Date | string
+    updated_at?: Date | string
     owner?: UserCreateNestedOneWithoutOwned_roomsInput
     participants?: RoomParticipantCreateNestedManyWithoutRoomInput
   }
@@ -6990,9 +7247,13 @@ export namespace Prisma {
   export type RoomUncheckedCreateWithoutMessagesInput = {
     id?: string
     name?: string | null
+    description?: string | null
+    capacity?: number | null
+    equipment?: string | null
     type?: string
     created_by?: string | null
     created_at?: Date | string
+    updated_at?: Date | string
     participants?: RoomParticipantUncheckedCreateNestedManyWithoutRoomInput
   }
 
@@ -7046,8 +7307,12 @@ export namespace Prisma {
   export type RoomUpdateWithoutMessagesInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    capacity?: NullableIntFieldUpdateOperationsInput | number | null
+    equipment?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     owner?: UserUpdateOneWithoutOwned_roomsNestedInput
     participants?: RoomParticipantUpdateManyWithoutRoomNestedInput
   }
@@ -7055,9 +7320,13 @@ export namespace Prisma {
   export type RoomUncheckedUpdateWithoutMessagesInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    capacity?: NullableIntFieldUpdateOperationsInput | number | null
+    equipment?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
     created_by?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     participants?: RoomParticipantUncheckedUpdateManyWithoutRoomNestedInput
   }
 
@@ -7120,8 +7389,12 @@ export namespace Prisma {
   export type RoomCreateManyOwnerInput = {
     id?: string
     name?: string | null
+    description?: string | null
+    capacity?: number | null
+    equipment?: string | null
     type?: string
     created_at?: Date | string
+    updated_at?: Date | string
   }
 
   export type MessageUpdateWithoutSenderInput = {
@@ -7184,8 +7457,12 @@ export namespace Prisma {
   export type RoomUpdateWithoutOwnerInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    capacity?: NullableIntFieldUpdateOperationsInput | number | null
+    equipment?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     participants?: RoomParticipantUpdateManyWithoutRoomNestedInput
     messages?: MessageUpdateManyWithoutRoomNestedInput
   }
@@ -7193,8 +7470,12 @@ export namespace Prisma {
   export type RoomUncheckedUpdateWithoutOwnerInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    capacity?: NullableIntFieldUpdateOperationsInput | number | null
+    equipment?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     participants?: RoomParticipantUncheckedUpdateManyWithoutRoomNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRoomNestedInput
   }
@@ -7202,8 +7483,12 @@ export namespace Prisma {
   export type RoomUncheckedUpdateManyWithoutOwnerInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    capacity?: NullableIntFieldUpdateOperationsInput | number | null
+    equipment?: NullableStringFieldUpdateOperationsInput | string | null
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RoomParticipantCreateManyRoomInput = {

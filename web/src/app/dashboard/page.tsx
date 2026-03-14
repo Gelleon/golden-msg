@@ -5,7 +5,14 @@ import { MessageSquare, ArrowLeft } from "lucide-react"
 
 export default function DashboardPage() {
   return (
-    <div className="flex h-full items-center justify-center bg-slate-50/50 p-6">
+    <div className="flex h-full items-center justify-center bg-slate-50/50 p-6 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[120px]" />
+        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-secondary/10 rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.03] bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px]" />
+      </div>
+
       <motion.div 
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -13,29 +20,43 @@ export default function DashboardPage() {
           duration: 0.5,
           ease: [0.16, 1, 0.3, 1]
         }}
-        className="text-center space-y-6 max-w-md"
+        className="text-center space-y-8 max-w-md relative z-10"
       >
-        <div className="relative inline-flex">
-          <div className="p-6 bg-white rounded-3xl shadow-xl shadow-blue-500/10 border border-slate-100 relative z-10">
-            <MessageSquare className="h-12 w-12 text-blue-600" />
+        <div className="relative inline-flex group">
+          <div className="p-8 bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-blue-500/10 border border-white/50 relative z-10 transition-transform duration-500 group-hover:scale-105">
+            <MessageSquare className="h-16 w-16 text-blue-600 drop-shadow-sm" />
           </div>
           <motion.div 
             animate={{ 
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.1, 0.3]
+              scale: [1, 1.3, 1],
+              opacity: [0.4, 0.15, 0.4]
             }}
             transition={{ 
-              duration: 4,
+              duration: 5,
               repeat: Infinity,
               ease: "easeInOut"
             }}
-            className="absolute -inset-4 bg-blue-500 rounded-full blur-2xl z-0"
+            className="absolute -inset-6 bg-blue-500/30 rounded-full blur-3xl z-0"
+          />
+          <motion.div 
+            animate={{ 
+              scale: [1.2, 1, 1.2],
+              opacity: [0.1, 0.3, 0.1]
+            }}
+            transition={{ 
+              duration: 7,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className="absolute -inset-10 bg-secondary/20 rounded-full blur-3xl z-0"
           />
         </div>
         
-        <div className="space-y-2">
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Выберите чат</h2>
-          <p className="text-slate-500 text-lg leading-relaxed">
+        <div className="space-y-4">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+            Выберите чат
+          </h2>
+          <p className="text-slate-500 text-lg md:text-xl leading-relaxed font-medium">
             Выберите комнату в меню слева, чтобы начать общение с вашими партнерами.
           </p>
         </div>
@@ -44,9 +65,9 @@ export default function DashboardPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="flex items-center justify-center gap-2 text-blue-600 font-medium md:hidden"
+          className="flex items-center justify-center gap-3 text-blue-600 font-semibold md:hidden bg-blue-50 py-3 px-6 rounded-2xl"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-5 w-5 animate-pulse" />
           <span>Откройте меню</span>
         </motion.div>
       </motion.div>

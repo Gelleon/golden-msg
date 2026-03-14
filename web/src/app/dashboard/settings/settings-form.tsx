@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useRef } from "react"
-import { updateProfile } from "@/app/actions/users"
+import { useSearchParams } from "next/navigation"
+import { useEffect, useState, useRef } from "react"
+import { getUsers, updateUserRole, updateProfile } from "@/app/actions/users"
 import { uploadFile } from "@/app/actions/upload"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,7 +23,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Loader2, User, Lock, Camera, Check, AlertCircle, Globe } from "lucide-react"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Loader2, User, Lock, Camera, Check, AlertCircle, Globe, Users, ShieldCheck, Briefcase, UserCheck, UserCog, Search, Filter, MoreHorizontal, ChevronDown } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { motion, AnimatePresence } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -30,53 +47,99 @@ import { cn } from "@/lib/utils"
 
 export function SettingsForm({ user }: { user: any }) {
   const { toast } = useToast()
-  const [activeTab, setActiveTab] = useState("profile")
+  const searchParams = useSearchParams()
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "profile")
+
+  useEffect(() => {
+    const tab = searchParams.get("tab")
+    if (tab && ["profile", "security", "language", "users"].includes(tab)) {
+      if (tab === "users" && user?.role !== "admin") {
+        setActiveTab("profile")
+      } else {
+        setActiveTab(tab)
+      }
+    }
+  }, [searchParams, user])
   
   return (
-    <div className="flex-1 h-full bg-slate-50/50">
-      <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8 animate-fade-in">
-        <header className="space-y-1">
-          <motion.h2 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="text-3xl font-bold tracking-tight text-slate-900"
-          >
-            Настройки
-          </motion.h2>
-          <motion.p 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-slate-500"
-          >
-            Управление вашим профилем, безопасностью и предпочтениями.
-          </motion.p>
+    <div className="flex-1 min-h-screen bg-[#F8FAFC] relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-blue-600/5 rounded-full blur-[100px] -mr-48 -mt-48" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-amber-600/5 rounded-full blur-[100px] -ml-48 -mb-48" />
+      
+      <div className="max-w-5xl mx-auto px-4 py-6 md:px-6 md:py-8 space-y-6 relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <header className="relative pb-5 border-b border-slate-200/60">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="space-y-2">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-900 text-white rounded-md text-[9px] font-bold uppercase tracking-wider mb-0.5"
+              >
+                <ShieldCheck className="h-2.5 w-2.5 text-blue-400" />
+                Личный кабинет
+              </motion.div>
+              <motion.h2 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl leading-tight"
+              >
+                Настройки
+              </motion.h2>
+              <motion.p 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="text-xs md:text-sm text-slate-600 font-medium max-w-xl leading-relaxed"
+              >
+                Персонализируйте свой аккаунт, управляйте безопасностью и контролируйте доступ участников системы.
+              </motion.p>
+            </div>
+            <div className="hidden md:flex items-center gap-2.5 text-[9px] font-bold text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">
+              <div className="flex items-center gap-1 px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100">
+                <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                <span>ЗАЩИЩЕНО</span>
+              </div>
+              <span className="uppercase tracking-wider">Безопасное соединение</span>
+            </div>
+          </div>
         </header>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-white/50 backdrop-blur-sm border border-slate-200 p-1 rounded-xl w-full md:w-auto overflow-x-auto inline-flex whitespace-nowrap">
-            <TabsTrigger 
-              value="profile" 
-              className="flex items-center gap-2 rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white px-6 py-2 transition-all duration-300"
-            >
-              <User className="h-4 w-4" />
-              Профиль
-            </TabsTrigger>
-            <TabsTrigger 
-              value="security" 
-              className="flex items-center gap-2 rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white px-6 py-2 transition-all duration-300"
-            >
-              <Lock className="h-4 w-4" />
-              Безопасность
-            </TabsTrigger>
-            <TabsTrigger 
-              value="language" 
-              className="flex items-center gap-2 rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white px-6 py-2 transition-all duration-300"
-            >
-              <Globe className="h-4 w-4" />
-              Язык и Регион
-            </TabsTrigger>
-          </TabsList>
+          <div className="sticky top-4 z-40 flex justify-center md:justify-start">
+            <TabsList className="bg-white/90 backdrop-blur-md border border-slate-200 p-1 rounded-xl shadow-md w-full md:w-auto flex">
+              <TabsTrigger 
+                value="profile" 
+                className="flex items-center gap-2 rounded-lg data-[state=active]:bg-slate-900 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
+              >
+                <User className="h-3.5 w-3.5" />
+                Профиль
+              </TabsTrigger>
+              <TabsTrigger 
+                value="security" 
+                className="flex items-center gap-2 rounded-lg data-[state=active]:bg-slate-900 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
+              >
+                <Lock className="h-3.5 w-3.5" />
+                Безопасность
+              </TabsTrigger>
+              <TabsTrigger 
+                value="language" 
+                className="flex items-center gap-2 rounded-lg data-[state=active]:bg-slate-900 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
+              >
+                <Globe className="h-3.5 w-3.5" />
+                Язык
+              </TabsTrigger>
+              {user?.role === "admin" && (
+                <TabsTrigger 
+                  value="users" 
+                  className="flex items-center gap-2 rounded-lg data-[state=active]:bg-amber-600 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
+                >
+                  <UserCog className="h-3.5 w-3.5" />
+                  Пользователи
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </div>
 
           <AnimatePresence mode="wait">
             <motion.div
@@ -97,11 +160,225 @@ export function SettingsForm({ user }: { user: any }) {
               <TabsContent value="language" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
                 <LanguageForm user={user} toast={toast} />
               </TabsContent>
+
+              {user?.role === "admin" && (
+                <TabsContent value="users" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                  <UsersManagementForm toast={toast} />
+                </TabsContent>
+              )}
             </motion.div>
           </AnimatePresence>
         </Tabs>
       </div>
     </div>
+  )
+}
+
+const roleLabels: Record<string, string> = {
+  admin: "Администратор",
+  manager: "Менеджер",
+  partner: "Партнер",
+  client: "Клиент",
+}
+
+const roleIcons: Record<string, any> = {
+  admin: ShieldCheck,
+  manager: Briefcase,
+  partner: UserCheck,
+  client: Users,
+}
+
+const roleColors: Record<string, string> = {
+  admin: "bg-red-500/10 text-red-500 border-red-500/20 shadow-[0_0_12px_rgba(239,68,68,0.1)]",
+  manager: "bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-[0_0_12px_rgba(59,130,246,0.1)]",
+  partner: "bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-[0_0_12px_rgba(245,158,11,0.1)]",
+  client: "bg-slate-500/10 text-slate-400 border-slate-500/20 shadow-[0_0_12px_rgba(100,116,139,0.1)]",
+}
+
+function UsersManagementForm({ toast }: { toast: any }) {
+  const [users, setUsers] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const fetchUsers = async () => {
+    setIsLoading(true)
+    const data = await getUsers()
+    setUsers(data)
+    setIsLoading(false)
+  }
+
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const handleRoleUpdate = async (userId: string, newRole: string) => {
+    const previousUsers = [...users]
+    setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u))
+
+    const result = await updateUserRole(userId, newRole)
+    if (result.success) {
+      toast({
+        title: "Роль обновлена",
+        description: "Права доступа пользователя успешно изменены.",
+      })
+    } else {
+      setUsers(previousUsers)
+      toast({
+        title: "Ошибка",
+        description: result.error || "Не удалось обновить роль",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const filteredUsers = users.filter(user => 
+    user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  return (
+    <Card className="border border-slate-200/60 shadow-lg bg-white rounded-2xl overflow-hidden ring-1 ring-black/[0.03]">
+      <CardHeader className="p-6 md:p-8 border-b border-slate-100 bg-slate-50 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 blur-[80px] -mr-32 -mt-32 rounded-full" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-slate-900 rounded-xl shadow-lg shadow-slate-900/20 ring-2 ring-slate-900/5 shrink-0">
+              <UserCog className="h-6 w-6 text-white" />
+            </div>
+            <div className="space-y-1">
+              <CardTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Управление пользователями</CardTitle>
+              <CardDescription className="text-slate-600 text-sm font-bold">Контроль доступа и управление ролями</CardDescription>
+            </div>
+          </div>
+          <div className="relative group w-full md:w-72">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-900 transition-colors z-10" />
+            <Input
+              placeholder="Поиск по имени или email..."
+              className="pl-11 w-full h-11 bg-white border-2 border-slate-200 focus:border-slate-900 focus:ring-slate-900/5 rounded-xl text-sm font-bold transition-all shadow-sm placeholder:text-slate-400 placeholder:font-medium"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+            <Loader2 className="h-8 w-8 animate-spin text-slate-900 mb-4" />
+            <p className="text-sm font-black text-slate-900 animate-pulse tracking-tight uppercase">Загрузка...</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-slate-50/80 border-b border-slate-100">
+                <TableRow className="hover:bg-transparent border-none">
+                  <TableHead className="pl-6 py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">Пользователь</TableHead>
+                  <TableHead className="hidden md:table-cell py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">Email адрес</TableHead>
+                  <TableHead className="py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">Текущая роль</TableHead>
+                  <TableHead className="pr-6 py-4 text-right text-[10px] font-black text-slate-900 uppercase tracking-wider">Действия</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-48 text-center">
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <div className="p-4 bg-slate-50 rounded-full border border-slate-100">
+                          <Search className="h-6 w-6 text-slate-300" />
+                        </div>
+                        <p className="text-sm font-bold text-slate-500">Пользователи не найдены</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredUsers.map((user) => {
+                    const RoleIcon = roleIcons[user.role] || Users
+                    return (
+                      <TableRow key={user.id} className="group hover:bg-slate-50/50 border-slate-100 transition-colors">
+                        <TableCell className="pl-6 py-4">
+                          <div className="flex items-center gap-4">
+                            <div className="relative">
+                              <Avatar className="h-10 w-10 rounded-lg border border-white shadow-md ring-1 ring-slate-200 transition-transform group-hover:scale-105 duration-300">
+                                <AvatarImage src={user.avatar_url} className="object-cover" />
+                                <AvatarFallback className="bg-slate-900 text-white font-black text-sm">
+                                  {user.full_name?.charAt(0) || user.email.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-sm font-black text-slate-900 leading-tight group-hover:text-blue-600 transition-colors">{user.full_name || "Без имени"}</span>
+                              <span className="text-[10px] text-slate-500 font-bold md:hidden">{user.email}</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell py-4">
+                          <span className="text-sm font-bold text-slate-600">{user.email}</span>
+                        </TableCell>
+                        <TableCell className="py-4">
+                          <div className={cn(
+                            "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-wider shadow-sm",
+                            roleColors[user.role] || roleColors.client
+                          )}>
+                            <RoleIcon className="h-3 w-3" />
+                            {roleLabels[user.role] || "Клиент"}
+                          </div>
+                        </TableCell>
+                        <TableCell className="pr-6 py-4 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-9 w-9 p-0 rounded-lg hover:bg-slate-900 hover:text-white transition-all duration-300 border border-transparent hover:border-slate-900 group/btn shadow-sm hover:shadow-lg">
+                                <MoreHorizontal className="h-5 w-5 transition-transform group-hover/btn:scale-110" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-64 rounded-2xl border border-slate-200 shadow-xl p-3 bg-white/98 backdrop-blur-2xl">
+                              <DropdownMenuLabel className="text-[9px] font-black text-slate-400 uppercase tracking-wider px-3 py-2">Изменить права доступа</DropdownMenuLabel>
+                              <DropdownMenuSeparator className="bg-slate-100 my-1.5 h-px rounded-full" />
+                              <div className="grid gap-1">
+                                {Object.entries(roleLabels).map(([role, label]) => {
+                                  const Icon = roleIcons[role] || Users
+                                  const isActive = user.role === role
+                                  return (
+                                    <DropdownMenuItem 
+                                      key={role}
+                                      onClick={() => handleRoleUpdate(user.id, role)}
+                                      className={cn(
+                                        "flex items-center gap-3 rounded-xl cursor-pointer transition-all py-2.5 px-3 text-sm font-bold",
+                                        isActive 
+                                          ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20" 
+                                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                      )}
+                                    >
+                                      <div className={cn(
+                                        "p-1.5 rounded-lg border transition-colors",
+                                        isActive ? "bg-white/10 border-white/20" : "bg-slate-50 border-slate-100"
+                                      )}>
+                                        <Icon className={cn("h-4 w-4", isActive ? "text-white" : "text-slate-400")} />
+                                      </div>
+                                      <div className="flex flex-col">
+                                        <span>{label}</span>
+                                        <span className={cn("text-[8px] font-black uppercase tracking-wider opacity-60", isActive ? "text-white" : "text-slate-400")}>
+                                          {role === "admin" ? "Полный доступ" : role === "manager" ? "Управление" : "Просмотр"}
+                                        </span>
+                                      </div>
+                                      {isActive && <Check className="h-4 w-4 ml-auto text-white" />}
+                                    </DropdownMenuItem>
+                                  )
+                                })}
+                              </div>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
@@ -126,7 +403,6 @@ function ProfileForm({ user, toast }: { user: any, toast: any }) {
     const result = await uploadFile(formData)
     if (result.success && result.url) {
       setAvatarUrl(result.url)
-      // Automatically update profile with new avatar URL
       const profileData = new FormData()
       profileData.append("avatarUrl", result.url)
       await updateProfile(profileData)
@@ -172,89 +448,139 @@ function ProfileForm({ user, toast }: { user: any, toast: any }) {
   }
 
   return (
-    <Card className="border-none shadow-xl bg-white/70 backdrop-blur-md rounded-2xl overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-blue-900 to-slate-900 text-white p-6 md:p-8">
-        <div className="flex flex-col md:flex-row items-center gap-6">
-          <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
-            <Avatar className="h-20 w-20 md:h-24 md:w-24 border-4 border-white/20 shadow-2xl transition-transform duration-300 group-hover:scale-105">
-              <AvatarImage src={avatarUrl} />
-              <AvatarFallback className="bg-blue-100 text-blue-900 text-xl md:text-2xl font-bold">
+    <Card className="border border-slate-200/60 shadow-lg bg-white rounded-2xl overflow-hidden ring-1 ring-black/[0.03]">
+      <CardHeader className="p-0 bg-slate-900 relative overflow-hidden h-32 md:h-40">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-amber-600/20 mix-blend-overlay" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[80px] -mr-32 -mt-32 rounded-full" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/10 blur-[60px] -ml-24 -mb-24 rounded-full" />
+      </CardHeader>
+      
+      <div className="px-6 md:px-10 -mt-12 md:-mt-16 relative z-10">
+        <div className="flex flex-col md:flex-row md:items-end gap-6 md:gap-8">
+          <div className="relative group self-start">
+            <Avatar className="h-24 w-24 md:h-32 md:w-32 rounded-3xl border-4 border-white shadow-2xl ring-1 ring-black/5 overflow-hidden transition-transform duration-500 group-hover:scale-[1.02]">
+              <AvatarImage src={avatarUrl} className="object-cover" />
+              <AvatarFallback className="bg-slate-100 text-slate-900 font-black text-3xl">
                 {user?.full_name?.charAt(0) || user?.email?.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <Camera className="text-white h-6 w-6 md:h-8 md:w-8" />
-            </div>
-            {isUploading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
-                <Loader2 className="text-white h-6 w-6 md:h-8 md:w-8 animate-spin" />
-              </div>
-            )}
+            <button 
+              onClick={handleAvatarClick}
+              disabled={isUploading}
+              className="absolute -bottom-2 -right-2 p-2.5 bg-slate-900 text-white rounded-xl shadow-xl hover:bg-blue-600 transition-all active:scale-90 group/btn border-2 border-white disabled:opacity-50"
+            >
+              {isUploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Camera className="h-4 w-4 group-hover/btn:scale-110 transition-transform" />
+              )}
+            </button>
             <input 
               type="file" 
               ref={fileInputRef} 
               onChange={handleFileChange} 
               className="hidden" 
-              accept="image/*"
+              accept="image/*" 
             />
           </div>
-          <div className="text-center md:text-left space-y-1">
-            <CardTitle className="text-xl md:text-2xl font-bold">{user?.full_name || "Пользователь"}</CardTitle>
-            <CardDescription className="text-blue-100/70 text-sm md:text-base">
-              {user?.email} • {user?.role === "admin" ? "Администратор" : user?.role === "manager" ? "Менеджер" : "Партнер"}
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <form onSubmit={onSubmit}>
-        <CardContent className="p-6 md:p-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-slate-700 text-sm md:text-base font-medium">Полное имя</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                <Input 
-                  id="fullName" 
-                  name="fullName" 
-                  placeholder="Введите ваше имя" 
-                  defaultValue={user?.full_name || ""} 
-                  className="pl-10 bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl h-10 md:h-11 text-sm md:text-base"
-                />
+          
+          <div className="flex-1 pb-2">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-3">
+                <h3 className="text-xl md:text-3xl font-black text-slate-900 tracking-tight leading-none">
+                  {user?.full_name || "Без имени"}
+                </h3>
+                <div className={cn(
+                  "px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider border",
+                  roleColors[user?.role] || roleColors.client
+                )}>
+                  {roleLabels[user?.role] || "Клиент"}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-slate-500 font-bold text-sm">
+                <span>{user?.email}</span>
+                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                <span className="text-[10px] uppercase tracking-widest text-slate-400">ID: {user?.id?.slice(0, 8)}</span>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-700 text-sm md:text-base font-medium">Электронная почта</Label>
+          </div>
+        </div>
+      </div>
+
+      <form onSubmit={onSubmit}>
+        <CardContent className="p-6 md:p-10 space-y-8 mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+            <div className="space-y-3">
+              <Label htmlFor="fullName" className="text-slate-900 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
+                <div className="p-1.5 bg-blue-50 rounded-lg border border-blue-100">
+                  <User className="h-3.5 w-3.5 text-blue-600" />
+                </div>
+                Полное имя
+              </Label>
               <Input 
-                id="email" 
-                value={user?.email} 
-                disabled 
-                className="bg-slate-100/50 border-slate-200 text-slate-500 cursor-not-allowed rounded-xl h-10 md:h-11 text-sm md:text-base"
+                id="fullName" 
+                name="fullName" 
+                placeholder="Иван Иванов" 
+                defaultValue={user?.full_name || ""} 
+                className="bg-slate-50 border-2 border-slate-200 focus:bg-white focus:border-slate-900 focus:ring-slate-900/5 rounded-xl h-11 px-4 text-sm font-bold transition-all shadow-sm placeholder:text-slate-400"
               />
-              <p className="text-[10px] md:text-[11px] text-slate-400 flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" /> Электронную почту нельзя изменить самостоятельно
+              <p className="text-[11px] text-slate-500 font-bold leading-relaxed pl-1">
+                Это имя будет отображаться в профиле и документах.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <Label htmlFor="email" className="text-slate-900 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
+                <div className="p-1.5 bg-slate-100 rounded-lg border border-slate-200">
+                  <Globe className="h-3.5 w-3.5 text-slate-600" />
+                </div>
+                Электронная почта
+              </Label>
+              <div className="relative group">
+                <Input 
+                  id="email" 
+                  value={user?.email} 
+                  disabled 
+                  className="bg-slate-100 border-2 border-slate-200 text-slate-500 cursor-not-allowed rounded-xl h-11 px-4 text-sm font-bold shadow-inner opacity-80"
+                />
+                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                  <Lock className="h-4 w-4 text-slate-400" />
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-500 font-bold leading-relaxed pl-1 flex items-center gap-1.5">
+                <AlertCircle className="h-3 w-3 text-amber-600" />
+                Email не подлежит изменению.
               </p>
             </div>
           </div>
+
+          <div className="pt-6 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-start gap-4 text-slate-700 bg-slate-50 p-5 rounded-2xl border border-slate-100 max-w-xl">
+              <div className="p-2 bg-amber-100 rounded-xl shrink-0 shadow-sm">
+                <AlertCircle className="h-5 w-5 text-amber-700" />
+              </div>
+              <p className="text-xs font-bold leading-relaxed">
+                Пожалуйста, проверяйте корректность вводимых данных. Обновление профиля влияет на ваше отображение в системе.
+              </p>
+            </div>
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-full md:w-auto min-w-[200px] h-11 bg-slate-900 hover:bg-black text-white rounded-xl text-sm font-black shadow-xl shadow-slate-900/10 transition-all active:scale-95 disabled:opacity-50 group"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Сохранение...
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+                  Сохранить изменения
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
-        <CardFooter className="bg-slate-50/50 border-t border-slate-100 p-4 md:p-6 flex justify-end">
-          <Button 
-            type="submit" 
-            disabled={isLoading}
-            className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-xl transition-all duration-300 shadow-lg shadow-blue-500/20"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Сохранение...
-              </>
-            ) : (
-              <>
-                <Check className="mr-2 h-4 w-4" />
-                Сохранить профиль
-              </>
-            )}
-          </Button>
-        </CardFooter>
       </form>
     </Card>
   )
@@ -300,62 +626,89 @@ function SecurityForm({ toast }: { toast: any }) {
   }
 
   return (
-    <Card className="border-none shadow-xl bg-white/70 backdrop-blur-md rounded-2xl overflow-hidden">
-      <CardHeader className="p-6 md:p-8 pb-4">
-        <CardTitle className="text-lg md:text-xl font-bold text-slate-900 flex items-center gap-2">
-          <Lock className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
-          Безопасность аккаунта
-        </CardTitle>
-        <CardDescription className="text-xs md:text-sm text-slate-500">
-          Регулярная смена пароля помогает защитить ваш аккаунт от несанкционированного доступа.
-        </CardDescription>
+    <Card className="border border-slate-200/60 shadow-lg bg-white rounded-2xl overflow-hidden ring-1 ring-black/[0.03]">
+      <CardHeader className="p-6 md:p-8 border-b border-slate-100 bg-slate-50 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 blur-[80px] -mr-32 -mt-32 rounded-full" />
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="p-3 bg-slate-900 rounded-xl shadow-lg shadow-slate-900/20 ring-2 ring-slate-900/5">
+            <Lock className="h-6 w-6 text-white" />
+          </div>
+          <div className="space-y-1">
+            <CardTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Безопасность</CardTitle>
+            <CardDescription className="text-slate-600 text-sm font-bold">Управление доступом к аккаунту</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <form onSubmit={onSubmit}>
-        <CardContent className="p-6 md:p-8 pt-4 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm md:text-base">Новый пароль</Label>
+        <CardContent className="p-6 md:p-10 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+            <div className="space-y-3">
+              <Label htmlFor="password" title="Новый пароль" className="text-slate-900 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.5)]" />
+                Новый пароль
+              </Label>
               <Input 
                 id="password" 
                 name="password" 
                 type="password" 
                 required 
                 minLength={6} 
-                className="bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl h-10 md:h-11 text-sm md:text-base"
+                placeholder="••••••••"
+                className="bg-slate-50 border-2 border-slate-200 focus:bg-white focus:border-slate-900 focus:ring-slate-900/5 rounded-xl h-11 px-4 text-sm font-bold transition-all shadow-sm"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-sm md:text-base">Подтвердите новый пароль</Label>
+            <div className="space-y-3">
+              <Label htmlFor="confirmPassword" title="Подтвердите пароль" className="text-slate-900 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.5)]" />
+                Подтвердите пароль
+              </Label>
               <Input 
                 id="confirmPassword" 
                 name="confirmPassword" 
                 type="password" 
                 required 
                 minLength={6} 
-                className="bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl h-10 md:h-11 text-sm md:text-base"
+                placeholder="••••••••"
+                className="bg-slate-50 border-2 border-slate-200 focus:bg-white focus:border-slate-900 focus:ring-slate-900/5 rounded-xl h-11 px-4 text-sm font-bold transition-all shadow-sm"
               />
             </div>
           </div>
+
+          <div className="p-5 bg-slate-900 rounded-2xl text-white relative overflow-hidden group shadow-xl">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600 opacity-20 blur-[80px] -mr-24 -mt-24 group-hover:opacity-40 transition-opacity duration-700" />
+            <div className="flex items-start gap-4 relative z-10">
+              <div className="p-2 bg-white/10 rounded-xl backdrop-blur-md border border-white/20 shadow-inner">
+                <ShieldCheck className="h-5 w-5 text-blue-400" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-black text-sm tracking-tight">Совет по безопасности</h4>
+                <p className="text-slate-400 text-xs font-medium leading-relaxed max-w-2xl">
+                  Используйте минимум 8 символов, включая заглавные буквы, цифры и специальные знаки для максимальной защиты вашего аккаунта.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-slate-100 flex justify-end">
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-full md:w-auto min-w-[200px] h-11 bg-slate-900 hover:bg-black text-white rounded-xl text-sm font-black shadow-xl shadow-slate-900/10 transition-all active:scale-95 disabled:opacity-50 group"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Обновление...
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+                  Обновить пароль
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
-        <CardFooter className="bg-slate-50/50 border-t border-slate-100 p-4 md:p-6 flex justify-end">
-          <Button 
-            type="submit" 
-            disabled={isLoading}
-            className="w-full md:w-auto bg-slate-900 hover:bg-slate-800 text-white px-8 py-2 rounded-xl transition-all duration-300 shadow-lg"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Обновление...
-              </>
-            ) : (
-              <>
-                <Check className="mr-2 h-4 w-4" />
-                Обновить пароль
-              </>
-            )}
-          </Button>
-        </CardFooter>
       </form>
     </Card>
   )
@@ -372,11 +725,10 @@ function LanguageForm({ user, toast }: { user: any, toast: any }) {
     const result = await updateProfile(formData)
 
     if (result.success) {
-      toast({
+      toast({ 
         title: "Настройки сохранены",
         description: "Языковые предпочтения обновлены.",
       })
-      // Optionally refresh page or update global state to change UI language
     } else {
       toast({
         title: "Ошибка",
@@ -388,41 +740,47 @@ function LanguageForm({ user, toast }: { user: any, toast: any }) {
   }
 
   return (
-    <Card className="border-none shadow-xl bg-white/70 backdrop-blur-md rounded-2xl overflow-hidden">
-      <CardHeader className="p-6 md:p-8 pb-4">
-        <CardTitle className="text-lg md:text-xl font-bold text-slate-900 flex items-center gap-2">
-          <Globe className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
-          Язык и региональные настройки
-        </CardTitle>
-        <CardDescription className="text-xs md:text-sm text-slate-500">
-          Выберите язык интерфейса и другие параметры локализации.
-        </CardDescription>
+    <Card className="border border-slate-200/60 shadow-lg bg-white rounded-2xl overflow-hidden ring-1 ring-black/[0.03]">
+      <CardHeader className="p-6 md:p-8 border-b border-slate-100 bg-slate-50 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 blur-[80px] -mr-32 -mt-32 rounded-full" />
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="p-3 bg-slate-900 rounded-xl shadow-lg shadow-slate-900/20 ring-2 ring-slate-900/5">
+            <Globe className="h-6 w-6 text-white" />
+          </div>
+          <div className="space-y-1">
+            <CardTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Язык и Регион</CardTitle>
+            <CardDescription className="text-slate-600 text-sm font-bold">Персонализация интерфейса</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <form onSubmit={onSubmit}>
-        <CardContent className="p-6 md:p-8 pt-4 space-y-6">
-          <div className="space-y-4 max-w-md">
-            <div className="space-y-2">
-              <Label htmlFor="language" className="text-slate-700 text-sm md:text-base font-medium">Язык интерфейса</Label>
+        <CardContent className="p-6 md:p-10 space-y-8">
+          <div className="space-y-6 max-w-xl">
+            <div className="space-y-3">
+              <Label htmlFor="language" className="text-slate-900 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+                Язык интерфейса
+              </Label>
               <Select name="language" defaultValue={user?.preferred_language || "ru"}>
-                <SelectTrigger className="bg-slate-50 border-slate-200 focus:ring-blue-500 rounded-xl h-10 md:h-11 text-sm md:text-base">
+                <SelectTrigger className="bg-slate-50 border-2 border-slate-200 focus:bg-white focus:border-slate-900 focus:ring-slate-900/5 rounded-xl h-11 px-4 text-sm font-bold transition-all shadow-sm">
                   <SelectValue placeholder="Выберите язык" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border-slate-200">
-                  <SelectItem value="ru" className="focus:bg-blue-50 focus:text-blue-600 cursor-pointer py-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">🇷🇺</span>
+                <SelectContent className="rounded-2xl border-2 border-slate-200 shadow-xl p-2 bg-white/98 backdrop-blur-2xl">
+                  <SelectItem value="ru" className="rounded-xl focus:bg-slate-50 cursor-pointer py-3 px-4 transition-all">
+                    <div className="flex items-center gap-4">
+                      <span className="text-2xl drop-shadow-sm">🇷🇺</span>
                       <div className="flex flex-col">
-                        <span className="font-medium">Русский</span>
-                        <span className="text-xs text-slate-400">Russian</span>
+                        <span className="font-black text-slate-900 text-sm tracking-tight">Русский</span>
+                        <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">Russian</span>
                       </div>
                     </div>
                   </SelectItem>
-                  <SelectItem value="cn" className="focus:bg-blue-50 focus:text-blue-600 cursor-pointer py-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">🇨🇳</span>
+                  <SelectItem value="cn" className="rounded-xl focus:bg-slate-50 cursor-pointer py-3 px-4 transition-all">
+                    <div className="flex items-center gap-4">
+                      <span className="text-2xl drop-shadow-sm">🇨🇳</span>
                       <div className="flex flex-col">
-                        <span className="font-medium">中文</span>
-                        <span className="text-xs text-slate-400">Chinese</span>
+                        <span className="font-black text-slate-900 text-sm tracking-tight">中文</span>
+                        <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">Chinese</span>
                       </div>
                     </div>
                   </SelectItem>
@@ -430,32 +788,39 @@ function LanguageForm({ user, toast }: { user: any, toast: any }) {
               </Select>
             </div>
             
-            <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
-              <p className="text-xs md:text-sm text-blue-700 leading-relaxed">
-                Настройки языка применяются мгновенно ко всему интерфейсу приложения, включая чаты и системные уведомления.
-              </p>
+            <div className="p-5 bg-blue-50 rounded-2xl border border-blue-100 relative overflow-hidden group shadow-sm">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600/5 blur-[80px] -mr-24 -mt-24" />
+              <div className="flex gap-4 relative z-10">
+                <div className="p-2 bg-white rounded-lg shadow-sm border border-blue-100 shrink-0 h-fit">
+                  <Globe className="h-5 w-5 text-blue-600" />
+                </div>
+                <p className="text-xs text-blue-900 font-bold leading-relaxed">
+                  Выбранный язык будет мгновенно применен ко всем элементам интерфейса, системным уведомлениям и автоматическим сообщениям.
+                </p>
+              </div>
             </div>
           </div>
+
+          <div className="pt-6 border-t border-slate-100 flex justify-end">
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-full md:w-auto min-w-[200px] h-11 bg-slate-900 hover:bg-black text-white rounded-xl text-sm font-black shadow-xl shadow-slate-900/10 transition-all active:scale-95 disabled:opacity-50 group"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Применение...
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+                  Применить настройки
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
-        <CardFooter className="bg-slate-50/50 border-t border-slate-100 p-4 md:p-6 flex justify-end">
-          <Button 
-            type="submit" 
-            disabled={isLoading}
-            className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-xl transition-all duration-300 shadow-lg shadow-blue-500/20"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Применение...
-              </>
-            ) : (
-              <>
-                <Check className="mr-2 h-4 w-4" />
-                Применить настройки
-              </>
-            )}
-          </Button>
-        </CardFooter>
       </form>
     </Card>
   )

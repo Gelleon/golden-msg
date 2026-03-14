@@ -1,5 +1,6 @@
 "use client"
 
+import { redirect } from "next/navigation"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { getUsers, updateUserRole } from "@/app/actions/users"
@@ -54,6 +55,11 @@ const roleColors: Record<string, string> = {
 }
 
 export default function UsersPage() {
+  redirect("/dashboard/settings?tab=users")
+  return null
+}
+
+export function OldUsersPage() {
   const [users, setUsers] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")

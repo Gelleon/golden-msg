@@ -1,12 +1,22 @@
 "use client"
 
-import { useState } from "react"
-import { Download, Play, Pause, Loader2, FileText, CheckCircle2, Languages, Image as ImageIcon } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Download, Play, Pause, Loader2, FileText, CheckCircle2, Languages, Image as ImageIcon, Trash2, AlertTriangle } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { deleteMessage } from "@/app/actions/chat"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { useToast } from "@/components/ui/use-toast"
 
 interface Message {
   id: string
@@ -38,24 +48,72 @@ const isImage = (url: string | null) => {
 
 export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
   const [isPlaying, setIsPlaying] = useState(false)
-  const [audio, setAudio] = useState<HTMLAudioElement | null>(null)
+  const [duration, setDuration] = useState<number | null>(null)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    if (message.message_type === "voice" && message.file_url) {
+      const audio = new Audio(message.file_url)
+      audio.onloadedmetadata = () => {
+        setDuration(audio.duration)
+      }
+      audio.onended = () => {
+        setIsPlaying(false)
+        setCurrentTime(0)
+      }
+      audio.ontimeupdate = () => {
+        setCurrentTime(audio.currentTime)
+      }
+      audioRef.current = audio
+    }
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
+  }, [message.message_type, message.file_url])
 
   const togglePlay = () => {
-    if (!message.file_url) return
+    if (!audioRef.current) return
 
-    if (isPlaying && audio) {
-      audio.pause()
+    if (isPlaying) {
+      audioRef.current.pause()
       setIsPlaying(false)
     } else {
-      if (!audio) {
-        const newAudio = new Audio(message.file_url)
-        newAudio.onended = () => setIsPlaying(false)
-        setAudio(newAudio)
-        newAudio.play().catch((err) => console.error("Error playing audio:", err))
-      } else {
-        audio.play().catch((err) => console.error("Error playing audio:", err))
-      }
+      audioRef.current.play().catch((err) => console.error("Error playing audio:", err))
       setIsPlaying(true)
+    }
+  }
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60)
+    const seconds = Math.floor(time % 60)
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`
+  }
+
+  const handleDelete = async () => {
+    setIsDeleting(true)
+    const result = await deleteMessage(message.id)
+    
+    if (result.success) {
+      toast({
+        title: "Сообщение удалено",
+        description: "Ваше сообщение было успешно удалено из чата и с сервера.",
+      })
+      setShowDeleteConfirm(false)
+    } else {
+      toast({
+        title: "Ошибка удаления",
+        description: result.error || "Не удалось удалить сообщение. Попробуйте позже.",
+        variant: "destructive",
+      } as any)
+      setIsDeleting(false)
     }
   }
 
@@ -87,13 +145,13 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
     switch (message.message_type) {
       case "text":
         return (
-          <div className="space-y-0">
+          <div className="space-y-0 w-full">
             <div className={cn(
               "p-3.5 md:p-4 text-sm md:text-[15px] leading-relaxed transition-all duration-300",
               isCurrentUser ? "text-white" : "text-slate-900"
             )}>
               {renderLanguageIndicator(!!message.content_translated)}
-              <p className="whitespace-pre-wrap font-medium">
+              <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere font-medium">
                 {message.content_original}
               </p>
             </div>
@@ -117,7 +175,9 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
                      <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
                     <span>{message.language_original === "ru" ? "Перевод на китайский" : "Перевод на русский"}</span>
                   </div>
-                  <p className="whitespace-pre-wrap font-medium leading-relaxed">{message.content_translated}</p>
+                  <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere font-medium leading-relaxed">
+                    {message.content_translated}
+                  </p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -135,13 +195,13 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
         )
       case "voice":
         return (
-          <div className="min-w-[220px] md:min-w-[280px]">
-            <div className={cn("flex items-center gap-3 md:gap-4 p-3 md:p-4 transition-all duration-300",
+          <div className="min-w-[180px] md:min-w-[220px]">
+            <div className={cn("flex items-center gap-3 p-3 transition-all duration-300",
                 isCurrentUser ? "text-white" : "text-slate-900"
             )}>
               <Button
                 size="icon"
-                className={cn("h-10 w-10 md:h-12 md:w-12 rounded-full shadow-lg transition-all active:scale-95 shrink-0",
+                className={cn("h-10 w-10 rounded-full shadow-lg transition-all active:scale-95 shrink-0",
                     isCurrentUser 
                       ? "bg-white text-blue-600 hover:bg-blue-50" 
                       : "bg-blue-600 text-white hover:bg-blue-700"
@@ -149,30 +209,53 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
                 onClick={togglePlay}
               >
                 {isPlaying ? (
-                  <Pause className="h-4 w-4 md:h-5 md:w-5 fill-current" />
+                  <Pause className="h-4 w-4 fill-current" />
                 ) : (
-                  <Play className="h-4 w-4 md:h-5 md:w-5 ml-1 fill-current" />
+                  <Play className="h-4 w-4 ml-1 fill-current" />
                 )}
               </Button>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 space-y-1">
                 {renderLanguageIndicator(!!message.content_translated)}
+                
+                {/* Waveform visualizer */}
+                <div className="flex items-center gap-0.5 h-6">
+                  {[...Array(12)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      animate={{
+                        height: isPlaying ? [4, Math.random() * 16 + 4, 4] : 4
+                      }}
+                      transition={{
+                        duration: 0.5,
+                        repeat: Infinity,
+                        delay: i * 0.05
+                      }}
+                      className={cn(
+                        "w-1 rounded-full",
+                        isCurrentUser ? "bg-white/40" : "bg-blue-200"
+                      )}
+                    />
+                  ))}
+                  <span className={cn(
+                    "ml-2 text-[10px] font-mono font-bold",
+                    isCurrentUser ? "text-white/80" : "text-slate-500"
+                  )}>
+                    {isPlaying ? formatTime(currentTime) : (duration ? formatTime(duration) : "0:00")}
+                  </span>
+                </div>
+
                 {message.voice_transcription ? (
                   <p className={cn(
-                    "text-xs md:text-sm font-medium italic truncate leading-snug",
+                    "text-[11px] md:text-xs font-medium italic truncate opacity-80",
                     isCurrentUser ? "text-white" : "text-slate-700"
                   )}>
                     "{message.voice_transcription}"
                   </p>
                 ) : (
                   <div className={cn(
-                    "flex items-center gap-1.5 text-[10px] md:text-xs font-bold uppercase tracking-tighter",
-                    isCurrentUser ? "text-white/50" : "text-slate-400"
+                    "flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-tighter opacity-60",
+                    isCurrentUser ? "text-white" : "text-slate-400"
                   )}>
-                    <div className="flex gap-0.5 items-center">
-                      <div className="w-0.5 h-2 bg-current animate-[bounce_1s_infinite_0ms]" />
-                      <div className="w-0.5 h-3 bg-current animate-[bounce_1s_infinite_200ms]" />
-                      <div className="w-0.5 h-2 bg-current animate-[bounce_1s_infinite_400ms]" />
-                    </div>
                     <span>Расшифровка...</span>
                   </div>
                 )}
@@ -284,13 +367,88 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
         </Avatar>
       </motion.div>
       <div className={cn(
-        "flex-1 max-w-[80%] md:max-w-[70%] rounded-2xl shadow-lg transition-all duration-300 overflow-hidden",
+        "flex-1 max-w-[min(400px,80%)] md:max-w-[min(400px,70%)] rounded-2xl shadow-lg transition-all duration-300 relative group/bubble",
         isCurrentUser 
           ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white" 
           : "bg-white text-slate-900 border border-slate-200"
       )}>
-        {renderContent()}
+        <div className={cn(
+          "max-h-[200px] overflow-y-auto overflow-x-hidden custom-scrollbar",
+          isCurrentUser ? "custom-scrollbar-white" : "custom-scrollbar-slate"
+        )}>
+          {renderContent()}
+        </div>
+        
+        {/* Delete button - visible on hover for current user or admin */}
+        {isCurrentUser && (
+          <div className={cn(
+            "absolute top-2 right-2 opacity-0 group-hover/bubble:opacity-100 transition-opacity",
+            isDeleting && "opacity-100"
+          )}>
+            <Button
+              size="icon"
+              variant="ghost"
+              className={cn(
+                "h-7 w-7 rounded-full bg-black/20 hover:bg-red-500 hover:text-white text-white/70 border-none",
+                isDeleting && "cursor-not-allowed"
+              )}
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="h-3.5 w-3.5" />
+              )}
+            </Button>
+          </div>
+        )}
       </div>
+
+      {/* Custom Delete Confirmation Dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent className="sm:max-w-[400px] border-none shadow-2xl bg-white p-0 overflow-hidden rounded-3xl">
+          <div className="p-6 pt-8 text-center space-y-4">
+            <div className="mx-auto w-16 h-16 bg-red-50 rounded-full flex items-center justify-center text-red-500">
+              <AlertTriangle className="h-8 w-8" />
+            </div>
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-slate-900 text-center">
+                Удалить сообщение?
+              </DialogTitle>
+              <DialogDescription className="text-slate-500 text-center text-[15px] pt-2">
+                Это действие необратимо. Сообщение и связанные с ним файлы будут полностью удалены с сервера.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 p-6 bg-slate-50/50 sm:gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              className="flex-1 h-12 rounded-2xl font-bold text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={isDeleting}
+            >
+              Отмена
+            </Button>
+            <Button
+              type="button"
+              className="flex-1 h-12 rounded-2xl font-bold bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Удаление...
+                </>
+              ) : (
+                "Удалить"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   )
 }

@@ -31,9 +31,13 @@ model User {
 model Room {
   id          String   @id @default(uuid())
   name        String?
+  description String?
+  capacity    Int?     @default(0)
+  equipment   String?  // JSON string or comma-separated list
   type        String   @default("private") // private, group
   created_by  String?
   created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
 
   // Relations
   owner        User?    @relation(fields: [created_by], references: [id])

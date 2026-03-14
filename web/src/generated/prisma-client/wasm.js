@@ -133,9 +133,13 @@ exports.Prisma.UserScalarFieldEnum = {
 exports.Prisma.RoomScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  description: 'description',
+  capacity: 'capacity',
+  equipment: 'equipment',
   type: 'type',
   created_by: 'created_by',
-  created_at: 'created_at'
+  created_at: 'created_at',
+  updated_at: 'updated_at'
 };
 
 exports.Prisma.RoomParticipantScalarFieldEnum = {

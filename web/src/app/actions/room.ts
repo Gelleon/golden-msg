@@ -380,3 +380,51 @@ export async function searchUsersForRoom(query: string) {
     return []
   }
 }
+
+export async function updateRoom(roomId: string, data: { 
+  name?: string, 
+  description?: string, 
+  capacity?: number, 
+  equipment?: string 
+}) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+  })
+  
+  if (!["admin", "manager"].includes(currentUser?.role || "")) {
+    return { error: "Permission denied" }
+  }
+
+  try {
+    const room = await prisma.room.update({
+      where: { id: roomId },
+      data: {
+        name: data.name,
+        description: data.description,
+        capacity: data.capacity,
+        equipment: data.equipment,
+      },
+    })
+
+    // Log the action
+    console.log(`[LOG] User ${session.user.id} (${currentUser?.role}) updated room ${roomId}. Changes:`, data)
+
+    revalidatePath("/dashboard")
+    revalidatePath(`/dashboard/rooms/${roomId}`)
+    
+    return { 
+      success: true, 
+      room: {
+        ...room,
+        created_at: room.created_at.toISOString(),
+        updated_at: room.updated_at.toISOString()
+      } 
+    }
+  } catch (error) {
+    console.error("Update room error:", error)
+    return { error: "Failed to update room" }
+  }
+}
