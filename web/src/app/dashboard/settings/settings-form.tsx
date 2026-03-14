@@ -39,7 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Loader2, User, Lock, Camera, Check, AlertCircle, Globe, Users, ShieldCheck, Briefcase, UserCheck, UserCog, Search, Filter, MoreHorizontal, ChevronDown } from "lucide-react"
+import { Loader2, User, Lock, Camera, Check, AlertCircle, Globe, Users, ShieldCheck, Briefcase, UserCheck, UserCog, Search, Filter, MoreHorizontal, ChevronDown, Save } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { motion, AnimatePresence } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
