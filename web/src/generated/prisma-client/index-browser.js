@@ -162,7 +162,8 @@ exports.Prisma.MessageScalarFieldEnum = {
   file_url: 'file_url',
   voice_transcription: 'voice_transcription',
   created_at: 'created_at',
-  is_edited: 'is_edited'
+  is_edited: 'is_edited',
+  reply_to_id: 'reply_to_id'
 };
 
 exports.Prisma.RoomInviteScalarFieldEnum = {

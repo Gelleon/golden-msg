@@ -86,6 +86,16 @@ export default async function RoomPage({ params }: RoomPageProps) {
           preferred_language: true,
         },
       },
+      reply_to: {
+        include: {
+          sender: {
+            select: {
+              id: true,
+              full_name: true,
+            }
+          }
+        }
+      }
     },
     orderBy: { created_at: "asc" },
   })
@@ -99,6 +109,12 @@ export default async function RoomPage({ params }: RoomPageProps) {
     file_url: msg.file_url,
     voice_transcription: msg.voice_transcription,
     created_at: msg.created_at.toISOString(),
+    is_edited: msg.is_edited,
+    reply_to: msg.reply_to ? {
+      id: msg.reply_to.id,
+      content: msg.reply_to.content,
+      sender_name: msg.reply_to.sender.full_name,
+    } : null,
     sender: {
       id: msg.sender.id,
       full_name: msg.sender.full_name,

@@ -14,14 +14,23 @@ interface MessageInputProps {
   roomId: string
   userId: string
   userRole: string
+  replyTo?: any
+  onCancelReply?: () => void
 }
 
-export function MessageInput({ roomId, userId, userRole }: MessageInputProps) {
+export function MessageInput({ 
+  roomId, 
+  userId, 
+  userRole, 
+  replyTo, 
+  onCancelReply 
+}: MessageInputProps) {
   const { t } = useTranslation()
   const [message, setMessage] = useState("")
   const [isRecording, setIsRecording] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const lastTypingUpdateRef = useRef<number>(0)
 
@@ -33,9 +42,35 @@ export function MessageInput({ roomId, userId, userRole }: MessageInputProps) {
     }
   }, [message, roomId])
 
+  // Cleanup preview URL on unmount or file change
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+      }
+    }
+  }, [previewUrl])
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0])
+      const selectedFile = e.target.files[0]
+      setFile(selectedFile)
+      
+      // Create preview for images
+      if (selectedFile.type.startsWith('image/')) {
+        const url = URL.createObjectURL(selectedFile)
+        setPreviewUrl(url)
+      } else {
+        setPreviewUrl(null)
+      }
+    }
+  }
+
+  const removeFile = () => {
+    setFile(null)
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+      setPreviewUrl(null)
     }
   }
 
@@ -63,15 +98,19 @@ export function MessageInput({ roomId, userId, userRole }: MessageInputProps) {
       }
 
       // Call Server Action
-      await sendMessageAction({
+      console.log("Calling sendMessageAction with:", { roomId, messageType, content, replyToId: replyTo?.id });
+      const result = await sendMessageAction({
         roomId,
-        content,
+        content: content || (file ? file.name : ""),
         messageType,
         fileUrl,
+        replyToId: replyTo?.id,
       })
+      console.log("sendMessageAction result:", result);
 
       setMessage("")
-      setFile(null)
+      removeFile()
+      if (onCancelReply) onCancelReply()
     } catch (error) {
       console.error("Error sending message:", error)
       alert(t("chat.errorSendMessage"))
@@ -142,17 +181,51 @@ export function MessageInput({ roomId, userId, userRole }: MessageInputProps) {
   return (
     <div className="p-2 md:p-4 border-t border-slate-200 bg-white/80 backdrop-blur-md sticky bottom-0 z-10 transition-all duration-300">
       <div className="max-w-4xl mx-auto space-y-2 md:space-y-3">
+        {replyTo && (
+          <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-blue-50/50 border border-blue-100 rounded-xl text-xs md:sm shadow-sm animate-slide-up relative">
+            <div className="w-1 self-stretch bg-blue-500 rounded-full" />
+            <div className="flex-1 min-w-0">
+              <div className="font-bold text-blue-600 text-[10px] uppercase tracking-wider">
+                {replyTo.sender_name}
+              </div>
+              <div className="text-slate-600 truncate text-[11px] md:text-xs">
+                {replyTo.content}
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-100/50"
+              onClick={onCancelReply}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        )}
+
         {file && (
           <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs md:sm shadow-sm animate-slide-up">
-            <div className="bg-white p-1.5 md:p-2 rounded-lg border border-slate-100">
-              <Paperclip className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-500" />
+            {previewUrl ? (
+              <div className="relative h-12 w-12 md:h-16 md:w-16 rounded-lg overflow-hidden border border-slate-200 bg-white shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
+              </div>
+            ) : (
+              <div className="bg-white p-1.5 md:p-2 rounded-lg border border-slate-100">
+                <Paperclip className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-500" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-slate-700 truncate">{file.name}</div>
+              <div className="text-[10px] md:text-xs text-slate-400">
+                {(file.size / 1024 / 1024).toFixed(2)} MB
+              </div>
             </div>
-            <span className="flex-1 truncate font-medium text-slate-700">{file.name}</span>
             <Button
               variant="ghost"
               size="icon"
               className="h-7 w-7 md:h-8 md:w-8 hover:bg-slate-200 rounded-full text-slate-400 hover:text-red-500"
-              onClick={() => setFile(null)}
+              onClick={removeFile}
             >
               <X className="h-3.5 w-3.5 md:h-4 md:w-4" />
             </Button>
@@ -201,7 +274,7 @@ export function MessageInput({ roomId, userId, userRole }: MessageInputProps) {
                 onClick={handleSend} 
                 disabled={isUploading || isRecording}
                 size="icon"
-                className="h-9 w-9 md:h-12 md:w-12 rounded-full bg-primary hover:bg-primary/90 text-white shadow-md transition-all hover:scale-105 active:scale-95"
+                className="h-9 w-9 md:h-12 md:w-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-md transition-all hover:scale-105 active:scale-95"
               >
                 <Send className="h-4 w-4 md:h-5 md:w-5 ml-0.5" />
               </Button>

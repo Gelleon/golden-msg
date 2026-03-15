@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Download, Play, Pause, Loader2, FileText, CheckCircle2, Languages, Image as ImageIcon, Trash2, AlertTriangle, Pencil, X, Check } from "lucide-react"
+import { Download, Play, Pause, Loader2, FileText, CheckCircle2, Languages, Image as ImageIcon, Trash2, AlertTriangle, Pencil, X, Check, Reply, CornerUpLeft } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { useTranslation } from "@/lib/language-context"
@@ -19,6 +19,12 @@ import {
 } from "@/components/ui/dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
 
 interface Message {
   id: string
@@ -36,11 +42,17 @@ interface Message {
     avatar_url: string | null
     role: string
   }
+  reply_to?: {
+    id: string
+    content: string | null
+    sender_name: string | null
+  } | null
 }
 
 interface MessageBubbleProps {
   message: Message
   isCurrentUser: boolean
+  onReply?: (message: Message) => void
 }
 
 const isImage = (url: string | null) => {
@@ -49,7 +61,7 @@ const isImage = (url: string | null) => {
   return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '')
 }
 
-export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
+export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubbleProps) {
   const { t } = useTranslation()
   const [isPlaying, setIsPlaying] = useState(false)
   const [duration, setDuration] = useState<number | null>(null)
@@ -176,11 +188,48 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
     )
   }
 
+  const renderReplyPreview = () => {
+    if (!message.reply_to) return null
+
+    return (
+      <div 
+        className={cn(
+          "mx-3 mt-2 p-2 border-l-2 flex flex-col gap-0.5 cursor-pointer hover:bg-black/5 transition-colors rounded-r-lg",
+          isCurrentUser 
+            ? "border-blue-200 bg-white/10" 
+            : "border-blue-500 bg-blue-50/50"
+        )}
+        onClick={() => {
+          const element = document.getElementById(`message-${message.reply_to?.id}`)
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            element.classList.add('bg-blue-100/50')
+            setTimeout(() => element.classList.remove('bg-blue-100/50'), 2000)
+          }
+        }}
+      >
+        <div className={cn(
+          "text-[10px] font-bold truncate",
+          isCurrentUser ? "text-blue-200" : "text-blue-600"
+        )}>
+          {message.reply_to.sender_name}
+        </div>
+        <div className={cn(
+          "text-[11px] truncate opacity-80",
+          isCurrentUser ? "text-white/80" : "text-slate-600"
+        )}>
+          {message.reply_to.content}
+        </div>
+      </div>
+    )
+  }
+
   const renderContent = () => {
     switch (message.message_type) {
       case "text":
         return (
           <div className="space-y-0 w-full">
+            {renderReplyPreview()}
             {isEditing ? (
               <div className="p-3 space-y-3">
                 <Textarea
@@ -274,11 +323,16 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
                 
                 {!message.content_translated && (
                   <div className={cn(
-                    "px-4 py-2 border-t text-[10px] font-bold uppercase tracking-wider flex items-center gap-2",
+                    "px-4 py-2 border-t text-[10px] font-bold uppercase tracking-wider flex flex-col gap-1",
                     isCurrentUser ? "bg-black/10 border-white/10 text-white/50" : "bg-slate-50 border-slate-100 text-slate-400"
                   )}>
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>{t("chat.aiTranslation")}</span>
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <span>{t("chat.aiTranslation")}</span>
+                    </div>
+                    <div className="text-[8px] opacity-30">
+                      ID: {message.id.substring(0, 8)} | Lang: {message.language_original}
+                    </div>
                   </div>
                 )}
               </>
@@ -411,8 +465,7 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
                 <div className="flex items-center gap-2">
                   <a
                     href={message.file_url || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    download={message.content_original || "file"}
                     className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-wider transition-all shadow-sm",
                         isCurrentUser 
                           ? "bg-white text-blue-600 hover:bg-blue-50" 
@@ -434,6 +487,7 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
 
   return (
     <motion.div
+      id={`message-${message.id}`}
       layout
       initial={{ opacity: 0, x: isCurrentUser ? 20 : -20, scale: 0.9 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -443,7 +497,7 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
         damping: 20
       }}
       className={cn(
-        "flex w-full gap-2 md:gap-3 mb-4 md:mb-6",
+        "flex w-full gap-2 md:gap-3 mb-4 md:mb-6 group/bubble-container transition-colors duration-500 rounded-xl",
         isCurrentUser ? "flex-row-reverse" : "flex-row"
       )}
     >
@@ -458,71 +512,104 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
           </AvatarFallback>
         </Avatar>
       </motion.div>
-      <div className={cn(
-        "flex-1 relative group/bubble max-w-fit min-w-[60px]",
-        isCurrentUser ? "flex flex-col items-end" : "flex flex-col items-start"
-      )}>
-        <div className={cn(
-          "rounded-[20px] shadow-sm transition-all duration-300 overflow-hidden relative",
-          isCurrentUser 
-            ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-[5px]" 
-            : "bg-white text-slate-900 border border-slate-100 rounded-tl-[5px]",
-          "max-w-[320px] sm:max-w-[400px]"
-        )}>
-          {renderContent()}
-          
-          {/* Message Info (Time & Status) */}
+
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
           <div className={cn(
-            "flex items-center gap-1 px-2 pb-1 justify-end",
-            isCurrentUser ? "text-white/70" : "text-slate-400"
+            "flex-1 relative group/bubble max-w-fit min-w-[60px]",
+            isCurrentUser ? "flex flex-col items-end" : "flex flex-col items-start"
           )}>
-            {message.is_edited && (
-              <span className="text-[9px] italic font-medium">{t("chat.edited")}</span>
-            )}
-            <span className="text-[10px] font-medium">
-              {new Date(message.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', hour12: false })}
-            </span>
-            {isCurrentUser && (
-              <Check className="h-3 w-3" />
+            <div className={cn(
+              "rounded-[20px] shadow-sm transition-all duration-300 overflow-hidden relative",
+              isCurrentUser 
+                ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-[5px]" 
+                : "bg-white text-slate-900 border border-slate-100 rounded-tl-[5px]",
+              "hover:shadow-md max-w-[320px] sm:max-w-[400px]"
+            )}>
+              {renderContent()}
+              
+              {/* Message Info (Time & Status) */}
+              <div className={cn(
+                "flex items-center gap-1 px-2 pb-1 justify-end",
+                isCurrentUser ? "text-white/70" : "text-slate-400"
+              )}>
+                {message.is_edited && (
+                  <span className="text-[9px] italic font-medium">{t("chat.edited")}</span>
+                )}
+                <span className="text-[10px] font-medium">
+                  {new Date(message.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                </span>
+                {isCurrentUser && (
+                  <Check className="h-3 w-3" />
+                )}
+              </div>
+            </div>
+            
+            {/* Actions - visible on hover for current user */}
+            {isCurrentUser && !isEditing && (
+              <div className={cn(
+                "absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover/bubble:opacity-100 transition-opacity flex flex-col items-center gap-1",
+                isDeleting && "opacity-100"
+              )}>
+                {message.message_type === "text" && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 border-none shadow-sm"
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className={cn(
+                    "h-7 w-7 rounded-full bg-slate-100 hover:bg-red-50 text-red-400 border-none shadow-sm",
+                    isDeleting && "cursor-not-allowed"
+                  )}
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              </div>
             )}
           </div>
-        </div>
-        
-        {/* Actions - visible on hover for current user */}
-        {isCurrentUser && !isEditing && (
-          <div className={cn(
-            "absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover/bubble:opacity-100 transition-opacity flex flex-col items-center gap-1",
-            isDeleting && "opacity-100"
-          )}>
-            {message.message_type === "text" && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 border-none shadow-sm"
+        </ContextMenuTrigger>
+        <ContextMenuContent className="w-48 p-1.5 rounded-xl shadow-2xl border-slate-200/60 bg-white/95 backdrop-blur-sm">
+          <ContextMenuItem 
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 focus:bg-blue-50 focus:text-blue-600 transition-colors cursor-pointer group"
+            onClick={() => onReply?.(message)}
+          >
+            <Reply className="h-4 w-4 text-slate-400 group-focus:text-blue-500" />
+            <span className="font-semibold text-sm">{t("chat.reply")}</span>
+          </ContextMenuItem>
+
+          {isCurrentUser && (
+            <>
+              <ContextMenuItem 
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 focus:bg-blue-50 focus:text-blue-600 transition-colors cursor-pointer group"
                 onClick={() => setIsEditing(true)}
               >
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
-            )}
-            <Button
-              size="icon"
-              variant="ghost"
-              className={cn(
-                "h-7 w-7 rounded-full bg-slate-100 hover:bg-red-50 text-red-400 border-none shadow-sm",
-                isDeleting && "cursor-not-allowed"
-              )}
-              onClick={() => setShowDeleteConfirm(true)}
-              disabled={isDeleting}
-            >
-              {isDeleting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Trash2 className="h-3.5 w-3.5" />
-              )}
-            </Button>
-          </div>
-        )}
-      </div>
+                <Pencil className="h-4 w-4 text-slate-400 group-focus:text-blue-500" />
+                <span className="font-semibold text-sm">{t("common.edit")}</span>
+              </ContextMenuItem>
+              <ContextMenuItem 
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-600 focus:bg-red-50 focus:text-red-700 transition-colors cursor-pointer group"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                <Trash2 className="h-4 w-4 text-red-400 group-focus:text-red-500" />
+                <span className="font-semibold text-sm">{t("common.delete")}</span>
+              </ContextMenuItem>
+            </>
+          )}
+        </ContextMenuContent>
+      </ContextMenu>
 
       {/* Custom Delete Confirmation Dialog */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>

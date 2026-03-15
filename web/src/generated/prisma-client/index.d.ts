@@ -1290,6 +1290,37 @@ export namespace Prisma {
 
 
   /**
+   * Count Type MessageCountOutputType
+   */
+
+  export type MessageCountOutputType = {
+    replies: number
+  }
+
+  export type MessageCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    replies?: boolean | MessageCountOutputTypeCountRepliesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * MessageCountOutputType without action
+   */
+  export type MessageCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MessageCountOutputType
+     */
+    select?: MessageCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * MessageCountOutputType without action
+   */
+  export type MessageCountOutputTypeCountRepliesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MessageWhereInput
+  }
+
+
+  /**
    * Models
    */
 
@@ -4431,6 +4462,7 @@ export namespace Prisma {
     voice_transcription: string | null
     created_at: Date | null
     is_edited: boolean | null
+    reply_to_id: string | null
   }
 
   export type MessageMaxAggregateOutputType = {
@@ -4444,6 +4476,7 @@ export namespace Prisma {
     voice_transcription: string | null
     created_at: Date | null
     is_edited: boolean | null
+    reply_to_id: string | null
   }
 
   export type MessageCountAggregateOutputType = {
@@ -4457,6 +4490,7 @@ export namespace Prisma {
     voice_transcription: number
     created_at: number
     is_edited: number
+    reply_to_id: number
     _all: number
   }
 
@@ -4472,6 +4506,7 @@ export namespace Prisma {
     voice_transcription?: true
     created_at?: true
     is_edited?: true
+    reply_to_id?: true
   }
 
   export type MessageMaxAggregateInputType = {
@@ -4485,6 +4520,7 @@ export namespace Prisma {
     voice_transcription?: true
     created_at?: true
     is_edited?: true
+    reply_to_id?: true
   }
 
   export type MessageCountAggregateInputType = {
@@ -4498,6 +4534,7 @@ export namespace Prisma {
     voice_transcription?: true
     created_at?: true
     is_edited?: true
+    reply_to_id?: true
     _all?: true
   }
 
@@ -4584,6 +4621,7 @@ export namespace Prisma {
     voice_transcription: string | null
     created_at: Date
     is_edited: boolean
+    reply_to_id: string | null
     _count: MessageCountAggregateOutputType | null
     _min: MessageMinAggregateOutputType | null
     _max: MessageMaxAggregateOutputType | null
@@ -4614,8 +4652,12 @@ export namespace Prisma {
     voice_transcription?: boolean
     created_at?: boolean
     is_edited?: boolean
+    reply_to_id?: boolean
     room?: boolean | RoomDefaultArgs<ExtArgs>
     sender?: boolean | UserDefaultArgs<ExtArgs>
+    reply_to?: boolean | Message$reply_toArgs<ExtArgs>
+    replies?: boolean | Message$repliesArgs<ExtArgs>
+    _count?: boolean | MessageCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["message"]>
 
   export type MessageSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -4629,8 +4671,10 @@ export namespace Prisma {
     voice_transcription?: boolean
     created_at?: boolean
     is_edited?: boolean
+    reply_to_id?: boolean
     room?: boolean | RoomDefaultArgs<ExtArgs>
     sender?: boolean | UserDefaultArgs<ExtArgs>
+    reply_to?: boolean | Message$reply_toArgs<ExtArgs>
   }, ExtArgs["result"]["message"]>
 
   export type MessageSelectScalar = {
@@ -4644,15 +4688,20 @@ export namespace Prisma {
     voice_transcription?: boolean
     created_at?: boolean
     is_edited?: boolean
+    reply_to_id?: boolean
   }
 
   export type MessageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     room?: boolean | RoomDefaultArgs<ExtArgs>
     sender?: boolean | UserDefaultArgs<ExtArgs>
+    reply_to?: boolean | Message$reply_toArgs<ExtArgs>
+    replies?: boolean | Message$repliesArgs<ExtArgs>
+    _count?: boolean | MessageCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type MessageIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     room?: boolean | RoomDefaultArgs<ExtArgs>
     sender?: boolean | UserDefaultArgs<ExtArgs>
+    reply_to?: boolean | Message$reply_toArgs<ExtArgs>
   }
 
   export type $MessagePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4660,6 +4709,8 @@ export namespace Prisma {
     objects: {
       room: Prisma.$RoomPayload<ExtArgs>
       sender: Prisma.$UserPayload<ExtArgs>
+      reply_to: Prisma.$MessagePayload<ExtArgs> | null
+      replies: Prisma.$MessagePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -4672,6 +4723,7 @@ export namespace Prisma {
       voice_transcription: string | null
       created_at: Date
       is_edited: boolean
+      reply_to_id: string | null
     }, ExtArgs["result"]["message"]>
     composites: {}
   }
@@ -5038,6 +5090,8 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     room<T extends RoomDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RoomDefaultArgs<ExtArgs>>): Prisma__RoomClient<$Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     sender<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    reply_to<T extends Message$reply_toArgs<ExtArgs> = {}>(args?: Subset<T, Message$reply_toArgs<ExtArgs>>): Prisma__MessageClient<$Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    replies<T extends Message$repliesArgs<ExtArgs> = {}>(args?: Subset<T, Message$repliesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5077,6 +5131,7 @@ export namespace Prisma {
     readonly voice_transcription: FieldRef<"Message", 'String'>
     readonly created_at: FieldRef<"Message", 'DateTime'>
     readonly is_edited: FieldRef<"Message", 'Boolean'>
+    readonly reply_to_id: FieldRef<"Message", 'String'>
   }
     
 
@@ -5390,6 +5445,41 @@ export namespace Prisma {
      * Filter which Messages to delete
      */
     where?: MessageWhereInput
+  }
+
+  /**
+   * Message.reply_to
+   */
+  export type Message$reply_toArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Message
+     */
+    select?: MessageSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MessageInclude<ExtArgs> | null
+    where?: MessageWhereInput
+  }
+
+  /**
+   * Message.replies
+   */
+  export type Message$repliesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Message
+     */
+    select?: MessageSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MessageInclude<ExtArgs> | null
+    where?: MessageWhereInput
+    orderBy?: MessageOrderByWithRelationInput | MessageOrderByWithRelationInput[]
+    cursor?: MessageWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: MessageScalarFieldEnum | MessageScalarFieldEnum[]
   }
 
   /**
@@ -6493,7 +6583,8 @@ export namespace Prisma {
     file_url: 'file_url',
     voice_transcription: 'voice_transcription',
     created_at: 'created_at',
-    is_edited: 'is_edited'
+    is_edited: 'is_edited',
+    reply_to_id: 'reply_to_id'
   };
 
   export type MessageScalarFieldEnum = (typeof MessageScalarFieldEnum)[keyof typeof MessageScalarFieldEnum]
@@ -6821,8 +6912,11 @@ export namespace Prisma {
     voice_transcription?: StringNullableFilter<"Message"> | string | null
     created_at?: DateTimeFilter<"Message"> | Date | string
     is_edited?: BoolFilter<"Message"> | boolean
+    reply_to_id?: StringNullableFilter<"Message"> | string | null
     room?: XOR<RoomRelationFilter, RoomWhereInput>
     sender?: XOR<UserRelationFilter, UserWhereInput>
+    reply_to?: XOR<MessageNullableRelationFilter, MessageWhereInput> | null
+    replies?: MessageListRelationFilter
   }
 
   export type MessageOrderByWithRelationInput = {
@@ -6836,8 +6930,11 @@ export namespace Prisma {
     voice_transcription?: SortOrderInput | SortOrder
     created_at?: SortOrder
     is_edited?: SortOrder
+    reply_to_id?: SortOrderInput | SortOrder
     room?: RoomOrderByWithRelationInput
     sender?: UserOrderByWithRelationInput
+    reply_to?: MessageOrderByWithRelationInput
+    replies?: MessageOrderByRelationAggregateInput
   }
 
   export type MessageWhereUniqueInput = Prisma.AtLeast<{
@@ -6854,8 +6951,11 @@ export namespace Prisma {
     voice_transcription?: StringNullableFilter<"Message"> | string | null
     created_at?: DateTimeFilter<"Message"> | Date | string
     is_edited?: BoolFilter<"Message"> | boolean
+    reply_to_id?: StringNullableFilter<"Message"> | string | null
     room?: XOR<RoomRelationFilter, RoomWhereInput>
     sender?: XOR<UserRelationFilter, UserWhereInput>
+    reply_to?: XOR<MessageNullableRelationFilter, MessageWhereInput> | null
+    replies?: MessageListRelationFilter
   }, "id">
 
   export type MessageOrderByWithAggregationInput = {
@@ -6869,6 +6969,7 @@ export namespace Prisma {
     voice_transcription?: SortOrderInput | SortOrder
     created_at?: SortOrder
     is_edited?: SortOrder
+    reply_to_id?: SortOrderInput | SortOrder
     _count?: MessageCountOrderByAggregateInput
     _max?: MessageMaxOrderByAggregateInput
     _min?: MessageMinOrderByAggregateInput
@@ -6888,6 +6989,7 @@ export namespace Prisma {
     voice_transcription?: StringNullableWithAggregatesFilter<"Message"> | string | null
     created_at?: DateTimeWithAggregatesFilter<"Message"> | Date | string
     is_edited?: BoolWithAggregatesFilter<"Message"> | boolean
+    reply_to_id?: StringNullableWithAggregatesFilter<"Message"> | string | null
   }
 
   export type RoomInviteWhereInput = {
@@ -7237,6 +7339,8 @@ export namespace Prisma {
     is_edited?: boolean
     room: RoomCreateNestedOneWithoutMessagesInput
     sender: UserCreateNestedOneWithoutMessages_sentInput
+    reply_to?: MessageCreateNestedOneWithoutRepliesInput
+    replies?: MessageCreateNestedManyWithoutReply_toInput
   }
 
   export type MessageUncheckedCreateInput = {
@@ -7250,6 +7354,8 @@ export namespace Prisma {
     voice_transcription?: string | null
     created_at?: Date | string
     is_edited?: boolean
+    reply_to_id?: string | null
+    replies?: MessageUncheckedCreateNestedManyWithoutReply_toInput
   }
 
   export type MessageUpdateInput = {
@@ -7263,6 +7369,8 @@ export namespace Prisma {
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     room?: RoomUpdateOneRequiredWithoutMessagesNestedInput
     sender?: UserUpdateOneRequiredWithoutMessages_sentNestedInput
+    reply_to?: MessageUpdateOneWithoutRepliesNestedInput
+    replies?: MessageUpdateManyWithoutReply_toNestedInput
   }
 
   export type MessageUncheckedUpdateInput = {
@@ -7276,6 +7384,8 @@ export namespace Prisma {
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
+    reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
+    replies?: MessageUncheckedUpdateManyWithoutReply_toNestedInput
   }
 
   export type MessageCreateManyInput = {
@@ -7289,6 +7399,7 @@ export namespace Prisma {
     voice_transcription?: string | null
     created_at?: Date | string
     is_edited?: boolean
+    reply_to_id?: string | null
   }
 
   export type MessageUpdateManyMutationInput = {
@@ -7313,6 +7424,7 @@ export namespace Prisma {
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
+    reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RoomInviteCreateInput = {
@@ -7713,6 +7825,11 @@ export namespace Prisma {
     not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
+  export type MessageNullableRelationFilter = {
+    is?: MessageWhereInput | null
+    isNot?: MessageWhereInput | null
+  }
+
   export type MessageCountOrderByAggregateInput = {
     id?: SortOrder
     room_id?: SortOrder
@@ -7724,6 +7841,7 @@ export namespace Prisma {
     voice_transcription?: SortOrder
     created_at?: SortOrder
     is_edited?: SortOrder
+    reply_to_id?: SortOrder
   }
 
   export type MessageMaxOrderByAggregateInput = {
@@ -7737,6 +7855,7 @@ export namespace Prisma {
     voice_transcription?: SortOrder
     created_at?: SortOrder
     is_edited?: SortOrder
+    reply_to_id?: SortOrder
   }
 
   export type MessageMinOrderByAggregateInput = {
@@ -7750,6 +7869,7 @@ export namespace Prisma {
     voice_transcription?: SortOrder
     created_at?: SortOrder
     is_edited?: SortOrder
+    reply_to_id?: SortOrder
   }
 
   export type BoolWithAggregatesFilter<$PrismaModel = never> = {
@@ -8207,6 +8327,26 @@ export namespace Prisma {
     connect?: UserWhereUniqueInput
   }
 
+  export type MessageCreateNestedOneWithoutRepliesInput = {
+    create?: XOR<MessageCreateWithoutRepliesInput, MessageUncheckedCreateWithoutRepliesInput>
+    connectOrCreate?: MessageCreateOrConnectWithoutRepliesInput
+    connect?: MessageWhereUniqueInput
+  }
+
+  export type MessageCreateNestedManyWithoutReply_toInput = {
+    create?: XOR<MessageCreateWithoutReply_toInput, MessageUncheckedCreateWithoutReply_toInput> | MessageCreateWithoutReply_toInput[] | MessageUncheckedCreateWithoutReply_toInput[]
+    connectOrCreate?: MessageCreateOrConnectWithoutReply_toInput | MessageCreateOrConnectWithoutReply_toInput[]
+    createMany?: MessageCreateManyReply_toInputEnvelope
+    connect?: MessageWhereUniqueInput | MessageWhereUniqueInput[]
+  }
+
+  export type MessageUncheckedCreateNestedManyWithoutReply_toInput = {
+    create?: XOR<MessageCreateWithoutReply_toInput, MessageUncheckedCreateWithoutReply_toInput> | MessageCreateWithoutReply_toInput[] | MessageUncheckedCreateWithoutReply_toInput[]
+    connectOrCreate?: MessageCreateOrConnectWithoutReply_toInput | MessageCreateOrConnectWithoutReply_toInput[]
+    createMany?: MessageCreateManyReply_toInputEnvelope
+    connect?: MessageWhereUniqueInput | MessageWhereUniqueInput[]
+  }
+
   export type BoolFieldUpdateOperationsInput = {
     set?: boolean
   }
@@ -8225,6 +8365,44 @@ export namespace Prisma {
     upsert?: UserUpsertWithoutMessages_sentInput
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutMessages_sentInput, UserUpdateWithoutMessages_sentInput>, UserUncheckedUpdateWithoutMessages_sentInput>
+  }
+
+  export type MessageUpdateOneWithoutRepliesNestedInput = {
+    create?: XOR<MessageCreateWithoutRepliesInput, MessageUncheckedCreateWithoutRepliesInput>
+    connectOrCreate?: MessageCreateOrConnectWithoutRepliesInput
+    upsert?: MessageUpsertWithoutRepliesInput
+    disconnect?: MessageWhereInput | boolean
+    delete?: MessageWhereInput | boolean
+    connect?: MessageWhereUniqueInput
+    update?: XOR<XOR<MessageUpdateToOneWithWhereWithoutRepliesInput, MessageUpdateWithoutRepliesInput>, MessageUncheckedUpdateWithoutRepliesInput>
+  }
+
+  export type MessageUpdateManyWithoutReply_toNestedInput = {
+    create?: XOR<MessageCreateWithoutReply_toInput, MessageUncheckedCreateWithoutReply_toInput> | MessageCreateWithoutReply_toInput[] | MessageUncheckedCreateWithoutReply_toInput[]
+    connectOrCreate?: MessageCreateOrConnectWithoutReply_toInput | MessageCreateOrConnectWithoutReply_toInput[]
+    upsert?: MessageUpsertWithWhereUniqueWithoutReply_toInput | MessageUpsertWithWhereUniqueWithoutReply_toInput[]
+    createMany?: MessageCreateManyReply_toInputEnvelope
+    set?: MessageWhereUniqueInput | MessageWhereUniqueInput[]
+    disconnect?: MessageWhereUniqueInput | MessageWhereUniqueInput[]
+    delete?: MessageWhereUniqueInput | MessageWhereUniqueInput[]
+    connect?: MessageWhereUniqueInput | MessageWhereUniqueInput[]
+    update?: MessageUpdateWithWhereUniqueWithoutReply_toInput | MessageUpdateWithWhereUniqueWithoutReply_toInput[]
+    updateMany?: MessageUpdateManyWithWhereWithoutReply_toInput | MessageUpdateManyWithWhereWithoutReply_toInput[]
+    deleteMany?: MessageScalarWhereInput | MessageScalarWhereInput[]
+  }
+
+  export type MessageUncheckedUpdateManyWithoutReply_toNestedInput = {
+    create?: XOR<MessageCreateWithoutReply_toInput, MessageUncheckedCreateWithoutReply_toInput> | MessageCreateWithoutReply_toInput[] | MessageUncheckedCreateWithoutReply_toInput[]
+    connectOrCreate?: MessageCreateOrConnectWithoutReply_toInput | MessageCreateOrConnectWithoutReply_toInput[]
+    upsert?: MessageUpsertWithWhereUniqueWithoutReply_toInput | MessageUpsertWithWhereUniqueWithoutReply_toInput[]
+    createMany?: MessageCreateManyReply_toInputEnvelope
+    set?: MessageWhereUniqueInput | MessageWhereUniqueInput[]
+    disconnect?: MessageWhereUniqueInput | MessageWhereUniqueInput[]
+    delete?: MessageWhereUniqueInput | MessageWhereUniqueInput[]
+    connect?: MessageWhereUniqueInput | MessageWhereUniqueInput[]
+    update?: MessageUpdateWithWhereUniqueWithoutReply_toInput | MessageUpdateWithWhereUniqueWithoutReply_toInput[]
+    updateMany?: MessageUpdateManyWithWhereWithoutReply_toInput | MessageUpdateManyWithWhereWithoutReply_toInput[]
+    deleteMany?: MessageScalarWhereInput | MessageScalarWhereInput[]
   }
 
   export type RoomCreateNestedOneWithoutInvitesInput = {
@@ -8474,6 +8652,8 @@ export namespace Prisma {
     created_at?: Date | string
     is_edited?: boolean
     room: RoomCreateNestedOneWithoutMessagesInput
+    reply_to?: MessageCreateNestedOneWithoutRepliesInput
+    replies?: MessageCreateNestedManyWithoutReply_toInput
   }
 
   export type MessageUncheckedCreateWithoutSenderInput = {
@@ -8486,6 +8666,8 @@ export namespace Prisma {
     voice_transcription?: string | null
     created_at?: Date | string
     is_edited?: boolean
+    reply_to_id?: string | null
+    replies?: MessageUncheckedCreateNestedManyWithoutReply_toInput
   }
 
   export type MessageCreateOrConnectWithoutSenderInput = {
@@ -8622,6 +8804,7 @@ export namespace Prisma {
     voice_transcription?: StringNullableFilter<"Message"> | string | null
     created_at?: DateTimeFilter<"Message"> | Date | string
     is_edited?: BoolFilter<"Message"> | boolean
+    reply_to_id?: StringNullableFilter<"Message"> | string | null
   }
 
   export type RoomParticipantUpsertWithWhereUniqueWithoutUserInput = {
@@ -8785,6 +8968,8 @@ export namespace Prisma {
     created_at?: Date | string
     is_edited?: boolean
     sender: UserCreateNestedOneWithoutMessages_sentInput
+    reply_to?: MessageCreateNestedOneWithoutRepliesInput
+    replies?: MessageCreateNestedManyWithoutReply_toInput
   }
 
   export type MessageUncheckedCreateWithoutRoomInput = {
@@ -8797,6 +8982,8 @@ export namespace Prisma {
     voice_transcription?: string | null
     created_at?: Date | string
     is_edited?: boolean
+    reply_to_id?: string | null
+    replies?: MessageUncheckedCreateNestedManyWithoutReply_toInput
   }
 
   export type MessageCreateOrConnectWithoutRoomInput = {
@@ -9136,6 +9323,76 @@ export namespace Prisma {
     create: XOR<UserCreateWithoutMessages_sentInput, UserUncheckedCreateWithoutMessages_sentInput>
   }
 
+  export type MessageCreateWithoutRepliesInput = {
+    id?: string
+    content?: string | null
+    content_translated?: string | null
+    message_type?: string
+    file_url?: string | null
+    voice_transcription?: string | null
+    created_at?: Date | string
+    is_edited?: boolean
+    room: RoomCreateNestedOneWithoutMessagesInput
+    sender: UserCreateNestedOneWithoutMessages_sentInput
+    reply_to?: MessageCreateNestedOneWithoutRepliesInput
+  }
+
+  export type MessageUncheckedCreateWithoutRepliesInput = {
+    id?: string
+    room_id: string
+    sender_id: string
+    content?: string | null
+    content_translated?: string | null
+    message_type?: string
+    file_url?: string | null
+    voice_transcription?: string | null
+    created_at?: Date | string
+    is_edited?: boolean
+    reply_to_id?: string | null
+  }
+
+  export type MessageCreateOrConnectWithoutRepliesInput = {
+    where: MessageWhereUniqueInput
+    create: XOR<MessageCreateWithoutRepliesInput, MessageUncheckedCreateWithoutRepliesInput>
+  }
+
+  export type MessageCreateWithoutReply_toInput = {
+    id?: string
+    content?: string | null
+    content_translated?: string | null
+    message_type?: string
+    file_url?: string | null
+    voice_transcription?: string | null
+    created_at?: Date | string
+    is_edited?: boolean
+    room: RoomCreateNestedOneWithoutMessagesInput
+    sender: UserCreateNestedOneWithoutMessages_sentInput
+    replies?: MessageCreateNestedManyWithoutReply_toInput
+  }
+
+  export type MessageUncheckedCreateWithoutReply_toInput = {
+    id?: string
+    room_id: string
+    sender_id: string
+    content?: string | null
+    content_translated?: string | null
+    message_type?: string
+    file_url?: string | null
+    voice_transcription?: string | null
+    created_at?: Date | string
+    is_edited?: boolean
+    replies?: MessageUncheckedCreateNestedManyWithoutReply_toInput
+  }
+
+  export type MessageCreateOrConnectWithoutReply_toInput = {
+    where: MessageWhereUniqueInput
+    create: XOR<MessageCreateWithoutReply_toInput, MessageUncheckedCreateWithoutReply_toInput>
+  }
+
+  export type MessageCreateManyReply_toInputEnvelope = {
+    data: MessageCreateManyReply_toInput | MessageCreateManyReply_toInput[]
+  }
+
   export type RoomUpsertWithoutMessagesInput = {
     update: XOR<RoomUpdateWithoutMessagesInput, RoomUncheckedUpdateWithoutMessagesInput>
     create: XOR<RoomCreateWithoutMessagesInput, RoomUncheckedCreateWithoutMessagesInput>
@@ -9212,6 +9469,61 @@ export namespace Prisma {
     room_participations?: RoomParticipantUncheckedUpdateManyWithoutUserNestedInput
     owned_rooms?: RoomUncheckedUpdateManyWithoutOwnerNestedInput
     created_invites?: RoomInviteUncheckedUpdateManyWithoutCreatorNestedInput
+  }
+
+  export type MessageUpsertWithoutRepliesInput = {
+    update: XOR<MessageUpdateWithoutRepliesInput, MessageUncheckedUpdateWithoutRepliesInput>
+    create: XOR<MessageCreateWithoutRepliesInput, MessageUncheckedCreateWithoutRepliesInput>
+    where?: MessageWhereInput
+  }
+
+  export type MessageUpdateToOneWithWhereWithoutRepliesInput = {
+    where?: MessageWhereInput
+    data: XOR<MessageUpdateWithoutRepliesInput, MessageUncheckedUpdateWithoutRepliesInput>
+  }
+
+  export type MessageUpdateWithoutRepliesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    message_type?: StringFieldUpdateOperationsInput | string
+    file_url?: NullableStringFieldUpdateOperationsInput | string | null
+    voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_edited?: BoolFieldUpdateOperationsInput | boolean
+    room?: RoomUpdateOneRequiredWithoutMessagesNestedInput
+    sender?: UserUpdateOneRequiredWithoutMessages_sentNestedInput
+    reply_to?: MessageUpdateOneWithoutRepliesNestedInput
+  }
+
+  export type MessageUncheckedUpdateWithoutRepliesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    room_id?: StringFieldUpdateOperationsInput | string
+    sender_id?: StringFieldUpdateOperationsInput | string
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    message_type?: StringFieldUpdateOperationsInput | string
+    file_url?: NullableStringFieldUpdateOperationsInput | string | null
+    voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_edited?: BoolFieldUpdateOperationsInput | boolean
+    reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type MessageUpsertWithWhereUniqueWithoutReply_toInput = {
+    where: MessageWhereUniqueInput
+    update: XOR<MessageUpdateWithoutReply_toInput, MessageUncheckedUpdateWithoutReply_toInput>
+    create: XOR<MessageCreateWithoutReply_toInput, MessageUncheckedCreateWithoutReply_toInput>
+  }
+
+  export type MessageUpdateWithWhereUniqueWithoutReply_toInput = {
+    where: MessageWhereUniqueInput
+    data: XOR<MessageUpdateWithoutReply_toInput, MessageUncheckedUpdateWithoutReply_toInput>
+  }
+
+  export type MessageUpdateManyWithWhereWithoutReply_toInput = {
+    where: MessageScalarWhereInput
+    data: XOR<MessageUpdateManyMutationInput, MessageUncheckedUpdateManyWithoutReply_toInput>
   }
 
   export type RoomCreateWithoutInvitesInput = {
@@ -9368,6 +9680,7 @@ export namespace Prisma {
     voice_transcription?: string | null
     created_at?: Date | string
     is_edited?: boolean
+    reply_to_id?: string | null
   }
 
   export type RoomParticipantCreateManyUserInput = {
@@ -9411,6 +9724,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     room?: RoomUpdateOneRequiredWithoutMessagesNestedInput
+    reply_to?: MessageUpdateOneWithoutRepliesNestedInput
+    replies?: MessageUpdateManyWithoutReply_toNestedInput
   }
 
   export type MessageUncheckedUpdateWithoutSenderInput = {
@@ -9423,6 +9738,8 @@ export namespace Prisma {
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
+    reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
+    replies?: MessageUncheckedUpdateManyWithoutReply_toNestedInput
   }
 
   export type MessageUncheckedUpdateManyWithoutSenderInput = {
@@ -9435,6 +9752,7 @@ export namespace Prisma {
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
+    reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RoomParticipantUpdateWithoutUserInput = {
@@ -9555,6 +9873,7 @@ export namespace Prisma {
     voice_transcription?: string | null
     created_at?: Date | string
     is_edited?: boolean
+    reply_to_id?: string | null
   }
 
   export type RoomInviteCreateManyRoomInput = {
@@ -9605,6 +9924,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     sender?: UserUpdateOneRequiredWithoutMessages_sentNestedInput
+    reply_to?: MessageUpdateOneWithoutRepliesNestedInput
+    replies?: MessageUpdateManyWithoutReply_toNestedInput
   }
 
   export type MessageUncheckedUpdateWithoutRoomInput = {
@@ -9617,6 +9938,8 @@ export namespace Prisma {
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
+    reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
+    replies?: MessageUncheckedUpdateManyWithoutReply_toNestedInput
   }
 
   export type MessageUncheckedUpdateManyWithoutRoomInput = {
@@ -9629,6 +9952,7 @@ export namespace Prisma {
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
+    reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RoomInviteUpdateWithoutRoomInput = {
@@ -9664,6 +9988,60 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type MessageCreateManyReply_toInput = {
+    id?: string
+    room_id: string
+    sender_id: string
+    content?: string | null
+    content_translated?: string | null
+    message_type?: string
+    file_url?: string | null
+    voice_transcription?: string | null
+    created_at?: Date | string
+    is_edited?: boolean
+  }
+
+  export type MessageUpdateWithoutReply_toInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    message_type?: StringFieldUpdateOperationsInput | string
+    file_url?: NullableStringFieldUpdateOperationsInput | string | null
+    voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_edited?: BoolFieldUpdateOperationsInput | boolean
+    room?: RoomUpdateOneRequiredWithoutMessagesNestedInput
+    sender?: UserUpdateOneRequiredWithoutMessages_sentNestedInput
+    replies?: MessageUpdateManyWithoutReply_toNestedInput
+  }
+
+  export type MessageUncheckedUpdateWithoutReply_toInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    room_id?: StringFieldUpdateOperationsInput | string
+    sender_id?: StringFieldUpdateOperationsInput | string
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    message_type?: StringFieldUpdateOperationsInput | string
+    file_url?: NullableStringFieldUpdateOperationsInput | string | null
+    voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_edited?: BoolFieldUpdateOperationsInput | boolean
+    replies?: MessageUncheckedUpdateManyWithoutReply_toNestedInput
+  }
+
+  export type MessageUncheckedUpdateManyWithoutReply_toInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    room_id?: StringFieldUpdateOperationsInput | string
+    sender_id?: StringFieldUpdateOperationsInput | string
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    message_type?: StringFieldUpdateOperationsInput | string
+    file_url?: NullableStringFieldUpdateOperationsInput | string | null
+    voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_edited?: BoolFieldUpdateOperationsInput | boolean
+  }
+
 
 
   /**
@@ -9677,6 +10055,10 @@ export namespace Prisma {
      * @deprecated Use RoomCountOutputTypeDefaultArgs instead
      */
     export type RoomCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = RoomCountOutputTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use MessageCountOutputTypeDefaultArgs instead
+     */
+    export type MessageCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = MessageCountOutputTypeDefaultArgs<ExtArgs>
     /**
      * @deprecated Use UserDefaultArgs instead
      */

@@ -6,6 +6,39 @@ import { getSession } from "./auth"
 import { revalidatePath } from "next/cache"
 import fs from "fs/promises"
 import path from "path"
+import { translateText } from "@/lib/dewiar"
+
+export async function writeDebugLog(msg: string) {
+  try {
+    const timestamp = new Date().toISOString()
+    const logLine = `[${timestamp}] ${msg}\n`
+    // Write to root for IDE view
+    await fs.appendFile(path.join(process.cwd(), "debug_api.log"), logLine)
+    // Write to public for potential browser access (not ideal for prod, but good for debug)
+    await fs.appendFile(path.join(process.cwd(), "public", "debug_api.log"), logLine)
+  } catch (e) {
+    console.error("LOGGING ERROR:", e)
+  }
+}
+
+async function translateWithDewiar(text: string, fromLang: string, toLang: string) {
+  await writeDebugLog(`translateWithDewiar CALLED with: "${text.substring(0, 30)}..." from ${fromLang} to ${toLang}`);
+  
+  try {
+    const translation = await translateText(text, fromLang, toLang);
+    
+    if (translation) {
+      await writeDebugLog(`Dewiar SUCCESS: ${translation.substring(0, 30)}...`);
+      return translation;
+    }
+    
+    await writeDebugLog(`Dewiar translation returned null`);
+    return null;
+  } catch (error) {
+    await writeDebugLog(`Dewiar translation error: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  }
+}
 
 export async function deleteMessage(messageId: string) {
   const session = await getSession()
@@ -71,26 +104,36 @@ export async function updateMessage(messageId: string, content: string) {
     const languageOriginal = user?.preferred_language || "ru"
     const targetLanguage = languageOriginal === "ru" ? "Chinese" : "Russian"
 
-    if (openai && content !== message.content) {
-      try {
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content: `You are a professional translator. Translate the following text from ${
-                languageOriginal === "ru" ? "Russian" : "Chinese"
-              } to ${targetLanguage}. Return only the translated text.`,
-            },
-            {
-              role: "user",
-              content: content,
-            },
-          ],
-        })
-        contentTranslated = completion.choices[0].message.content
-      } catch (e) {
-        console.error("Translation error during update:", e)
+    if (content !== message.content) {
+      const dewiarTranslation = await translateWithDewiar(
+        content,
+        languageOriginal === "ru" ? "Russian" : "Chinese",
+        targetLanguage
+      );
+
+      if (dewiarTranslation) {
+        contentTranslated = dewiarTranslation;
+      } else if (openai) {
+        try {
+          const completion = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              {
+                role: "system",
+                content: `You are a professional translator. Translate the following text from ${
+                  languageOriginal === "ru" ? "Russian" : "Chinese"
+                } to ${targetLanguage}. Return only the translated text.`,
+              },
+              {
+                role: "user",
+                content: content,
+              },
+            ],
+          })
+          contentTranslated = completion.choices[0].message.content
+        } catch (e) {
+          console.error("Translation error during update:", e)
+        }
       }
     }
 
@@ -167,6 +210,16 @@ export async function getMessages(roomId: string) {
           preferred_language: true,
         },
       },
+      reply_to: {
+        include: {
+          sender: {
+            select: {
+              id: true,
+              full_name: true,
+            }
+          }
+        }
+      }
     },
     orderBy: {
       created_at: "asc",
@@ -204,6 +257,12 @@ export async function getMessages(roomId: string) {
     voice_transcription: msg.voice_transcription,
     created_at: msg.created_at.toISOString(),
     is_edited: msg.is_edited,
+    reply_to_id: msg.reply_to_id,
+    reply_to: msg.reply_to ? {
+      id: msg.reply_to.id,
+      content: msg.reply_to.content,
+      sender_name: msg.reply_to.sender.full_name,
+    } : null,
     sender: {
       id: msg.sender.id,
       full_name: msg.sender.full_name,
@@ -249,12 +308,15 @@ export async function sendMessageAction({
   content,
   messageType,
   fileUrl,
+  replyToId,
 }: {
   roomId: string
   content: string
   messageType: "text" | "voice" | "file"
   fileUrl?: string
+  replyToId?: string
 }) {
+  await writeDebugLog(`sendMessageAction CALLED for room ${roomId}, type ${messageType}, replyToId: ${replyToId}, content: "${content.substring(0, 20)}..."`);
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
 
@@ -269,60 +331,89 @@ export async function sendMessageAction({
   const languageOriginal = user.preferred_language || "ru"
   const targetLanguage = languageOriginal === "ru" ? "Chinese" : "Russian"
 
+  console.log(`Sending message from ${user.full_name} (${languageOriginal}) to ${targetLanguage}`);
+
   let contentTranslated: string | null = null
   let voiceTranscription: string | null = null
 
   // AI Processing
   try {
-    if (openai) {
-      if (messageType === "text") {
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content: `You are a professional translator. Translate the following text from ${
-                languageOriginal === "ru" ? "Russian" : "Chinese"
-              } to ${targetLanguage}. Return only the translated text.`,
-            },
-            {
-              role: "user",
-              content: content,
-            },
-          ],
-        })
-        contentTranslated = completion.choices[0].message.content
-      } else if (messageType === "voice" && fileUrl) {
-        // Fetch the audio file
-        let file: any; // Type 'any' to accommodate both File and ReadStream
+    if (messageType === "text" || (messageType === "voice" && voiceTranscription)) {
+      const textToTranslate = messageType === "text" ? content : voiceTranscription;
+      
+      console.log(`Attempting Dewiar translation for: "${textToTranslate?.substring(0, 30)}..." from ${languageOriginal} to ${targetLanguage}`);
+      const dewiarTranslation = await translateWithDewiar(
+        textToTranslate!,
+        languageOriginal === "ru" ? "Russian" : "Chinese",
+        targetLanguage
+      );
 
-        if (fileUrl.startsWith("/uploads/")) {
-             // Local file
-             const fs = await import("fs")
-             const path = await import("path")
-             // Remove leading slash to ensure path.join works correctly on all OS
-             const relativePath = fileUrl.startsWith("/") ? fileUrl.slice(1) : fileUrl
-             const filePath = path.join(process.cwd(), "public", relativePath)
-             file = fs.createReadStream(filePath)
-        } else {
-            const response = await fetch(fileUrl)
-            if (!response.ok) throw new Error("Failed to fetch audio file")
-            
-            const blob = await response.blob()
-            
-            // Convert Blob to File-like object for OpenAI
-            file = new File([blob], "voice.webm", { type: "audio/webm" })
+      if (dewiarTranslation) {
+        contentTranslated = dewiarTranslation;
+        console.log("Dewiar translation successful:", contentTranslated.substring(0, 30));
+      } else {
+        console.warn("Dewiar failed or returned null, contentTranslated remains null");
+        if (openai) {
+          console.log("Falling back to OpenAI for translation...");
+          const completion = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              {
+                role: "system",
+                content: `You are a professional translator. Translate the following text from ${
+                  languageOriginal === "ru" ? "Russian" : "Chinese"
+                } to ${targetLanguage}. Return only the translated text.`,
+              },
+              {
+                role: "user",
+                content: textToTranslate!,
+              },
+            ],
+          })
+          contentTranslated = completion.choices[0].message.content
+          console.log("OpenAI translation successful:", contentTranslated?.substring(0, 30));
         }
+      }
+    }
 
-        const transcription = await openai.audio.transcriptions.create({
-          file: file,
-          model: "whisper-1",
-          language: languageOriginal === "ru" ? "ru" : "zh", // Hint language
-        })
-        
-        voiceTranscription = transcription.text
-        
-        // Translate the transcription
+    if (messageType === "voice" && fileUrl && !voiceTranscription) {
+      // Existing voice processing logic...
+      console.log("Processing voice message for transcription...");
+      // Fetch the audio file
+      let file: any; 
+      
+      if (fileUrl.startsWith("/uploads/")) {
+        const fs = await import("fs")
+        const path = await import("path")
+        const relativePath = fileUrl.startsWith("/") ? fileUrl.slice(1) : fileUrl
+        const filePath = path.join(process.cwd(), "public", relativePath)
+        file = (await import("fs")).createReadStream(filePath)
+      } else {
+        const response = await fetch(fileUrl)
+        if (!response.ok) throw new Error("Failed to fetch audio file")
+        const blob = await response.blob()
+        file = new File([blob], "voice.webm", { type: "audio/webm" })
+      }
+
+      const transcription = await openai.audio.transcriptions.create({
+        file: file,
+        model: "whisper-1",
+        language: languageOriginal === "ru" ? "ru" : "zh",
+      })
+      
+      voiceTranscription = transcription.text
+      console.log("Voice transcription successful:", voiceTranscription.substring(0, 30));
+
+      // Translate the voice transcription
+      const dewiarTranslation = await translateWithDewiar(
+        voiceTranscription,
+        languageOriginal === "ru" ? "Russian" : "Chinese",
+        targetLanguage
+      );
+
+      if (dewiarTranslation) {
+        contentTranslated = dewiarTranslation;
+      } else if (openai) {
         const completion = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
@@ -340,19 +431,15 @@ export async function sendMessageAction({
         })
         contentTranslated = completion.choices[0].message.content
       }
-    } else {
-      // Mock AI if no API key
-      if (messageType === "text") {
-        contentTranslated = `[AI Translated to ${targetLanguage}]: ${content}`
-      } else if (messageType === "voice") {
-        voiceTranscription = "This is a simulated voice transcription."
-        contentTranslated = `[AI Translated]: ${voiceTranscription}`
-      }
     }
   } catch (error) {
     console.error("AI Processing Error:", error)
-    // Fallback if AI fails
-    contentTranslated = null
+    contentTranslated = "DEBUG: Translation Failed"
+  }
+
+  // Final fallback if still null
+  if (!contentTranslated && messageType === "text") {
+    contentTranslated = `DEBUG: No translation for: ${content.substring(0, 10)}...`
   }
 
   // Insert Message into Database
@@ -361,11 +448,12 @@ export async function sendMessageAction({
       data: {
         room_id: roomId,
         sender_id: user.id,
-        content: content, // Prisma schema uses `content`, not `content_original`
+        content: content,
         content_translated: contentTranslated,
         message_type: messageType,
         file_url: fileUrl,
         voice_transcription: voiceTranscription,
+        reply_to_id: replyToId,
       },
       include: {
         sender: {
@@ -376,6 +464,16 @@ export async function sendMessageAction({
             role: true,
           },
         },
+        reply_to: {
+          include: {
+            sender: {
+              select: {
+                id: true,
+                full_name: true,
+              }
+            }
+          }
+        }
       },
     })
 
@@ -385,7 +483,12 @@ export async function sendMessageAction({
       message: {
         ...message,
         created_at: message.created_at.toISOString(),
-        is_edited: message.is_edited
+        is_edited: message.is_edited,
+        reply_to: message.reply_to ? {
+          id: message.reply_to.id,
+          content: message.reply_to.content,
+          sender_name: message.reply_to.sender.full_name,
+        } : null
       } 
     }
   } catch (error) {

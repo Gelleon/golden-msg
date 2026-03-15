@@ -74,10 +74,13 @@ model Message {
   voice_transcription String?
   created_at          DateTime @default(now())
   is_edited           Boolean  @default(false)
+  reply_to_id         String?
 
   // Relations
-  room   Room @relation(fields: [room_id], references: [id], onDelete: Cascade)
-  sender User @relation(fields: [sender_id], references: [id], onDelete: Cascade)
+  room     Room      @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  sender   User      @relation(fields: [sender_id], references: [id], onDelete: Cascade)
+  reply_to Message?  @relation("MessageReplies", fields: [reply_to_id], references: [id], onDelete: SetNull)
+  replies  Message[] @relation("MessageReplies")
 }
 
 model RoomInvite {

@@ -33,6 +33,7 @@ export function ChatWindow({
   const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false)
   const [showUnreadSeparator, setShowUnreadSeparator] = useState(true)
   const [currentLastReadAt, setCurrentLastReadAt] = useState(lastReadAt)
+  const [replyTo, setReplyTo] = useState<any>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const unreadRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -156,17 +157,19 @@ export function ChatWindow({
                     )}
                   </AnimatePresence>
                   <motion.div
+                    id={`message-${message.id}`}
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.2 }}
                     className={cn(
-                      "relative",
+                      "relative transition-colors duration-500 rounded-xl",
                       isUnread && "before:absolute before:-left-2 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-2/3 before:bg-amber-500 before:rounded-full before:shadow-[0_0_8px_rgba(245,158,11,0.5)]"
                     )}
                   >
                     <MessageBubble
                       message={message}
                       isCurrentUser={message.sender.id === currentUser.id}
+                      onReply={(msg) => setReplyTo(msg)}
                     />
                   </motion.div>
                 </div>
@@ -216,6 +219,8 @@ export function ChatWindow({
         roomId={roomId}
         userId={currentUser.id}
         userRole={userProfile?.role}
+        replyTo={replyTo}
+        onCancelReply={() => setReplyTo(null)}
       />
     </div>
   )

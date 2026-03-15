@@ -7,6 +7,8 @@
     "search": "搜索...",
     "save": "保存",
     "cancel": "取消",
+    "edit": "修改",
+    "delete": "删除",
     "loading": "加载中...",
     "saving": "保存中...",
     "updating": "更新中...",
@@ -132,7 +134,8 @@
     "errorSendVoice": "发送语音消息失败",
     "errorMic": "无法访问麦克风",
     "voiceMessageContent": "语音消息",
-    "newMessages": "新消息"
+    "newMessages": "新消息",
+    "reply": "回复"
   },
   "settings_status": {
     "success": "成功",
