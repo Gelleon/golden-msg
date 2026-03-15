@@ -4,7 +4,7 @@ import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { Hash, AlignLeft, Users, Wrench } from "lucide-react"
+import { Hash, AlignLeft } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -33,8 +33,6 @@ import { useTranslation } from "@/lib/language-context"
 const formSchema = z.object({
   name: z.string().min(2),
   description: z.string().optional(),
-  capacity: z.coerce.number().min(0),
-  equipment: z.string().optional(),
 })
 
 interface EditRoomDialogProps {
@@ -60,8 +58,6 @@ export function EditRoomDialog({ room, open, onOpenChange, onSuccess }: EditRoom
     defaultValues: {
       name: room.name || "",
       description: room.description || "",
-      capacity: room.capacity || 0,
-      equipment: room.equipment || "",
     },
   })
 
@@ -151,52 +147,6 @@ export function EditRoomDialog({ room, open, onOpenChange, onSuccess }: EditRoom
                 </FormItem>
               )}
             />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="capacity"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-slate-300">{t('sidebar.roomCapacity')}</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                        <Input
-                          type="number"
-                          {...field}
-                          className="pl-10 bg-white/5 border-white/10 focus:border-amber-500 focus:ring-amber-500/20 text-white h-11 rounded-xl"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage>
-                      {form.formState.errors.capacity && t('sidebar.capacityMin')}
-                    </FormMessage>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="equipment"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-slate-300">{t('sidebar.roomEquipment')}</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Wrench className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-                        <Input
-                          {...field}
-                          placeholder={t('sidebar.roomEquipmentPlaceholder')}
-                          className="pl-10 bg-white/5 border-white/10 focus:border-amber-500 focus:ring-amber-500/20 text-white h-11 rounded-xl"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
 
             <DialogFooter className="pt-4">
               <Button

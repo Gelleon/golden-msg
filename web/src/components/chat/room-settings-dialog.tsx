@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Settings, Trash2, UserPlus, Users, X, Search, ShieldCheck } from "lucide-react"
+import { Settings, Trash2, UserPlus, Users, X, Search, ShieldCheck, Link as LinkIcon } from "lucide-react"
 import { useTranslation } from "@/lib/language-context"
 import { 
   getRoomParticipants, 
@@ -13,6 +13,7 @@ import {
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { InviteDialog } from "@/components/dashboard/invite-dialog"
 import {
   Dialog,
   DialogContent,
@@ -154,7 +155,7 @@ export function RoomSettingsDialog({
                 value="invite" 
                 className="rounded-xl data-[state=active]:bg-amber-500 data-[state=active]:text-white font-bold transition-all relative z-10"
               >
-                <UserPlus className="h-4 w-4 mr-2" />
+                <LinkIcon className="h-4 w-4 mr-2" />
                 {t("roomSettings.invite")}
               </TabsTrigger>
             </TabsList>
@@ -172,6 +173,7 @@ export function RoomSettingsDialog({
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
                     {t("roomSettings.totalParticipants")}: {participants.length}
                   </span>
+                  <InviteDialog roomId={roomId} userRole={currentUserRole} />
                 </div>
                 <ScrollArea className="h-[320px] pr-4 -mr-4">
                   <div className="space-y-3">

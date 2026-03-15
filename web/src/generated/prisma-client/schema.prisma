@@ -26,27 +26,35 @@ model User {
   messages_sent       Message[]
   room_participations RoomParticipant[]
   owned_rooms         Room[]
+  created_invites     RoomInvite[]      @relation("CreatedInvites")
 }
 
 model Room {
-  id         String   @id @default(uuid())
-  name       String?
-  type       String   @default("private") // private, group
-  created_by String?
-  created_at DateTime @default(now())
+  id          String   @id @default(uuid())
+  name        String?
+  description String?
+  capacity    Int?     @default(0)
+  equipment   String? // JSON string or comma-separated list
+  type        String   @default("private") // private, group
+  created_by  String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
 
   // Relations
   owner        User?             @relation(fields: [created_by], references: [id])
   participants RoomParticipant[]
   messages     Message[]
+  invites      RoomInvite[]
 }
 
 model RoomParticipant {
-  id        String   @id @default(uuid())
-  room_id   String
-  user_id   String
-  role      String   @default("member") // owner, admin, member
-  joined_at DateTime @default(now())
+  id           String    @id @default(uuid())
+  room_id      String
+  user_id      String
+  role         String    @default("member") // owner, admin, member
+  joined_at    DateTime  @default(now())
+  last_read_at DateTime  @default(now())
+  typing_at    DateTime?
 
   // Relations
   room Room @relation(fields: [room_id], references: [id], onDelete: Cascade)
@@ -70,4 +78,20 @@ model Message {
   // Relations
   room   Room @relation(fields: [room_id], references: [id], onDelete: Cascade)
   sender User @relation(fields: [sender_id], references: [id], onDelete: Cascade)
+}
+
+model RoomInvite {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  room_id    String
+  created_by String
+  role       String   @default("client") // partner, client
+  expires_at DateTime
+  max_uses   Int      @default(1)
+  uses       Int      @default(0)
+  created_at DateTime @default(now())
+
+  // Relations
+  room    Room @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  creator User @relation("CreatedInvites", fields: [created_by], references: [id], onDelete: Cascade)
 }

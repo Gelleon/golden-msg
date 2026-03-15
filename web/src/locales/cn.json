@@ -106,7 +106,8 @@
     }
   },
   "chat": {
-    "typing": "对方正在输入...",
+    "typing": "正在输入...",
+    "typing_multiple": "正在输入...",
     "messageUpdated": "消息已修改",
     "updateError": "更新失败",
     "messageDeleted": "消息已删除",
@@ -176,7 +177,23 @@
     "totalParticipants": "成员总数",
     "noParticipantsFound": "未找到成员",
     "add": "添加",
-    "removeConfirm": "您确定要删除此用户吗？"
+    "removeConfirm": "您确定要删除此用户吗？",
+    "inviteDialogTitle": "邀请进入房间",
+    "inviteDialogDesc": "创建一个独特的链接来邀请新成员。",
+    "selectRole": "选择角色",
+    "roleClientDesc": "受限的聊天功能访问权限。",
+    "rolePartnerDesc": "访问扩展的互动功能。",
+    "generateLink": "生成链接",
+    "copyLink": "复制链接",
+    "linkCopied": "链接已复制",
+    "linkCopiedDesc": "邀请链接已复制到剪贴板。",
+    "inviteError": "创建邀请时出错",
+    "inviteExpired": "链接有效期为 24 小时。",
+    "inviteLimit": "链接只能使用一次。",
+    "accepting": "正在处理邀请...",
+    "invalidInvite": "无效或已过期的邀请链接。",
+    "inviteSuccess": "您已成功加入房间！",
+    "joining": "正在加入..."
   },
   "room": {
     "interlocutor": "对话者",

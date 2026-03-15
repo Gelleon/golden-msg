@@ -148,7 +148,8 @@ exports.Prisma.RoomParticipantScalarFieldEnum = {
   user_id: 'user_id',
   role: 'role',
   joined_at: 'joined_at',
-  last_read_at: 'last_read_at'
+  last_read_at: 'last_read_at',
+  typing_at: 'typing_at'
 };
 
 exports.Prisma.MessageScalarFieldEnum = {
@@ -162,6 +163,18 @@ exports.Prisma.MessageScalarFieldEnum = {
   voice_transcription: 'voice_transcription',
   created_at: 'created_at',
   is_edited: 'is_edited'
+};
+
+exports.Prisma.RoomInviteScalarFieldEnum = {
+  id: 'id',
+  token: 'token',
+  room_id: 'room_id',
+  created_by: 'created_by',
+  role: 'role',
+  expires_at: 'expires_at',
+  max_uses: 'max_uses',
+  uses: 'uses',
+  created_at: 'created_at'
 };
 
 exports.Prisma.SortOrder = {
@@ -179,7 +192,8 @@ exports.Prisma.ModelName = {
   User: 'User',
   Room: 'Room',
   RoomParticipant: 'RoomParticipant',
-  Message: 'Message'
+  Message: 'Message',
+  RoomInvite: 'RoomInvite'
 };
 
 /**

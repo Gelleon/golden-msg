@@ -545,7 +545,6 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                       {profile?.full_name?.charAt(0) || user.email?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#0F172A] rounded-full shadow-sm" />
                 </div>
                 <div className="flex flex-col items-start text-xs truncate flex-1 overflow-hidden">
                   <span className="font-bold text-white truncate w-full text-left group-hover:text-amber-400 transition-colors">

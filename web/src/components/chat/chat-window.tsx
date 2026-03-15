@@ -29,6 +29,7 @@ export function ChatWindow({
   const { t } = useTranslation()
   const [messages, setMessages] = useState<any[]>(initialMessages)
   const [isTyping, setIsTyping] = useState(false)
+  const [typingUserNames, setTypingUserNames] = useState<string[]>([])
   const [hasScrolledToUnread, setHasScrolledToUnread] = useState(false)
   const [showUnreadSeparator, setShowUnreadSeparator] = useState(true)
   const [currentLastReadAt, setCurrentLastReadAt] = useState(lastReadAt)
@@ -83,38 +84,32 @@ export function ChatWindow({
         setShowUnreadSeparator(false)
       }
     }
-  }, [messages.length, isTyping, hasScrolledToUnread, currentUser.id])
+  }, [messages.length, hasScrolledToUnread, currentUser.id])
 
   useEffect(() => {
     const fetchMessages = async () => {
-      const result = await getMessages(roomId)
-      if (result.messages) {
-        const hasNewMessages = result.messages.length > messagesRef.current.length;
-        const newMessages = result.messages.slice(messagesRef.current.length);
-        const hasExternalNewMessages = newMessages.some(m => m.sender.id !== currentUser.id);
+      try {
+        const result = await getMessages(roomId)
+        if (result.messages) {
+          const hasNewMessages = result.messages.length > messagesRef.current.length;
+          const newMessages = result.messages.slice(messagesRef.current.length);
+          const hasExternalNewMessages = newMessages.some(m => m.sender.id !== currentUser.id);
 
-        if (JSON.stringify(result.messages) !== JSON.stringify(messagesRef.current)) {
-          setMessages(result.messages);
-        }
+          if (JSON.stringify(result.messages) !== JSON.stringify(messagesRef.current)) {
+            setMessages(result.messages);
+          }
 
-        if (hasNewMessages && hasExternalNewMessages) {
-          await markAsRead(roomId);
-          setCurrentLastReadAt(new Date().toISOString());
+          setIsTyping(result.isTyping || false)
+          setTypingUserNames(result.typingUserNames || [])
+
+          if (hasNewMessages && hasExternalNewMessages) {
+            await markAsRead(roomId);
+            setCurrentLastReadAt(new Date().toISOString());
+          }
         }
+      } catch (error) {
+        console.error("Error fetching messages:", error)
       }
-    }
-
-    // Simulation for "typing" animation demonstration
-    // Only if there are other participants in the room
-    let typingInterval: NodeJS.Timeout | null = null;
-    if (otherParticipantsCount > 0) {
-      typingInterval = setInterval(() => {
-        const now = new Date().getSeconds();
-        if (now % 15 === 0) {
-          setIsTyping(true);
-          setTimeout(() => setIsTyping(false), 3000);
-        }
-      }, 1000);
     }
 
     // Initial fetch to ensure sync
@@ -125,7 +120,6 @@ export function ChatWindow({
 
     return () => {
       clearInterval(interval)
-      if (typingInterval) clearInterval(typingInterval)
     }
   }, [roomId, otherParticipantsCount, currentUser.id])
 
@@ -180,7 +174,7 @@ export function ChatWindow({
             })}
           </AnimatePresence>
 
-          {/* Typing Indicator - Only for other users */}
+          {/* Typing Indicator - Real-time */}
           <AnimatePresence>
             {isTyping && (
               <motion.div
@@ -193,20 +187,24 @@ export function ChatWindow({
                   <motion.span
                     animate={{ opacity: [0.4, 1, 0.4] }}
                     transition={{ repeat: Infinity, duration: 1, delay: 0 }}
-                    className="w-1.5 h-1.5 bg-slate-400 rounded-full"
+                    className="w-1.5 h-1.5 bg-amber-500 rounded-full"
                   />
                   <motion.span
                     animate={{ opacity: [0.4, 1, 0.4] }}
                     transition={{ repeat: Infinity, duration: 1, delay: 0.2 }}
-                    className="w-1.5 h-1.5 bg-slate-400 rounded-full"
+                    className="w-1.5 h-1.5 bg-amber-500 rounded-full"
                   />
                   <motion.span
                     animate={{ opacity: [0.4, 1, 0.4] }}
                     transition={{ repeat: Infinity, duration: 1, delay: 0.4 }}
-                    className="w-1.5 h-1.5 bg-slate-400 rounded-full"
+                    className="w-1.5 h-1.5 bg-amber-500 rounded-full"
                   />
                 </div>
-                <span className="text-xs font-medium italic">{t("chat.typing")}</span>
+                <span className="text-xs font-medium italic">
+                  {typingUserNames.length > 1 
+                    ? `${typingUserNames.join(", ")} ${t("chat.typing_multiple") || "печатают..."}`
+                    : `${typingUserNames[0]} ${t("chat.typing") || "печатает..."}`}
+                </span>
               </motion.div>
             )}
           </AnimatePresence>

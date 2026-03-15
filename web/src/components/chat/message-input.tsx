@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Mic, Paperclip, Send, X, StopCircle } from "lucide-react"
 import { uploadFile } from "@/app/actions/upload"
 
@@ -8,7 +8,7 @@ import { useTranslation } from "@/lib/language-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
-import { sendMessageAction } from "@/app/actions/chat"
+import { sendMessageAction, updateTypingStatus } from "@/app/actions/chat"
 
 interface MessageInputProps {
   roomId: string
@@ -23,6 +23,15 @@ export function MessageInput({ roomId, userId, userRole }: MessageInputProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const lastTypingUpdateRef = useRef<number>(0)
+
+  // Notify server when typing
+  useEffect(() => {
+    if (message.trim() && Date.now() - lastTypingUpdateRef.current > 5000) {
+      lastTypingUpdateRef.current = Date.now()
+      updateTypingStatus(roomId)
+    }
+  }, [message, roomId])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

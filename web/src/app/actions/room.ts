@@ -3,6 +3,147 @@
 import { revalidatePath } from "next/cache"
 import prisma from "@/lib/db"
 import { getSession } from "./auth"
+import { randomBytes } from "crypto"
+
+export async function createRoomInvite(roomId: string, role: "client" | "partner", maxUses: number = 1) {
+  console.log(`[SERVER] Creating invite for room ${roomId}, role ${role}`)
+  const session = await getSession()
+  if (!session?.user) {
+    console.error("[SERVER] No session found")
+    return { error: "Unauthorized" }
+  }
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+  })
+
+  console.log(`[SERVER] Current user: ${currentUser?.id}, role: ${currentUser?.role}`)
+
+  if (!["admin", "manager"].includes(currentUser?.role || "")) {
+    console.error("[SERVER] Permission denied for role:", currentUser?.role)
+    return { error: "Permission denied" }
+  }
+
+  // Check if room exists
+  const room = await prisma.room.findUnique({
+    where: { id: roomId },
+  })
+
+  if (!room) {
+    console.error("[SERVER] Room not found:", roomId)
+    return { error: "Room not found" }
+  }
+
+  try {
+      const token = randomBytes(16).toString("hex")
+      const expiresAt = new Date()
+    expiresAt.setHours(expiresAt.getHours() + 24) // 24 hours expiry
+
+    const invite = await prisma.roomInvite.create({
+      data: {
+        token,
+        room_id: roomId,
+        created_by: session.user.id,
+        role,
+        expires_at: expiresAt,
+        max_uses: maxUses,
+      },
+    })
+
+    // Log the action
+    console.log(`[LOG] User ${session.user.id} (${currentUser?.role}) created an invite for room ${roomId} with role ${role}. Token: ${token}`)
+
+    const domain = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    const inviteUrl = `${domain}/invite/${roomId}/${token}`
+
+    return { success: true, inviteUrl }
+  } catch (error: any) {
+    console.error("[SERVER] Create room invite error:", error)
+    // Return more specific error message for debugging
+    return { error: `Failed to create invite: ${error.message || "Unknown error"}` }
+  }
+}
+
+export async function acceptRoomInvite(roomId: string, token: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  try {
+    const invite = await prisma.roomInvite.findUnique({
+      where: { token },
+      include: { room: true },
+    })
+
+    if (!invite || invite.room_id !== roomId) {
+      return { error: "Invalid invite link" }
+    }
+
+    if (new Date() > invite.expires_at) {
+      return { error: "Invite link has expired" }
+    }
+
+    if (invite.uses >= invite.max_uses) {
+      return { error: "Invite link has reached maximum uses" }
+    }
+
+    // Update invite uses
+    await prisma.roomInvite.update({
+      where: { id: invite.id },
+      data: { uses: { increment: 1 } },
+    })
+
+    // Add user to room
+    const existingParticipant = await prisma.roomParticipant.findUnique({
+      where: {
+        room_id_user_id: {
+          room_id: roomId,
+          user_id: session.user.id,
+        },
+      },
+    })
+
+    if (!existingParticipant) {
+      await prisma.roomParticipant.create({
+        data: {
+          room_id: roomId,
+          user_id: session.user.id,
+          role: "member",
+        },
+      })
+    }
+
+    // Update user role if it's currently lower than the invite role
+    const currentUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+    })
+
+    // Role hierarchy logic (optional, but requested: "role for the invited user")
+    // If the invite is for 'partner' and current user is 'client', upgrade to 'partner'
+    if (invite.role === "partner" && currentUser?.role === "client") {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { role: "partner" },
+      })
+    } else if (invite.role === "client" && !currentUser?.role) {
+       // If user has no role, set to client
+       await prisma.user.update({
+        where: { id: session.user.id },
+        data: { role: "client" },
+      })
+    }
+
+    // Log the action
+    console.log(`[LOG] User ${session.user.id} accepted invite ${token} for room ${roomId}. Role assigned: ${invite.role}`)
+
+    revalidatePath("/dashboard")
+    revalidatePath(`/dashboard/rooms/${roomId}`)
+
+    return { success: true, roomId }
+  } catch (error) {
+    console.error("Accept room invite error:", error)
+    return { error: "Failed to accept invite" }
+  }
+}
 
 export async function getRooms() {
   const session = await getSession()

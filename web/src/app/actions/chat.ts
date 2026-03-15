@@ -111,6 +111,29 @@ export async function updateMessage(messageId: string, content: string) {
   }
 }
 
+export async function updateTypingStatus(roomId: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  try {
+    await prisma.roomParticipant.update({
+      where: {
+        room_id_user_id: {
+          room_id: roomId,
+          user_id: session.user.id,
+        },
+      },
+      data: {
+        typing_at: new Date(),
+      },
+    })
+    return { success: true }
+  } catch (error) {
+    console.error("Update typing status error:", error)
+    return { error: "Failed to update typing status" }
+  }
+}
+
 export async function getMessages(roomId: string) {
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
@@ -129,6 +152,7 @@ export async function getMessages(roomId: string) {
     return { error: "You are not a member of this room" }
   }
 
+  // Fetch messages
   const messages = await prisma.message.findMany({
     where: {
       room_id: roomId,
@@ -149,6 +173,26 @@ export async function getMessages(roomId: string) {
     },
   })
 
+  // Fetch typing status of other participants
+  const typingThreshold = new Date(Date.now() - 10000) // 10 seconds ago
+  const typingParticipants = await prisma.roomParticipant.findMany({
+    where: {
+      room_id: roomId,
+      user_id: { not: session.user.id },
+      typing_at: { gte: typingThreshold },
+    },
+    include: {
+      user: {
+        select: {
+          full_name: true,
+        },
+      },
+    },
+  })
+
+  const isTyping = typingParticipants.length > 0
+  const typingUserNames = typingParticipants.map(p => p.user.full_name || "User")
+
   // Map to frontend structure
   const formattedMessages = messages.map((msg) => ({
     id: msg.id,
@@ -168,7 +212,11 @@ export async function getMessages(roomId: string) {
     },
   }))
 
-  return { messages: formattedMessages }
+  return { 
+    messages: formattedMessages,
+    isTyping,
+    typingUserNames
+  }
 }
 
 export async function markAsRead(roomId: string) {
