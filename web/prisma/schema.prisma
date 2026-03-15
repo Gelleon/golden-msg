@@ -51,6 +51,7 @@ model RoomParticipant {
   user_id   String
   role      String   @default("member") // owner, admin, member
   joined_at DateTime @default(now())
+  last_read_at DateTime @default(now())
 
   // Relations
   room Room @relation(fields: [room_id], references: [id], onDelete: Cascade)

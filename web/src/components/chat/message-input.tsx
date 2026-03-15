@@ -4,6 +4,7 @@ import { useState, useRef } from "react"
 import { Mic, Paperclip, Send, X, StopCircle } from "lucide-react"
 import { uploadFile } from "@/app/actions/upload"
 
+import { useTranslation } from "@/lib/language-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
@@ -16,6 +17,7 @@ interface MessageInputProps {
 }
 
 export function MessageInput({ roomId, userId, userRole }: MessageInputProps) {
+  const { t } = useTranslation()
   const [message, setMessage] = useState("")
   const [isRecording, setIsRecording] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -63,7 +65,7 @@ export function MessageInput({ roomId, userId, userRole }: MessageInputProps) {
       setFile(null)
     } catch (error) {
       console.error("Error sending message:", error)
-      alert("Failed to send message")
+      alert(t("chat.errorSendMessage"))
     } finally {
       setIsUploading(false)
     }
@@ -100,13 +102,13 @@ export function MessageInput({ roomId, userId, userRole }: MessageInputProps) {
 
           await sendMessageAction({
             roomId,
-            content: "Voice Message",
+            content: t("chat.voiceMessageContent"),
             messageType: "voice",
             fileUrl: result.url,
           })
         } catch (error) {
           console.error("Error sending voice message:", error)
-          alert("Failed to send voice message")
+          alert(t("chat.errorSendVoice"))
         } finally {
           setIsUploading(false)
           stream.getTracks().forEach(track => track.stop())
@@ -117,7 +119,7 @@ export function MessageInput({ roomId, userId, userRole }: MessageInputProps) {
       setIsRecording(true)
     } catch (err) {
       console.error("Error accessing microphone:", err)
-      alert("Could not access microphone")
+      alert(t("chat.errorMic"))
     }
   }
 
@@ -169,7 +171,7 @@ export function MessageInput({ roomId, userId, userRole }: MessageInputProps) {
             <Input
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder={isRecording ? "Запись..." : "Сообщение..."}
+              placeholder={isRecording ? t("chat.placeholderRecording") : t("chat.placeholderMessage")}
               className={cn(
                 "h-9 md:h-12 py-2 md:py-3 px-3 md:px-4 rounded-full border-slate-200 bg-slate-50 focus-visible:ring-amber-500 transition-all shadow-sm text-sm md:text-base",
                 isRecording && "border-red-500 bg-red-50 placeholder:text-red-400"

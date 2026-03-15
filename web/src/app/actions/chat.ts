@@ -52,6 +52,65 @@ export async function deleteMessage(messageId: string) {
   }
 }
 
+export async function updateMessage(messageId: string, content: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  try {
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+    })
+
+    if (!message) return { error: "Message not found" }
+    if (message.sender_id !== session.user.id) return { error: "Permission denied" }
+    if (message.message_type !== "text") return { error: "Only text messages can be edited" }
+
+    // Re-translate if content changed
+    let contentTranslated = message.content_translated
+    const user = await prisma.user.findUnique({ where: { id: session.user.id } })
+    const languageOriginal = user?.preferred_language || "ru"
+    const targetLanguage = languageOriginal === "ru" ? "Chinese" : "Russian"
+
+    if (openai && content !== message.content) {
+      try {
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: `You are a professional translator. Translate the following text from ${
+                languageOriginal === "ru" ? "Russian" : "Chinese"
+              } to ${targetLanguage}. Return only the translated text.`,
+            },
+            {
+              role: "user",
+              content: content,
+            },
+          ],
+        })
+        contentTranslated = completion.choices[0].message.content
+      } catch (e) {
+        console.error("Translation error during update:", e)
+      }
+    }
+
+    const updatedMessage = await prisma.message.update({
+      where: { id: messageId },
+      data: {
+        content: content,
+        content_translated: contentTranslated,
+        is_edited: true,
+      },
+    })
+
+    revalidatePath(`/dashboard/rooms/${message.room_id}`)
+    return { success: true, message: updatedMessage }
+  } catch (error) {
+    console.error("Update message error:", error)
+    return { error: "Failed to update message" }
+  }
+}
+
 export async function getMessages(roomId: string) {
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
@@ -100,6 +159,7 @@ export async function getMessages(roomId: string) {
     file_url: msg.file_url,
     voice_transcription: msg.voice_transcription,
     created_at: msg.created_at.toISOString(),
+    is_edited: msg.is_edited,
     sender: {
       id: msg.sender.id,
       full_name: msg.sender.full_name,
@@ -109,6 +169,31 @@ export async function getMessages(roomId: string) {
   }))
 
   return { messages: formattedMessages }
+}
+
+export async function markAsRead(roomId: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  try {
+    await prisma.roomParticipant.update({
+      where: {
+        room_id_user_id: {
+          room_id: roomId,
+          user_id: session.user.id,
+        },
+      },
+      data: {
+        last_read_at: new Date(),
+      },
+    })
+    revalidatePath("/dashboard")
+    revalidatePath(`/dashboard/rooms/${roomId}`)
+    return { success: true }
+  } catch (error) {
+    console.error("Mark as read error:", error)
+    return { error: "Failed to mark as read" }
+  }
 }
 
 export async function sendMessageAction({
@@ -251,7 +336,8 @@ export async function sendMessageAction({
       success: true, 
       message: {
         ...message,
-        created_at: message.created_at.toISOString()
+        created_at: message.created_at.toISOString(),
+        is_edited: message.is_edited
       } 
     }
   } catch (error) {

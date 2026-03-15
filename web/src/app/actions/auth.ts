@@ -19,7 +19,7 @@ export async function login(formData: FormData) {
   const password = formData.get("password") as string
 
   if (!email || !password) {
-    return { error: "Заполните все поля" }
+    return { error: "errorFieldsRequired" }
   }
 
   try {
@@ -30,7 +30,7 @@ export async function login(formData: FormData) {
 
     if (!user) {
       console.log("USER NOT FOUND", email)
-      return { error: "Пользователь не найден" }
+      return { error: "errorUserNotFound" }
     }
 
     console.log("COMPARING PASSWORD")
@@ -38,7 +38,7 @@ export async function login(formData: FormData) {
 
     if (!isValid) {
       console.log("INVALID PASSWORD")
-      return { error: "Неверный пароль" }
+      return { error: "errorInvalidPassword" }
     }
 
     // Set session cookie
@@ -55,7 +55,7 @@ export async function login(formData: FormData) {
     return { success: true }
   } catch (error: any) {
     console.error("Login error DETAILED:", error)
-    return { error: `Ошибка входа: ${error.message || "Неизвестная ошибка"}` }
+    return { error: "errorLoginFailed" }
   }
 }
 
@@ -68,7 +68,7 @@ export async function register(formData: FormData) {
 
   // Manual validation because safeParse was failing on optional fields or types
   if (!email || !password || password.length < 6) {
-    return { error: "Неверные данные" }
+    return { error: "errorFieldsRequired" }
   }
 
   try {
@@ -79,7 +79,7 @@ export async function register(formData: FormData) {
 
     if (existingUser) {
       console.log("USER ALREADY EXISTS", email)
-      return { error: "Пользователь уже существует" }
+      return { error: "errorUserExists" }
     }
 
     console.log("HASHING PASSWORD")
@@ -115,7 +115,7 @@ export async function register(formData: FormData) {
     return { success: true }
   } catch (error: any) {
     console.error("Registration error DETAILED:", error)
-    return { error: `Ошибка регистрации: ${error.message || "Неизвестная ошибка"}` }
+    return { error: "errorRegistrationFailed" }
   }
 }
 

@@ -7,6 +7,8 @@ import { RoomSettingsDialog } from "@/components/chat/room-settings-dialog"
 import { ChevronLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import * as motion from "framer-motion/client"
+import ru from "@/locales/ru.json"
+import cnTrans from "@/locales/cn.json"
 
 interface RoomPageProps {
   params: Promise<{
@@ -25,6 +27,9 @@ export default async function RoomPage({ params }: RoomPageProps) {
   })
 
   if (!user) redirect("/")
+
+  const lang = (session?.user?.preferred_language as "ru" | "cn") || "ru"
+  const translations = lang === "ru" ? ru : cnTrans
 
   // Check room access and get details
   const room = await prisma.room.findUnique({
@@ -48,11 +53,13 @@ export default async function RoomPage({ params }: RoomPageProps) {
     notFound()
   }
 
-  // Check participation
-  const isParticipant = room.participants.some(p => p.user_id === user.id)
-  if (!isParticipant) {
+  // Fetch participation
+  const participation = room.participants.find(p => p.user_id === user.id)
+  if (!participation) {
     redirect("/dashboard")
   }
+
+  const lastReadAt = participation.last_read_at
 
   // Determine display name for the room
   let displayName = room.name
@@ -61,7 +68,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
   if (room.type === 'private') {
     const otherParticipant = room.participants.find(p => p.user_id !== user.id)
     if (otherParticipant) {
-      displayName = otherParticipant.user.full_name || "Собеседник"
+      displayName = otherParticipant.user.full_name || translations.room.interlocutor
       displayAvatar = otherParticipant.user.avatar_url
     }
   }
@@ -132,11 +139,11 @@ export default async function RoomPage({ params }: RoomPageProps) {
                     "inline-flex items-center px-1.5 py-0.5 rounded-full text-[8px] md:text-[10px] font-bold uppercase tracking-wider",
                     room.type === 'private' ? "bg-blue-50 text-blue-600" : "bg-indigo-50 text-indigo-600"
                   )}>
-                    {room.type === 'private' ? 'Личный' : 'Группа'}
+                    {room.type === 'private' ? translations.room.private : translations.room.group}
                   </span>
                   <span className="text-[9px] md:text-xs text-slate-400 font-medium flex items-center gap-1">
                     <span className="w-1 h-1 rounded-full bg-slate-300" />
-                    {room.type === 'private' ? 'В сети' : `${room.participants.length} уч.`}
+                    {room.type === 'private' ? translations.room.online : `${room.participants.length} ${translations.room.participantsCount}`}
                   </span>
                 </div>
             </div>
@@ -156,6 +163,12 @@ export default async function RoomPage({ params }: RoomPageProps) {
           initialMessages={messages} 
           currentUser={user}
           userProfile={user}
+          lastReadAt={lastReadAt.toISOString()}
+          participants={room.participants.map(p => ({
+            id: p.user.id,
+            full_name: p.user.full_name,
+            avatar_url: p.user.avatar_url
+          }))}
         />
       </div>
     </motion.div>

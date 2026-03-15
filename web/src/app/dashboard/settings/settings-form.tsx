@@ -44,11 +44,34 @@ import { useToast } from "@/components/ui/use-toast"
 import { motion, AnimatePresence } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
+import { useTranslation } from "@/lib/language-context"
 
 export function SettingsForm({ user }: { user: any }) {
   const { toast } = useToast()
+  const { t } = useTranslation()
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "profile")
+
+  const roleLabels: Record<string, string> = {
+    admin: t('roles.admin'),
+    manager: t('roles.manager'),
+    partner: t('roles.partner'),
+    client: t('roles.client'),
+  }
+
+  const roleIcons: Record<string, any> = {
+    admin: ShieldCheck,
+    manager: Briefcase,
+    partner: UserCheck,
+    client: Users,
+  }
+
+  const roleColors: Record<string, string> = {
+    admin: "bg-red-500/10 text-red-500 border-red-500/20 shadow-[0_0_12px_rgba(239,68,68,0.1)]",
+    manager: "bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-[0_0_12px_rgba(59,130,246,0.1)]",
+    partner: "bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-[0_0_12px_rgba(245,158,11,0.1)]",
+    client: "bg-slate-500/10 text-slate-400 border-slate-500/20 shadow-[0_0_12px_rgba(100,116,139,0.1)]",
+  }
 
   useEffect(() => {
     const tab = searchParams.get("tab")
@@ -77,14 +100,14 @@ export function SettingsForm({ user }: { user: any }) {
                 className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-900 text-white rounded-md text-[9px] font-bold uppercase tracking-wider mb-0.5"
               >
                 <ShieldCheck className="h-2.5 w-2.5 text-blue-400" />
-                Личный кабинет
+                {t('settings.personalCabinet')}
               </motion.div>
               <motion.h2 
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl leading-tight"
               >
-                Настройки
+                {t('common.settings')}
               </motion.h2>
               <motion.p 
                 initial={{ opacity: 0, y: 10 }}
@@ -92,15 +115,15 @@ export function SettingsForm({ user }: { user: any }) {
                 transition={{ delay: 0.1 }}
                 className="text-xs md:text-sm text-slate-600 font-medium max-w-xl leading-relaxed"
               >
-                Персонализируйте свой аккаунт, управляйте безопасностью и контролируйте доступ участников системы.
+                {t('settings.description')}
               </motion.p>
             </div>
             <div className="hidden md:flex items-center gap-2.5 text-[9px] font-bold text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm">
               <div className="flex items-center gap-1 px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100">
                 <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                <span>ЗАЩИЩЕНО</span>
+                <span>{t('settings.protected')}</span>
               </div>
-              <span className="uppercase tracking-wider">Безопасное соединение</span>
+              <span className="uppercase tracking-wider">{t('settings.secureConnection')}</span>
             </div>
           </div>
         </header>
@@ -113,21 +136,21 @@ export function SettingsForm({ user }: { user: any }) {
                 className="flex items-center gap-2 rounded-lg data-[state=active]:bg-slate-900 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
               >
                 <User className="h-3.5 w-3.5" />
-                Профиль
+                {t('tabs.profile')}
               </TabsTrigger>
               <TabsTrigger 
                 value="security" 
                 className="flex items-center gap-2 rounded-lg data-[state=active]:bg-slate-900 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
               >
                 <Lock className="h-3.5 w-3.5" />
-                Безопасность
+                {t('tabs.security')}
               </TabsTrigger>
               <TabsTrigger 
                 value="language" 
                 className="flex items-center gap-2 rounded-lg data-[state=active]:bg-slate-900 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
               >
                 <Globe className="h-3.5 w-3.5" />
-                Язык
+                {t('tabs.language')}
               </TabsTrigger>
               {user?.role === "admin" && (
                 <TabsTrigger 
@@ -135,7 +158,7 @@ export function SettingsForm({ user }: { user: any }) {
                   className="flex items-center gap-2 rounded-lg data-[state=active]:bg-amber-600 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
                 >
                   <UserCog className="h-3.5 w-3.5" />
-                  Пользователи
+                  {t('tabs.users')}
                 </TabsTrigger>
               )}
             </TabsList>
@@ -150,7 +173,7 @@ export function SettingsForm({ user }: { user: any }) {
               transition={{ duration: 0.2 }}
             >
               <TabsContent value="profile" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-                <ProfileForm user={user} toast={toast} />
+                <ProfileForm user={user} toast={toast} roleLabels={roleLabels} roleColors={roleColors} />
               </TabsContent>
 
               <TabsContent value="security" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
@@ -163,7 +186,7 @@ export function SettingsForm({ user }: { user: any }) {
 
               {user?.role === "admin" && (
                 <TabsContent value="users" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-                  <UsersManagementForm toast={toast} />
+                  <UsersManagementForm toast={toast} roleLabels={roleLabels} roleIcons={roleIcons} roleColors={roleColors} />
                 </TabsContent>
               )}
             </motion.div>
@@ -174,28 +197,8 @@ export function SettingsForm({ user }: { user: any }) {
   )
 }
 
-const roleLabels: Record<string, string> = {
-  admin: "Администратор",
-  manager: "Менеджер",
-  partner: "Партнер",
-  client: "Клиент",
-}
-
-const roleIcons: Record<string, any> = {
-  admin: ShieldCheck,
-  manager: Briefcase,
-  partner: UserCheck,
-  client: Users,
-}
-
-const roleColors: Record<string, string> = {
-  admin: "bg-red-500/10 text-red-500 border-red-500/20 shadow-[0_0_12px_rgba(239,68,68,0.1)]",
-  manager: "bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-[0_0_12px_rgba(59,130,246,0.1)]",
-  partner: "bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-[0_0_12px_rgba(245,158,11,0.1)]",
-  client: "bg-slate-500/10 text-slate-400 border-slate-500/20 shadow-[0_0_12px_rgba(100,116,139,0.1)]",
-}
-
-function UsersManagementForm({ toast }: { toast: any }) {
+function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors }: { toast: any, roleLabels: Record<string, string>, roleIcons: Record<string, any>, roleColors: Record<string, string> }) {
+  const { t } = useTranslation()
   const [users, setUsers] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -244,34 +247,34 @@ function UsersManagementForm({ toast }: { toast: any }) {
         if (result.success) {
           successCount++
         } else {
-          lastError = result.error || "Не удалось обновить роль"
+          lastError = result.error || t('settings.users.updateRoleError')
         }
       }
 
       if (successCount === changesCount) {
         toast({
-          title: "Изменения сохранены",
-          description: `Роли ${successCount} ${successCount === 1 ? 'пользователя' : 'пользователей'} успешно обновлены.`,
+          title: t('common.changesSaved'),
+          description: t('settings.users.updateRoleSuccess'),
         })
         await fetchUsers()
       } else if (successCount > 0) {
         toast({
-          title: "Частичный успех",
-          description: `Обновлено ${successCount} из ${changesCount} ролей. Ошибка: ${lastError}`,
+          title: t('common.partialSuccess'),
+          description: `${t('settings.users.partialUpdateError')} ${lastError}`,
           variant: "destructive",
         })
         await fetchUsers()
       } else {
         toast({
-          title: "Ошибка",
-          description: lastError || "Не удалось сохранить изменения",
+          title: t('common.error'),
+          description: lastError || t('common.saveChangesError'),
           variant: "destructive",
         })
       }
     } catch (error) {
       toast({
-        title: "Критическая ошибка",
-        description: "Произошла ошибка при сохранении изменений",
+        title: t('common.criticalError'),
+        description: t('common.saveChangesCriticalError'),
         variant: "destructive",
       })
     } finally {
@@ -296,15 +299,15 @@ function UsersManagementForm({ toast }: { toast: any }) {
               <UserCog className="h-6 w-6 text-white" />
             </div>
             <div className="space-y-1">
-              <CardTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Управление пользователями</CardTitle>
-              <CardDescription className="text-slate-600 text-sm font-bold">Контроль доступа и управление ролями</CardDescription>
+              <CardTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">{t('settings.users.title')}</CardTitle>
+              <CardDescription className="text-slate-600 text-sm font-bold">{t('settings.users.description')}</CardDescription>
             </div>
           </div>
           <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
             <div className="relative group w-full md:w-72">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-900 transition-colors z-10" />
               <Input
-                placeholder="Поиск по имени или email..."
+                placeholder={t('settings.users.searchPlaceholder')}
                 className="pl-11 w-full h-11 bg-white border-2 border-slate-200 focus:border-slate-900 focus:ring-slate-900/5 rounded-xl text-sm font-bold transition-all shadow-sm placeholder:text-slate-400 placeholder:font-medium"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -326,7 +329,7 @@ function UsersManagementForm({ toast }: { toast: any }) {
                   ) : (
                     <Save className="h-4 w-4 transition-transform group-hover:scale-110" />
                   )}
-                  СОХРАНИТЬ ({Object.keys(pendingChanges).length})
+                  {t('common.save').toUpperCase()} ({Object.keys(pendingChanges).length})
                 </Button>
               </motion.div>
             )}
@@ -337,17 +340,17 @@ function UsersManagementForm({ toast }: { toast: any }) {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400">
             <Loader2 className="h-8 w-8 animate-spin text-slate-900 mb-4" />
-            <p className="text-sm font-black text-slate-900 animate-pulse tracking-tight uppercase">Загрузка...</p>
+            <p className="text-sm font-black text-slate-900 animate-pulse tracking-tight uppercase">{t('common.loading')}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader className="bg-slate-50/80 border-b border-slate-100">
                 <TableRow className="hover:bg-transparent border-none">
-                  <TableHead className="pl-6 py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">Пользователь</TableHead>
-                  <TableHead className="hidden md:table-cell py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">Email адрес</TableHead>
-                  <TableHead className="py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">Роль</TableHead>
-                  <TableHead className="pr-6 py-4 text-right text-[10px] font-black text-slate-900 uppercase tracking-wider">Действия</TableHead>
+                  <TableHead className="pl-6 py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">{t('settings.users.user')}</TableHead>
+                  <TableHead className="hidden md:table-cell py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">{t('settings.users.email')}</TableHead>
+                  <TableHead className="py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">{t('settings.users.role')}</TableHead>
+                  <TableHead className="pr-6 py-4 text-right text-[10px] font-black text-slate-900 uppercase tracking-wider">{t('settings.users.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -358,7 +361,7 @@ function UsersManagementForm({ toast }: { toast: any }) {
                         <div className="p-4 bg-slate-50 rounded-full border border-slate-100">
                           <Search className="h-6 w-6 text-slate-300" />
                         </div>
-                        <p className="text-sm font-bold text-slate-500">Пользователи не найдены</p>
+                        <p className="text-sm font-bold text-slate-500">{t('settings.users.noUsersFound')}</p>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -381,7 +384,7 @@ function UsersManagementForm({ toast }: { toast: any }) {
                               <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
                             </div>
                             <div className="flex flex-col">
-                              <span className="text-sm font-black text-slate-900 leading-tight group-hover:text-blue-600 transition-colors">{user.full_name || "Без имени"}</span>
+                              <span className="text-sm font-black text-slate-900 leading-tight group-hover:text-blue-600 transition-colors">{user.full_name || t('settings.users.noName')}</span>
                               <span className="text-[10px] text-slate-500 font-bold md:hidden">{user.email}</span>
                             </div>
                           </div>
@@ -397,11 +400,11 @@ function UsersManagementForm({ toast }: { toast: any }) {
                               isPending && "ring-2 ring-amber-500/50 animate-pulse"
                             )}>
                               <RoleIcon className="h-3 w-3" />
-                              {roleLabels[currentRole] || "Клиент"}
+                              {roleLabels[currentRole] || t('roles.client')}
                             </div>
                             {isPending && (
                               <span className="text-[8px] font-black text-amber-500 uppercase tracking-tighter ml-1">
-                                Не сохранено
+                                {t('settings.users.notSaved')}
                               </span>
                             )}
                           </div>
@@ -414,7 +417,7 @@ function UsersManagementForm({ toast }: { toast: any }) {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-64 rounded-2xl border border-slate-200 shadow-xl p-3 bg-white/98 backdrop-blur-2xl">
-                              <DropdownMenuLabel className="text-[9px] font-black text-slate-400 uppercase tracking-wider px-3 py-2">Выбрать новую роль</DropdownMenuLabel>
+                              <DropdownMenuLabel className="text-[9px] font-black text-slate-400 uppercase tracking-wider px-3 py-2">{t('settings.users.selectNewRole')}</DropdownMenuLabel>
                               <DropdownMenuSeparator className="bg-slate-100 my-1.5 h-px rounded-full" />
                               <div className="grid gap-1">
                                 {Object.entries(roleLabels).map(([role, label]) => {
@@ -442,11 +445,11 @@ function UsersManagementForm({ toast }: { toast: any }) {
                                         <div className="flex items-center gap-2">
                                           <span>{label}</span>
                                           {isOriginal && !isActive && (
-                                            <span className="text-[8px] bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded-md">Тек.</span>
+                                            <span className="text-[8px] bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded-md">{t('settings.users.current')}</span>
                                           )}
                                         </div>
                                         <span className={cn("text-[8px] font-black uppercase tracking-wider opacity-60", isActive ? "text-white" : "text-slate-400")}>
-                                          {role === "admin" ? "Полный доступ" : role === "manager" ? "Управление" : "Просмотр"}
+                                          {role === "admin" ? t('roles.permissions.full') : role === "manager" ? t('roles.permissions.management') : t('roles.permissions.view')}
                                         </span>
                                       </div>
                                       {isActive && <Check className="h-4 w-4 ml-auto text-white" />}
@@ -470,7 +473,8 @@ function UsersManagementForm({ toast }: { toast: any }) {
   )
 }
 
-function ProfileForm({ user, toast }: { user: any, toast: any }) {
+function ProfileForm({ user, toast, roleLabels, roleColors }: { user: any, toast: any, roleLabels: Record<string, string>, roleColors: Record<string, string> }) {
+  const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || "")
   const [isUploading, setIsUploading] = useState(false)
@@ -496,13 +500,13 @@ function ProfileForm({ user, toast }: { user: any, toast: any }) {
       await updateProfile(profileData)
       
       toast({
-        title: "Фото обновлено",
-        description: "Ваш аватар успешно сохранен.",
+        title: t('settings.profile.photoUpdated'),
+        description: t('settings.profile.photoUpdatedDesc'),
       })
     } else {
       toast({
-        title: "Ошибка",
-        description: result.error || "Не удалось загрузить фото",
+        title: t('common.error'),
+        description: result.error || t('settings.profile.photoUploadError'),
         variant: "destructive",
       })
     }
@@ -522,13 +526,13 @@ function ProfileForm({ user, toast }: { user: any, toast: any }) {
 
     if (result.success) {
       toast({
-        title: "Профиль обновлен",
-        description: "Ваши данные успешно сохранены.",
+        title: t('settings.profile.updated'),
+        description: t('settings.profile.updatedDesc'),
       })
     } else {
       toast({
-        title: "Ошибка",
-        description: result.error || "Не удалось обновить профиль.",
+        title: t('common.error'),
+        description: result.error || t('settings.profile.updateError'),
         variant: "destructive",
       })
     }
@@ -576,13 +580,13 @@ function ProfileForm({ user, toast }: { user: any, toast: any }) {
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-3">
                 <h3 className="text-xl md:text-3xl font-black text-slate-900 tracking-tight leading-none">
-                  {user?.full_name || "Без имени"}
+                  {user?.full_name || t('settings.users.noName')}
                 </h3>
                 <div className={cn(
                   "px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider border",
                   roleColors[user?.role] || roleColors.client
                 )}>
-                  {roleLabels[user?.role] || "Клиент"}
+                  {roleLabels[user?.role] || t('roles.client')}
                 </div>
               </div>
               <div className="flex items-center gap-2 text-slate-500 font-bold text-sm">
@@ -603,17 +607,17 @@ function ProfileForm({ user, toast }: { user: any, toast: any }) {
                 <div className="p-1.5 bg-blue-50 rounded-lg border border-blue-100">
                   <User className="h-3.5 w-3.5 text-blue-600" />
                 </div>
-                Полное имя
+                {t('settings.profile.fullName')}
               </Label>
               <Input 
                 id="fullName" 
                 name="fullName" 
-                placeholder="Иван Иванов" 
+                placeholder={t('settings.profile.fullNamePlaceholder')}
                 defaultValue={user?.full_name || ""} 
                 className="bg-slate-50 border-2 border-slate-200 focus:bg-white focus:border-slate-900 focus:ring-slate-900/5 rounded-xl h-11 px-4 text-sm font-bold transition-all shadow-sm placeholder:text-slate-400"
               />
               <p className="text-[11px] text-slate-500 font-bold leading-relaxed pl-1">
-                Это имя будет отображаться в профиле и документах.
+                {t('settings.profile.fullNameDesc')}
               </p>
             </div>
             <div className="space-y-3">
@@ -621,7 +625,7 @@ function ProfileForm({ user, toast }: { user: any, toast: any }) {
                 <div className="p-1.5 bg-slate-100 rounded-lg border border-slate-200">
                   <Globe className="h-3.5 w-3.5 text-slate-600" />
                 </div>
-                Электронная почта
+                {t('settings.profile.email')}
               </Label>
               <div className="relative group">
                 <Input 
@@ -636,7 +640,7 @@ function ProfileForm({ user, toast }: { user: any, toast: any }) {
               </div>
               <p className="text-[11px] text-slate-500 font-bold leading-relaxed pl-1 flex items-center gap-1.5">
                 <AlertCircle className="h-3 w-3 text-amber-600" />
-                Email не подлежит изменению.
+                {t('settings.profile.emailNoChange')}
               </p>
             </div>
           </div>
@@ -647,7 +651,7 @@ function ProfileForm({ user, toast }: { user: any, toast: any }) {
                 <AlertCircle className="h-5 w-5 text-amber-700" />
               </div>
               <p className="text-xs font-bold leading-relaxed">
-                Пожалуйста, проверяйте корректность вводимых данных. Обновление профиля влияет на ваше отображение в системе.
+                {t('settings.profile.dataCorrectnessWarning')}
               </p>
             </div>
             <Button 
@@ -658,12 +662,12 @@ function ProfileForm({ user, toast }: { user: any, toast: any }) {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Сохранение...
+                  {t('common.saving')}
                 </>
               ) : (
                 <>
                   <Check className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
-                  Сохранить изменения
+                  {t('common.saveChanges')}
                 </>
               )}
             </Button>
@@ -675,6 +679,7 @@ function ProfileForm({ user, toast }: { user: any, toast: any }) {
 }
 
 function SecurityForm({ toast }: { toast: any }) {
+  const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -687,8 +692,8 @@ function SecurityForm({ toast }: { toast: any }) {
     
     if (password !== confirm) {
       toast({
-        title: "Ошибка",
-        description: "Пароли не совпадают.",
+        title: t('common.error'),
+        description: t('settings.security.passwordsDoNotMatch'),
         variant: "destructive",
       })
       setIsLoading(false)
@@ -699,14 +704,14 @@ function SecurityForm({ toast }: { toast: any }) {
 
     if (result.success) {
       toast({
-        title: "Пароль обновлен",
-        description: "Ваш пароль был успешно изменен.",
+        title: t('settings.security.passwordUpdated'),
+        description: t('settings.security.passwordUpdatedDesc'),
       })
       ;(event.target as HTMLFormElement).reset()
     } else {
       toast({
-        title: "Ошибка",
-        description: result.error || "Не удалось обновить пароль.",
+        title: t('common.error'),
+        description: result.error || t('settings.security.updateError'),
         variant: "destructive",
       })
     }
@@ -722,8 +727,8 @@ function SecurityForm({ toast }: { toast: any }) {
             <Lock className="h-6 w-6 text-white" />
           </div>
           <div className="space-y-1">
-            <CardTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Безопасность</CardTitle>
-            <CardDescription className="text-slate-600 text-sm font-bold">Управление доступом к аккаунту</CardDescription>
+            <CardTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">{t('settings.security.title')}</CardTitle>
+            <CardDescription className="text-slate-600 text-sm font-bold">{t('settings.security.description')}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -731,9 +736,9 @@ function SecurityForm({ toast }: { toast: any }) {
         <CardContent className="p-6 md:p-10 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             <div className="space-y-3">
-              <Label htmlFor="password" title="Новый пароль" className="text-slate-900 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
+              <Label htmlFor="password" title={t('settings.security.newPassword')} className="text-slate-900 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.5)]" />
-                Новый пароль
+                {t('settings.security.newPassword')}
               </Label>
               <Input 
                 id="password" 
@@ -746,9 +751,9 @@ function SecurityForm({ toast }: { toast: any }) {
               />
             </div>
             <div className="space-y-3">
-              <Label htmlFor="confirmPassword" title="Подтвердите пароль" className="text-slate-900 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
+              <Label htmlFor="confirmPassword" title={t('settings.security.confirmPassword')} className="text-slate-900 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.5)]" />
-                Подтвердите пароль
+                {t('settings.security.confirmPassword')}
               </Label>
               <Input 
                 id="confirmPassword" 
@@ -769,9 +774,9 @@ function SecurityForm({ toast }: { toast: any }) {
                 <ShieldCheck className="h-5 w-5 text-blue-400" />
               </div>
               <div className="space-y-1">
-                <h4 className="font-black text-sm tracking-tight">Совет по безопасности</h4>
+                <h4 className="font-black text-sm tracking-tight">{t('settings.security.tipTitle')}</h4>
                 <p className="text-slate-400 text-xs font-medium leading-relaxed max-w-2xl">
-                  Используйте минимум 8 символов, включая заглавные буквы, цифры и специальные знаки для максимальной защиты вашего аккаунта.
+                  {t('settings.security.tipDesc')}
                 </p>
               </div>
             </div>
@@ -786,12 +791,12 @@ function SecurityForm({ toast }: { toast: any }) {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Обновление...
+                  {t('common.updating')}
                 </>
               ) : (
                 <>
                   <Check className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
-                  Обновить пароль
+                  {t('settings.security.updateButton')}
                 </>
               )}
             </Button>
@@ -804,23 +809,26 @@ function SecurityForm({ toast }: { toast: any }) {
 
 function LanguageForm({ user, toast }: { user: any, toast: any }) {
   const [isLoading, setIsLoading] = useState(false)
+  const { setLanguage, t } = useTranslation()
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setIsLoading(true)
 
     const formData = new FormData(event.currentTarget)
+    const newLang = formData.get("language") as "ru" | "cn"
     const result = await updateProfile(formData)
 
     if (result.success) {
+      setLanguage(newLang)
       toast({ 
-        title: "Настройки сохранены",
-        description: "Языковые предпочтения обновлены.",
+        title: t('settings_status.success'),
+        description: t('settings_status.success'),
       })
     } else {
       toast({
-        title: "Ошибка",
-        description: result.error || "Не удалось сохранить настройки.",
+        title: t('settings_status.error'),
+        description: result.error || t('settings_status.error'),
         variant: "destructive",
       })
     }
@@ -836,8 +844,8 @@ function LanguageForm({ user, toast }: { user: any, toast: any }) {
             <Globe className="h-6 w-6 text-white" />
           </div>
           <div className="space-y-1">
-            <CardTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Язык и Регион</CardTitle>
-            <CardDescription className="text-slate-600 text-sm font-bold">Персонализация интерфейса</CardDescription>
+            <CardTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">{t('settings.language.title')}</CardTitle>
+            <CardDescription className="text-slate-600 text-sm font-bold">{t('settings.language.description')}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -847,19 +855,19 @@ function LanguageForm({ user, toast }: { user: any, toast: any }) {
             <div className="space-y-3">
               <Label htmlFor="language" className="text-slate-900 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-                Язык интерфейса
+                {t('tabs.language')}
               </Label>
               <Select name="language" defaultValue={user?.preferred_language || "ru"}>
                 <SelectTrigger className="bg-slate-50 border-2 border-slate-200 focus:bg-white focus:border-slate-900 focus:ring-slate-900/5 rounded-xl h-11 px-4 text-sm font-bold transition-all shadow-sm">
-                  <SelectValue placeholder="Выберите язык" />
+                  <SelectValue placeholder={t('settings.language.selectPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-2 border-slate-200 shadow-xl p-2 bg-white/98 backdrop-blur-2xl">
                   <SelectItem value="ru" className="rounded-xl focus:bg-slate-50 cursor-pointer py-3 px-4 transition-all">
                     <div className="flex items-center gap-4">
                       <span className="text-2xl drop-shadow-sm">🇷🇺</span>
                       <div className="flex flex-col">
-                        <span className="font-black text-slate-900 text-sm tracking-tight">Русский</span>
-                        <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">Russian</span>
+                        <span className="font-black text-slate-900 text-sm tracking-tight">{t('settings.language.russian')}</span>
+                        <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{t('settings.language.russian')}</span>
                       </div>
                     </div>
                   </SelectItem>
@@ -867,8 +875,8 @@ function LanguageForm({ user, toast }: { user: any, toast: any }) {
                     <div className="flex items-center gap-4">
                       <span className="text-2xl drop-shadow-sm">🇨🇳</span>
                       <div className="flex flex-col">
-                        <span className="font-black text-slate-900 text-sm tracking-tight">中文</span>
-                        <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">Chinese</span>
+                        <span className="font-black text-slate-900 text-sm tracking-tight">{t('settings.language.chinese')}</span>
+                        <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{t('settings.language.chinese')}</span>
                       </div>
                     </div>
                   </SelectItem>
@@ -883,7 +891,7 @@ function LanguageForm({ user, toast }: { user: any, toast: any }) {
                   <Globe className="h-5 w-5 text-blue-600" />
                 </div>
                 <p className="text-xs text-blue-900 font-bold leading-relaxed">
-                  Выбранный язык будет мгновенно применен ко всем элементам интерфейса, системным уведомлениям и автоматическим сообщениям.
+                  {t('settings.language.instantApplyDesc')}
                 </p>
               </div>
             </div>
@@ -898,12 +906,12 @@ function LanguageForm({ user, toast }: { user: any, toast: any }) {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Применение...
+                  {t('settings.language.applying')}
                 </>
               ) : (
                 <>
                   <Check className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
-                  Применить настройки
+                  {t('settings.language.applyButton')}
                 </>
               )}
             </Button>

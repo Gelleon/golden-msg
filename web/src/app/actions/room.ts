@@ -18,12 +18,47 @@ export async function getRooms() {
           },
         },
       },
+      include: {
+        participants: {
+          where: { user_id: session.user.id },
+          select: { last_read_at: true }
+        },
+        _count: {
+          select: {
+            messages: {
+              where: {
+                created_at: {
+                  gt: new Date() // Placeholder, will be adjusted below
+                }
+              }
+            }
+          }
+        }
+      },
       orderBy: { created_at: "desc" },
     })
-    return rooms.map(room => ({
-      ...room,
-      created_at: room.created_at.toISOString()
+
+    const roomsWithCounts = await Promise.all(rooms.map(async (room) => {
+      const lastReadAt = room.participants[0]?.last_read_at || new Date(0)
+      const unreadCount = await prisma.message.count({
+        where: {
+          room_id: room.id,
+          created_at: { gt: lastReadAt },
+          sender_id: { not: session.user.id }
+        }
+      })
+
+      return {
+        id: room.id,
+        name: room.name,
+        type: room.type,
+        created_at: room.created_at.toISOString(),
+        unreadCount,
+        lastReadAt: lastReadAt.toISOString()
+      }
     }))
+
+    return roomsWithCounts
   } catch (error) {
     console.error("Get rooms error:", error)
     return []
@@ -96,17 +131,32 @@ export async function getDMs() {
       orderBy: { created_at: "desc" },
     })
 
-    // Process DMs to find the other user
-    const processedDMs = dms.map((dm) => {
+    // Process DMs to find the other user and count unread
+    const processedDMs = await Promise.all(dms.map(async (dm) => {
       const otherParticipant = dm.participants.find(
         (p) => p.user_id !== session.user.id
       )
+      const currentParticipant = dm.participants.find(
+        (p) => p.user_id === session.user.id
+      )
+      
+      const lastReadAt = currentParticipant?.last_read_at || new Date(0)
+      const unreadCount = await prisma.message.count({
+        where: {
+          room_id: dm.id,
+          created_at: { gt: lastReadAt },
+          sender_id: { not: session.user.id }
+        }
+      })
+
       return {
         id: dm.id,
         name: dm.name,
         type: dm.type,
         created_by: dm.created_by,
         created_at: dm.created_at.toISOString(),
+        unreadCount,
+        lastReadAt: lastReadAt.toISOString(),
         otherUser: otherParticipant?.user ? {
           id: otherParticipant.user.id,
           email: otherParticipant.user.email,
@@ -117,7 +167,7 @@ export async function getDMs() {
           created_at: otherParticipant.user.created_at.toISOString()
         } : undefined,
       }
-    })
+    }))
 
     return processedDMs
   } catch (error) {

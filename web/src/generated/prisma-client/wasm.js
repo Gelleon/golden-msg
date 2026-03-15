@@ -147,7 +147,8 @@ exports.Prisma.RoomParticipantScalarFieldEnum = {
   room_id: 'room_id',
   user_id: 'user_id',
   role: 'role',
-  joined_at: 'joined_at'
+  joined_at: 'joined_at',
+  last_read_at: 'last_read_at'
 };
 
 exports.Prisma.MessageScalarFieldEnum = {

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { getUsers, updateUserRole } from "@/app/actions/users"
+import { useTranslation } from "@/lib/language-context"
 import {
   Card,
   CardContent,
@@ -33,13 +34,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ChevronDown, Loader2, Search, MoreHorizontal, ShieldCheck, UserCheck, Briefcase, Users, Mail, Calendar, UserCog, Filter, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-const roleLabels: Record<string, string> = {
-  admin: "Администратор",
-  manager: "Менеджер",
-  partner: "Партнер",
-  client: "Клиент",
-}
-
 const roleIcons: Record<string, any> = {
   admin: ShieldCheck,
   manager: Briefcase,
@@ -60,9 +54,17 @@ export default function UsersPage() {
 }
 
 export function OldUsersPage() {
+  const { t, language } = useTranslation()
   const [users, setUsers] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+
+  const roleLabels: Record<string, string> = {
+    admin: t("roles.admin"),
+    manager: t("roles.manager"),
+    partner: t("roles.partner"),
+    client: t("roles.client"),
+  }
 
   const fetchUsers = async () => {
     setIsLoading(true)
@@ -83,7 +85,7 @@ export function OldUsersPage() {
     if (!result.success) {
       // Revert if failed
       fetchUsers()
-      alert("Не удалось обновить роль")
+      alert(t("settings.users.updateRoleError"))
     }
   }
 
@@ -104,10 +106,10 @@ export function OldUsersPage() {
             <div className="p-2 md:p-2.5 bg-white rounded-xl md:rounded-2xl shadow-sm border border-slate-100">
               <UserCog className="h-5 w-5 md:h-6 md:w-6 text-amber-500" />
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">Управление пользователями</h2>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">{t("settings.users.title")}</h2>
           </div>
           <p className="text-sm md:text-base text-slate-500 ml-10 md:ml-12">
-            Контроль доступа и управление ролями участников системы Golden Russia.
+            {t("settings.users.controlAccessDesc")}
           </p>
         </motion.div>
         
@@ -119,7 +121,7 @@ export function OldUsersPage() {
           <div className="relative group flex-1 md:flex-none">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-amber-500 transition-colors" />
             <Input
-              placeholder="Поиск..."
+              placeholder={t("common.search")}
               className="pl-10 pr-4 w-full md:w-80 h-11 md:h-12 bg-white border-slate-200 rounded-xl md:rounded-2xl shadow-sm focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm md:text-base"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -140,11 +142,11 @@ export function OldUsersPage() {
           <CardHeader className="border-b border-slate-100 bg-white p-5 md:p-8">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-lg md:text-xl font-bold text-slate-900">Список участников</CardTitle>
+                <CardTitle className="text-lg md:text-xl font-bold text-slate-900">{t("settings.users.participantsList")}</CardTitle>
                 <CardDescription className="mt-1 flex items-center gap-2">
                   <span className="flex items-center gap-1.5 px-2 py-0.5 md:px-2.5 md:py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-wider">
                     <Users className="h-3 w-3" />
-                    Всего: {users.length}
+                    {t("settings.users.total")}: {users.length}
                   </span>
                 </CardDescription>
               </div>
@@ -159,18 +161,18 @@ export function OldUsersPage() {
                     <div className="h-3 w-3 md:h-4 md:w-4 bg-white rounded-full" />
                   </div>
                 </div>
-                <p className="mt-4 text-sm md:text-base font-medium animate-pulse">Загрузка базы данных...</p>
+                <p className="mt-4 text-sm md:text-base font-medium animate-pulse">{t("settings.users.loadingDatabase")}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader className="bg-slate-50/50">
                     <TableRow className="hover:bg-transparent border-slate-100">
-                      <TableHead className="pl-5 md:pl-8 py-4 md:py-5 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-[0.1em] md:tracking-[0.2em]">Пользователь</TableHead>
-                      <TableHead className="hidden md:table-cell py-4 md:py-5 text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em]">Email</TableHead>
-                      <TableHead className="py-4 md:py-5 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-[0.1em] md:tracking-[0.2em]">Роль</TableHead>
-                      <TableHead className="hidden lg:table-cell py-4 md:py-5 text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em]">Регистрация</TableHead>
-                      <TableHead className="pr-5 md:pr-8 py-4 md:py-5 text-right text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-[0.1em] md:tracking-[0.2em]">Действия</TableHead>
+                      <TableHead className="pl-5 md:pl-8 py-4 md:py-5 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-[0.1em] md:tracking-[0.2em]">{t("settings.users.user")}</TableHead>
+                      <TableHead className="hidden md:table-cell py-4 md:py-5 text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em]">{t("settings.users.email")}</TableHead>
+                      <TableHead className="py-4 md:py-5 text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-[0.1em] md:tracking-[0.2em]">{t("settings.users.role")}</TableHead>
+                      <TableHead className="hidden lg:table-cell py-4 md:py-5 text-[11px] font-bold text-slate-500 uppercase tracking-[0.2em]">{t("settings.users.registration")}</TableHead>
+                      <TableHead className="pr-5 md:pr-8 py-4 md:py-5 text-right text-[10px] md:text-[11px] font-bold text-slate-500 uppercase tracking-[0.1em] md:tracking-[0.2em]">{t("settings.users.actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -180,8 +182,8 @@ export function OldUsersPage() {
                           <TableCell colSpan={5} className="h-32 md:h-40 text-center text-slate-400 bg-slate-50/30">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Search className="h-8 w-8 md:h-10 md:w-10 opacity-10 mb-2" />
-                              <p className="text-xs md:text-sm font-medium">Пользователи не найдены</p>
-                              <Button variant="link" onClick={() => setSearchQuery("")} className="text-amber-500 p-0 h-auto text-xs md:text-sm">Сбросить поиск</Button>
+                              <p className="text-xs md:text-sm font-medium">{t("settings.users.noUsersFound")}</p>
+                              <Button variant="link" onClick={() => setSearchQuery("")} className="text-amber-500 p-0 h-auto text-xs md:text-sm">{t("settings.users.resetSearch")}</Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -208,7 +210,7 @@ export function OldUsersPage() {
                                     <div className="absolute -bottom-0.5 -right-0.5 md:-bottom-1 md:-right-1 w-3 h-3 md:w-4 md:h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
                                   </div>
                                   <div className="flex flex-col gap-0.5 min-w-0">
-                                    <span className="font-bold text-slate-900 group-hover:text-amber-600 transition-colors truncate text-sm md:text-base">{user.full_name || "Без имени"}</span>
+                                    <span className="font-bold text-slate-900 group-hover:text-amber-600 transition-colors truncate text-sm md:text-base">{user.full_name || t("settings.users.noName")}</span>
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest md:hidden truncate max-w-[120px]">{user.email}</span>
                                   </div>
                                 </div>
@@ -231,7 +233,7 @@ export function OldUsersPage() {
                               <TableCell className="hidden lg:table-cell py-3 md:py-4">
                                 <div className="flex items-center gap-2 text-slate-500 font-medium text-sm">
                                   <Calendar className="h-3.5 w-3.5 text-slate-300" />
-                                  {new Date(user.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                  {new Date(user.created_at).toLocaleDateString(language === 'ru' ? 'ru-RU' : 'zh-CN', { day: 'numeric', month: 'long', year: 'numeric' })}
                                 </div>
                               </TableCell>
                               <TableCell className="pr-5 md:pr-8 py-3 md:py-4 text-right">
@@ -243,7 +245,7 @@ export function OldUsersPage() {
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end" className="w-60 md:w-64 p-1.5 md:p-2 bg-white rounded-xl md:rounded-2xl shadow-2xl border-slate-100">
                                     <DropdownMenuLabel className="px-3 py-2">
-                                      <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Смена привилегий</p>
+                                      <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">{t("settings.users.changePrivileges")}</p>
                                       <p className="text-xs md:text-sm font-semibold truncate text-slate-900">{user.full_name}</p>
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator className="bg-slate-50" />
@@ -284,7 +286,7 @@ export function OldUsersPage() {
                                         <div className="p-1.5 rounded-lg bg-red-50 group-focus:bg-red-100">
                                           <Trash2 className="h-3 w-3 md:h-3.5 md:w-3.5" />
                                         </div>
-                                        Удалить пользователя
+                                        {t("settings.users.deleteUser")}
                                       </div>
                                     </DropdownMenuItem>
                                   </DropdownMenuContent>

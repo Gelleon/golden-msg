@@ -3313,6 +3313,7 @@ export namespace Prisma {
     user_id: string | null
     role: string | null
     joined_at: Date | null
+    last_read_at: Date | null
   }
 
   export type RoomParticipantMaxAggregateOutputType = {
@@ -3321,6 +3322,7 @@ export namespace Prisma {
     user_id: string | null
     role: string | null
     joined_at: Date | null
+    last_read_at: Date | null
   }
 
   export type RoomParticipantCountAggregateOutputType = {
@@ -3329,6 +3331,7 @@ export namespace Prisma {
     user_id: number
     role: number
     joined_at: number
+    last_read_at: number
     _all: number
   }
 
@@ -3339,6 +3342,7 @@ export namespace Prisma {
     user_id?: true
     role?: true
     joined_at?: true
+    last_read_at?: true
   }
 
   export type RoomParticipantMaxAggregateInputType = {
@@ -3347,6 +3351,7 @@ export namespace Prisma {
     user_id?: true
     role?: true
     joined_at?: true
+    last_read_at?: true
   }
 
   export type RoomParticipantCountAggregateInputType = {
@@ -3355,6 +3360,7 @@ export namespace Prisma {
     user_id?: true
     role?: true
     joined_at?: true
+    last_read_at?: true
     _all?: true
   }
 
@@ -3436,6 +3442,7 @@ export namespace Prisma {
     user_id: string
     role: string
     joined_at: Date
+    last_read_at: Date
     _count: RoomParticipantCountAggregateOutputType | null
     _min: RoomParticipantMinAggregateOutputType | null
     _max: RoomParticipantMaxAggregateOutputType | null
@@ -3461,6 +3468,7 @@ export namespace Prisma {
     user_id?: boolean
     role?: boolean
     joined_at?: boolean
+    last_read_at?: boolean
     room?: boolean | RoomDefaultArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["roomParticipant"]>
@@ -3471,6 +3479,7 @@ export namespace Prisma {
     user_id?: boolean
     role?: boolean
     joined_at?: boolean
+    last_read_at?: boolean
     room?: boolean | RoomDefaultArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["roomParticipant"]>
@@ -3481,6 +3490,7 @@ export namespace Prisma {
     user_id?: boolean
     role?: boolean
     joined_at?: boolean
+    last_read_at?: boolean
   }
 
   export type RoomParticipantInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3504,6 +3514,7 @@ export namespace Prisma {
       user_id: string
       role: string
       joined_at: Date
+      last_read_at: Date
     }, ExtArgs["result"]["roomParticipant"]>
     composites: {}
   }
@@ -3904,6 +3915,7 @@ export namespace Prisma {
     readonly user_id: FieldRef<"RoomParticipant", 'String'>
     readonly role: FieldRef<"RoomParticipant", 'String'>
     readonly joined_at: FieldRef<"RoomParticipant", 'DateTime'>
+    readonly last_read_at: FieldRef<"RoomParticipant", 'DateTime'>
   }
     
 
@@ -5276,7 +5288,8 @@ export namespace Prisma {
     room_id: 'room_id',
     user_id: 'user_id',
     role: 'role',
-    joined_at: 'joined_at'
+    joined_at: 'joined_at',
+    last_read_at: 'last_read_at'
   };
 
   export type RoomParticipantScalarFieldEnum = (typeof RoomParticipantScalarFieldEnum)[keyof typeof RoomParticipantScalarFieldEnum]
@@ -5525,6 +5538,7 @@ export namespace Prisma {
     user_id?: StringFilter<"RoomParticipant"> | string
     role?: StringFilter<"RoomParticipant"> | string
     joined_at?: DateTimeFilter<"RoomParticipant"> | Date | string
+    last_read_at?: DateTimeFilter<"RoomParticipant"> | Date | string
     room?: XOR<RoomRelationFilter, RoomWhereInput>
     user?: XOR<UserRelationFilter, UserWhereInput>
   }
@@ -5535,6 +5549,7 @@ export namespace Prisma {
     user_id?: SortOrder
     role?: SortOrder
     joined_at?: SortOrder
+    last_read_at?: SortOrder
     room?: RoomOrderByWithRelationInput
     user?: UserOrderByWithRelationInput
   }
@@ -5549,6 +5564,7 @@ export namespace Prisma {
     user_id?: StringFilter<"RoomParticipant"> | string
     role?: StringFilter<"RoomParticipant"> | string
     joined_at?: DateTimeFilter<"RoomParticipant"> | Date | string
+    last_read_at?: DateTimeFilter<"RoomParticipant"> | Date | string
     room?: XOR<RoomRelationFilter, RoomWhereInput>
     user?: XOR<UserRelationFilter, UserWhereInput>
   }, "id" | "room_id_user_id">
@@ -5559,6 +5575,7 @@ export namespace Prisma {
     user_id?: SortOrder
     role?: SortOrder
     joined_at?: SortOrder
+    last_read_at?: SortOrder
     _count?: RoomParticipantCountOrderByAggregateInput
     _max?: RoomParticipantMaxOrderByAggregateInput
     _min?: RoomParticipantMinOrderByAggregateInput
@@ -5573,6 +5590,7 @@ export namespace Prisma {
     user_id?: StringWithAggregatesFilter<"RoomParticipant"> | string
     role?: StringWithAggregatesFilter<"RoomParticipant"> | string
     joined_at?: DateTimeWithAggregatesFilter<"RoomParticipant"> | Date | string
+    last_read_at?: DateTimeWithAggregatesFilter<"RoomParticipant"> | Date | string
   }
 
   export type MessageWhereInput = {
@@ -5842,6 +5860,7 @@ export namespace Prisma {
     id?: string
     role?: string
     joined_at?: Date | string
+    last_read_at?: Date | string
     room: RoomCreateNestedOneWithoutParticipantsInput
     user: UserCreateNestedOneWithoutRoom_participationsInput
   }
@@ -5852,12 +5871,14 @@ export namespace Prisma {
     user_id: string
     role?: string
     joined_at?: Date | string
+    last_read_at?: Date | string
   }
 
   export type RoomParticipantUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_read_at?: DateTimeFieldUpdateOperationsInput | Date | string
     room?: RoomUpdateOneRequiredWithoutParticipantsNestedInput
     user?: UserUpdateOneRequiredWithoutRoom_participationsNestedInput
   }
@@ -5868,6 +5889,7 @@ export namespace Prisma {
     user_id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_read_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RoomParticipantCreateManyInput = {
@@ -5876,12 +5898,14 @@ export namespace Prisma {
     user_id: string
     role?: string
     joined_at?: Date | string
+    last_read_at?: Date | string
   }
 
   export type RoomParticipantUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_read_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RoomParticipantUncheckedUpdateManyInput = {
@@ -5890,6 +5914,7 @@ export namespace Prisma {
     user_id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_read_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type MessageCreateInput = {
@@ -6233,6 +6258,7 @@ export namespace Prisma {
     user_id?: SortOrder
     role?: SortOrder
     joined_at?: SortOrder
+    last_read_at?: SortOrder
   }
 
   export type RoomParticipantMaxOrderByAggregateInput = {
@@ -6241,6 +6267,7 @@ export namespace Prisma {
     user_id?: SortOrder
     role?: SortOrder
     joined_at?: SortOrder
+    last_read_at?: SortOrder
   }
 
   export type RoomParticipantMinOrderByAggregateInput = {
@@ -6249,6 +6276,7 @@ export namespace Prisma {
     user_id?: SortOrder
     role?: SortOrder
     joined_at?: SortOrder
+    last_read_at?: SortOrder
   }
 
   export type BoolFilter<$PrismaModel = never> = {
@@ -6795,6 +6823,7 @@ export namespace Prisma {
     id?: string
     role?: string
     joined_at?: Date | string
+    last_read_at?: Date | string
     room: RoomCreateNestedOneWithoutParticipantsInput
   }
 
@@ -6803,6 +6832,7 @@ export namespace Prisma {
     room_id: string
     role?: string
     joined_at?: Date | string
+    last_read_at?: Date | string
   }
 
   export type RoomParticipantCreateOrConnectWithoutUserInput = {
@@ -6906,6 +6936,7 @@ export namespace Prisma {
     user_id?: StringFilter<"RoomParticipant"> | string
     role?: StringFilter<"RoomParticipant"> | string
     joined_at?: DateTimeFilter<"RoomParticipant"> | Date | string
+    last_read_at?: DateTimeFilter<"RoomParticipant"> | Date | string
   }
 
   export type RoomUpsertWithWhereUniqueWithoutOwnerInput = {
@@ -6974,6 +7005,7 @@ export namespace Prisma {
     id?: string
     role?: string
     joined_at?: Date | string
+    last_read_at?: Date | string
     user: UserCreateNestedOneWithoutRoom_participationsInput
   }
 
@@ -6982,6 +7014,7 @@ export namespace Prisma {
     user_id: string
     role?: string
     joined_at?: Date | string
+    last_read_at?: Date | string
   }
 
   export type RoomParticipantCreateOrConnectWithoutRoomInput = {
@@ -7384,6 +7417,7 @@ export namespace Prisma {
     room_id: string
     role?: string
     joined_at?: Date | string
+    last_read_at?: Date | string
   }
 
   export type RoomCreateManyOwnerInput = {
@@ -7437,6 +7471,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_read_at?: DateTimeFieldUpdateOperationsInput | Date | string
     room?: RoomUpdateOneRequiredWithoutParticipantsNestedInput
   }
 
@@ -7445,6 +7480,7 @@ export namespace Prisma {
     room_id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_read_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RoomParticipantUncheckedUpdateManyWithoutUserInput = {
@@ -7452,6 +7488,7 @@ export namespace Prisma {
     room_id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_read_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RoomUpdateWithoutOwnerInput = {
@@ -7496,6 +7533,7 @@ export namespace Prisma {
     user_id: string
     role?: string
     joined_at?: Date | string
+    last_read_at?: Date | string
   }
 
   export type MessageCreateManyRoomInput = {
@@ -7514,6 +7552,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_read_at?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneRequiredWithoutRoom_participationsNestedInput
   }
 
@@ -7522,6 +7561,7 @@ export namespace Prisma {
     user_id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_read_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RoomParticipantUncheckedUpdateManyWithoutRoomInput = {
@@ -7529,6 +7569,7 @@ export namespace Prisma {
     user_id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     joined_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_read_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type MessageUpdateWithoutRoomInput = {

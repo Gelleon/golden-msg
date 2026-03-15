@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Download, Play, Pause, Loader2, FileText, CheckCircle2, Languages, Image as ImageIcon, Trash2, AlertTriangle } from "lucide-react"
+import { Download, Play, Pause, Loader2, FileText, CheckCircle2, Languages, Image as ImageIcon, Trash2, AlertTriangle, Pencil, X, Check } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
+import { useTranslation } from "@/lib/language-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { deleteMessage } from "@/app/actions/chat"
+import { deleteMessage, updateMessage } from "@/app/actions/chat"
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useToast } from "@/components/ui/use-toast"
+import { Textarea } from "@/components/ui/textarea"
 
 interface Message {
   id: string
@@ -27,6 +29,7 @@ interface Message {
   file_url: string | null
   voice_transcription: string | null
   created_at: string
+  is_edited?: boolean
   sender: {
     id: string
     full_name: string | null
@@ -47,13 +50,45 @@ const isImage = (url: string | null) => {
 }
 
 export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
+  const { t } = useTranslation()
   const [isPlaying, setIsPlaying] = useState(false)
   const [duration, setDuration] = useState<number | null>(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editContent, setEditContent] = useState(message.content_original)
+  const [isUpdating, setIsUpdating] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const { toast } = useToast()
+
+  const handleUpdate = async () => {
+    if (!editContent.trim() || editContent === message.content_original) {
+      setIsEditing(false)
+      return
+    }
+
+    setIsUpdating(true)
+    const result = await updateMessage(message.id, editContent)
+
+    if (result.success) {
+      setIsEditing(false)
+      toast({
+        title: t("chat.messageUpdated"),
+      })
+    } else {
+      toast({
+        title: t("chat.updateError"),
+        description: result.error,
+        variant: "destructive",
+      } as any)
+    }
+    setIsUpdating(false)
+  }
+
+  useEffect(() => {
+    setEditContent(message.content_original)
+  }, [message.content_original])
 
   useEffect(() => {
     if (message.message_type === "voice" && message.file_url) {
@@ -103,14 +138,14 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
     
     if (result.success) {
       toast({
-        title: "Сообщение удалено",
-        description: "Ваше сообщение было успешно удалено из чата и с сервера.",
+        title: t("chat.messageDeleted"),
+        description: t("chat.messageDeletedDesc"),
       })
       setShowDeleteConfirm(false)
     } else {
       toast({
-        title: "Ошибка удаления",
-        description: result.error || "Не удалось удалить сообщение. Попробуйте позже.",
+        title: t("chat.deleteError"),
+        description: result.error || t("chat.deleteErrorDesc"),
         variant: "destructive",
       } as any)
       setIsDeleting(false)
@@ -146,50 +181,107 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
       case "text":
         return (
           <div className="space-y-0 w-full">
-            <div className={cn(
-              "p-3.5 md:p-4 text-sm md:text-[15px] leading-relaxed transition-all duration-300",
-              isCurrentUser ? "text-white" : "text-slate-900"
-            )}>
-              {renderLanguageIndicator(!!message.content_translated)}
-              <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere font-medium">
-                {message.content_original}
-              </p>
-            </div>
-            
-            <AnimatePresence>
-              {message.content_translated && (
-                <motion.div 
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
+            {isEditing ? (
+              <div className="p-3 space-y-3">
+                <Textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
                   className={cn(
-                    "p-3.5 md:p-4 text-sm md:text-[15px] leading-relaxed border-t transition-all duration-300 overflow-hidden",
+                    "min-h-[80px] text-sm md:text-[15px] leading-relaxed resize-none border-none focus-visible:ring-1",
                     isCurrentUser 
-                      ? "bg-black/10 border-white/10 text-blue-100" 
-                      : "bg-amber-50/50 border-amber-100 text-slate-900"
+                      ? "bg-black/20 text-white placeholder:text-white/40 focus-visible:ring-white/30" 
+                      : "bg-slate-50 text-slate-900 placeholder:text-slate-400 focus-visible:ring-blue-500/30"
                   )}
-                >
-                  <div className={cn(
-                    "text-[9px] md:text-[10px] mb-1.5 flex items-center gap-1.5 uppercase tracking-widest font-bold",
-                    isCurrentUser ? "text-blue-300" : "text-amber-600"
-                  )}>
-                     <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                    <span>{message.language_original === "ru" ? "Перевод на китайский" : "Перевод на русский"}</span>
-                  </div>
-                  <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere font-medium leading-relaxed">
-                    {message.content_translated}
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            
-            {!message.content_translated && (
-              <div className={cn(
-                "px-4 py-2 border-t text-[10px] font-bold uppercase tracking-wider flex items-center gap-2",
-                isCurrentUser ? "bg-black/10 border-white/10 text-white/50" : "bg-slate-50 border-slate-100 text-slate-400"
-              )}>
-                <Loader2 className="h-3 w-3 animate-spin" />
-                <span>AI Перевод...</span>
+                  placeholder={t("chat.editPlaceholder")}
+                  autoFocus
+                />
+                <div className="flex items-center justify-end gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className={cn(
+                      "h-8 px-3 rounded-lg font-bold text-xs uppercase tracking-wider",
+                      isCurrentUser ? "text-white/70 hover:bg-white/10 hover:text-white" : "text-slate-500 hover:bg-slate-100"
+                    )}
+                    onClick={() => {
+                      setIsEditing(false)
+                      setEditContent(message.content_original)
+                    }}
+                    disabled={isUpdating}
+                  >
+                    <X className="h-3.5 w-3.5 mr-1.5" />
+                    {t("common.cancel")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    className={cn(
+                      "h-8 px-3 rounded-lg font-bold text-xs uppercase tracking-wider shadow-sm",
+                      isCurrentUser 
+                        ? "bg-white text-blue-600 hover:bg-blue-50" 
+                        : "bg-blue-600 text-white hover:bg-blue-700"
+                    )}
+                    onClick={handleUpdate}
+                    disabled={isUpdating || !editContent.trim() || editContent === message.content_original}
+                  >
+                    {isUpdating ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <>
+                        <Check className="h-3.5 w-3.5 mr-1.5" />
+                        {t("common.save")}
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
+            ) : (
+              <>
+                <div className={cn(
+                  "p-3.5 md:p-4 text-sm md:text-[15px] leading-relaxed transition-all duration-300",
+                  isCurrentUser ? "text-white" : "text-slate-900"
+                )}>
+                  {renderLanguageIndicator(!!message.content_translated)}
+                  <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere font-medium">
+                    {message.content_original}
+                  </p>
+                </div>
+                
+                <AnimatePresence>
+                  {message.content_translated && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      className={cn(
+                        "p-3.5 md:p-4 text-sm md:text-[15px] leading-relaxed border-t transition-all duration-300 overflow-hidden",
+                        isCurrentUser 
+                          ? "bg-black/10 border-white/10 text-blue-100" 
+                          : "bg-amber-50/50 border-amber-100 text-slate-900"
+                      )}
+                    >
+                      <div className={cn(
+                        "text-[9px] md:text-[10px] mb-1.5 flex items-center gap-1.5 uppercase tracking-widest font-bold",
+                        isCurrentUser ? "text-blue-300" : "text-amber-600"
+                      )}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                        <span>{message.language_original === "ru" ? t("chat.translatedToCN") : t("chat.translatedToRU")}</span>
+                      </div>
+                      <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere font-medium leading-relaxed">
+                        {message.content_translated}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                
+                {!message.content_translated && (
+                  <div className={cn(
+                    "px-4 py-2 border-t text-[10px] font-bold uppercase tracking-wider flex items-center gap-2",
+                    isCurrentUser ? "bg-black/10 border-white/10 text-white/50" : "bg-slate-50 border-slate-100 text-slate-400"
+                  )}>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>{t("chat.aiTranslation")}</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )
@@ -256,7 +348,7 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
                     "flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-tighter opacity-60",
                     isCurrentUser ? "text-white" : "text-slate-400"
                   )}>
-                    <span>Расшифровка...</span>
+                    <span>{t("chat.transcription")}</span>
                   </div>
                 )}
               </div>
@@ -277,7 +369,7 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
                     isCurrentUser ? "text-blue-300" : "text-amber-600"
                   )}>
                     <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                    {message.language_original === "ru" ? "Перевод на китайский" : "Перевод на русский"}
+                    {message.language_original === "ru" ? t("chat.translatedToCN") : t("chat.translatedToRU")}
                   </div>
                   <p className="font-medium leading-relaxed">{message.content_translated}</p>
                 </motion.div>
@@ -314,7 +406,7 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className={cn("text-sm md:text-[15px] font-bold truncate mb-2", isCurrentUser ? "text-white" : "text-slate-900")}>
-                  {message.content_original || "Файл"}
+                  {message.content_original || t("chat.file")}
                 </p>
                 <div className="flex items-center gap-2">
                   <a
@@ -328,7 +420,7 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
                     )}
                   >
                     <Download className="h-3.5 w-3.5" />
-                    Скачать
+                    {t("chat.download")}
                   </a>
                 </div>
               </div>
@@ -367,29 +459,56 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
         </Avatar>
       </motion.div>
       <div className={cn(
-        "flex-1 max-w-[min(400px,80%)] md:max-w-[min(400px,70%)] rounded-2xl shadow-lg transition-all duration-300 relative group/bubble",
-        isCurrentUser 
-          ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white" 
-          : "bg-white text-slate-900 border border-slate-200"
+        "flex-1 relative group/bubble max-w-fit min-w-[60px]",
+        isCurrentUser ? "flex flex-col items-end" : "flex flex-col items-start"
       )}>
         <div className={cn(
-          "max-h-[200px] overflow-y-auto overflow-x-hidden custom-scrollbar",
-          isCurrentUser ? "custom-scrollbar-white" : "custom-scrollbar-slate"
+          "rounded-[20px] shadow-sm transition-all duration-300 overflow-hidden relative",
+          isCurrentUser 
+            ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-[5px]" 
+            : "bg-white text-slate-900 border border-slate-100 rounded-tl-[5px]",
+          "max-w-[320px] sm:max-w-[400px]"
         )}>
           {renderContent()}
+          
+          {/* Message Info (Time & Status) */}
+          <div className={cn(
+            "flex items-center gap-1 px-2 pb-1 justify-end",
+            isCurrentUser ? "text-white/70" : "text-slate-400"
+          )}>
+            {message.is_edited && (
+              <span className="text-[9px] italic font-medium">{t("chat.edited")}</span>
+            )}
+            <span className="text-[10px] font-medium">
+              {new Date(message.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', hour12: false })}
+            </span>
+            {isCurrentUser && (
+              <Check className="h-3 w-3" />
+            )}
+          </div>
         </div>
         
-        {/* Delete button - visible on hover for current user or admin */}
-        {isCurrentUser && (
+        {/* Actions - visible on hover for current user */}
+        {isCurrentUser && !isEditing && (
           <div className={cn(
-            "absolute top-2 right-2 opacity-0 group-hover/bubble:opacity-100 transition-opacity",
+            "absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover/bubble:opacity-100 transition-opacity flex flex-col items-center gap-1",
             isDeleting && "opacity-100"
           )}>
+            {message.message_type === "text" && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 border-none shadow-sm"
+                onClick={() => setIsEditing(true)}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+            )}
             <Button
               size="icon"
               variant="ghost"
               className={cn(
-                "h-7 w-7 rounded-full bg-black/20 hover:bg-red-500 hover:text-white text-white/70 border-none",
+                "h-7 w-7 rounded-full bg-slate-100 hover:bg-red-50 text-red-400 border-none shadow-sm",
                 isDeleting && "cursor-not-allowed"
               )}
               onClick={() => setShowDeleteConfirm(true)}
@@ -414,10 +533,10 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
             </div>
             <DialogHeader>
               <DialogTitle className="text-xl font-bold text-slate-900 text-center">
-                Удалить сообщение?
+                {t("chat.deleteConfirmTitle")}
               </DialogTitle>
               <DialogDescription className="text-slate-500 text-center text-[15px] pt-2">
-                Это действие необратимо. Сообщение и связанные с ним файлы будут полностью удалены с сервера.
+                {t("chat.deleteConfirmDesc")}
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -429,7 +548,7 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
               onClick={() => setShowDeleteConfirm(false)}
               disabled={isDeleting}
             >
-              Отмена
+              {t("common.cancel")}
             </Button>
             <Button
               type="button"
@@ -440,10 +559,10 @@ export function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
               {isDeleting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Удаление...
+                  {t("chat.deleteConfirmDeleting")}
                 </>
               ) : (
-                "Удалить"
+                t("chat.deleteConfirmConfirm")
               )}
             </Button>
           </DialogFooter>

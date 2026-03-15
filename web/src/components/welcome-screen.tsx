@@ -8,25 +8,27 @@ import * as z from "zod"
 import { motion, AnimatePresence } from "framer-motion"
 import { Loader2, Globe, Building2, MessageSquare, ArrowRight, ShieldCheck, Languages } from "lucide-react"
 import { login, register } from "@/app/actions/auth"
+import { useTranslation } from "@/lib/language-context"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-const authSchema = z.object({
-  email: z.string().email("Неверный формат email"),
-  password: z.string().min(6, "Пароль должен быть не менее 6 символов"),
-  fullName: z.string().optional(),
-})
-
-type AuthSchema = z.infer<typeof authSchema>
-
 export function WelcomeScreen() {
-  const [language, setLanguage] = useState<"ru" | "cn" | null>(null)
+  const { t, setLanguage, language } = useTranslation()
+  const [hasConfirmedLanguage, setHasConfirmedLanguage] = useState(false)
   const [isLogin, setIsLogin] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+
+  const authSchema = z.object({
+    email: z.string().email(t("welcome.emailError")),
+    password: z.string().min(6, t("welcome.passwordError")),
+    fullName: z.string().optional(),
+  })
+
+  type AuthSchema = z.infer<typeof authSchema>
 
   const form = useForm<AuthSchema>({
     resolver: zodResolver(authSchema),
@@ -37,50 +39,23 @@ export function WelcomeScreen() {
     },
   })
 
-  const text = {
-    ru: {
-      heroTitle: "Бизнес без границ",
-      heroSubtitle: "Эффективное взаимодействие между Россией и Китаем с поддержкой ИИ-перевода.",
-      welcome: "Добро пожаловать",
-      subtitle: "Войдите или зарегистрируйтесь для продолжения",
-      login: "Вход",
-      register: "Регистрация",
-      email: "Email",
-      password: "Пароль",
-      fullName: "Полное имя",
-      submit: isLogin ? "Войти в систему" : "Создать аккаунт",
-      toggle: isLogin ? "Нет аккаунта? Зарегистрироваться" : "Уже есть аккаунт? Войти",
-      loading: "Обработка...",
-      error: "Ошибка",
-      features: [
-        { icon: Globe, text: "Мгновенный ИИ-перевод (RU/CN)", desc: "Общайтесь свободно на своем языке" },
-        { icon: MessageSquare, text: "Голосовые с транскрибацией", desc: "Голос в текст в реальном времени" },
-        { icon: ShieldCheck, text: "Защищенные чаты", desc: "Шифрование и безопасность данных" },
-      ]
+  const features = [
+    { 
+      icon: Globe, 
+      text: t("welcome.features.translation.title"), 
+      desc: t("welcome.features.translation.desc") 
     },
-    cn: {
-      heroTitle: "商业无国界",
-      heroSubtitle: "支持AI翻译的俄罗斯与中国之间的高效互动。",
-      welcome: "欢迎回来",
-      subtitle: "登录或注册以继续",
-      login: "登录",
-      register: "注册",
-      email: "电子邮箱",
-      password: "密码",
-      fullName: "全名",
-      submit: isLogin ? "登录系统" : "创建账户",
-      toggle: isLogin ? "没有账号？立即注册" : "已有账号？立即登录",
-      loading: "处理中...",
-      error: "错误",
-      features: [
-        { icon: Globe, text: "即时AI翻译 (俄/中)", desc: "使用母语自由交流" },
-        { icon: MessageSquare, text: "语音消息转文字", desc: "实时语音转文本" },
-        { icon: ShieldCheck, text: "安全聊天室", desc: "数据加密与安全保障" },
-      ]
+    { 
+      icon: MessageSquare, 
+      text: t("welcome.features.voice.title"), 
+      desc: t("welcome.features.voice.desc") 
     },
-  }
-
-  const t = language ? text[language] : text.ru
+    { 
+      icon: ShieldCheck, 
+      text: t("welcome.features.security.title"), 
+      desc: t("welcome.features.security.desc") 
+    },
+  ]
 
   async function onSubmit(data: AuthSchema) {
     setIsLoading(true)
@@ -92,9 +67,7 @@ export function WelcomeScreen() {
     if (!isLogin && data.fullName) {
       formData.append("fullName", data.fullName)
     }
-    if (language) {
-      formData.append("language", language)
-    }
+    formData.append("language", language)
 
     try {
       let result
@@ -105,20 +78,23 @@ export function WelcomeScreen() {
       }
 
       if (result.error) {
-        setError(result.error)
+        // Map error code to translation key if possible, otherwise use as is
+        const errorKey = `welcome.${result.error}`
+        const translatedError = t(errorKey as any)
+        setError(translatedError === errorKey ? result.error : translatedError)
       } else {
         router.push("/dashboard")
       }
     } catch (err: any) {
       console.error("Auth error:", err)
-      setError("Произошла ошибка при аутентификации")
+      setError(t("welcome.authError"))
     } finally {
       setIsLoading(false)
     }
   }
 
   // Language Selection Screen
-  if (!language) {
+  if (!hasConfirmedLanguage) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0c10] relative overflow-hidden font-sans">
         {/* Animated Background Elements */}
@@ -160,7 +136,7 @@ export function WelcomeScreen() {
               className="inline-flex items-center justify-center p-2.5 md:p-3 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl mb-2 md:mb-4"
             >
                <Building2 className="h-8 w-8 md:h-10 md:w-10 text-secondary mr-2 md:mr-3" />
-               <span className="text-xl md:text-2xl font-bold text-white tracking-[0.1em] md:tracking-[0.2em]">GOLDEN RUSSIA</span>
+               <span className="text-xl md:text-2xl font-bold text-white tracking-[0.1em] md:tracking-[0.2em]">{t("welcome.brandName")}</span>
             </motion.div>
             
             <motion.h1 
@@ -169,9 +145,9 @@ export function WelcomeScreen() {
               transition={{ delay: 0.4, duration: 0.6 }}
               className="text-5xl sm:text-6xl md:text-8xl font-black tracking-tighter text-white leading-[0.95] md:leading-[0.9]"
             >
-              Бизнес <br/>
+              {t("welcome.heroTitle").split(" ")[0]} <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary via-amber-200 to-secondary">
-                Без Границ
+                {t("welcome.heroTitle").split(" ").slice(1).join(" ")}
               </span>
             </motion.h1>
             
@@ -181,7 +157,7 @@ export function WelcomeScreen() {
               transition={{ delay: 0.6, duration: 0.8 }}
               className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-light px-4"
             >
-              Выберите язык для продолжения / 请选择语言
+              {t("welcome.chooseLanguage")}
             </motion.p>
           </div>
           
@@ -189,7 +165,10 @@ export function WelcomeScreen() {
             <motion.button
               whileHover={{ y: -8, scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setLanguage("ru")}
+              onClick={() => {
+                setLanguage("ru")
+                setHasConfirmedLanguage(true)
+              }}
               className="group relative flex flex-col items-center p-6 md:p-10 bg-white/[0.03] backdrop-blur-xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 transition-all duration-500 hover:bg-white/[0.08] hover:border-white/20 shadow-2xl overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -207,7 +186,7 @@ export function WelcomeScreen() {
                 transition={{ delay: 0.8 }}
                 className="text-xl md:text-2xl font-bold text-white mb-1 md:mb-2"
               >
-                Русский
+                {t("welcome.russian")}
               </motion.span>
               <motion.span 
                 initial={{ opacity: 0 }}
@@ -215,10 +194,10 @@ export function WelcomeScreen() {
                 transition={{ delay: 0.9 }}
                 className="text-xs md:text-sm text-slate-400 font-light"
               >
-                Для пользователей из РФ
+                {t("welcome.russianDesc")}
               </motion.span>
               <div className="mt-4 md:mt-6 flex items-center text-blue-400 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-2 group-hover:translate-y-0">
-                <span className="text-xs md:text-sm font-medium mr-2">Продолжить</span>
+                <span className="text-xs md:text-sm font-medium mr-2">{t("welcome.continue")}</span>
                 <ArrowRight className="h-3.5 w-3.5 md:h-4 md:w-4" />
               </div>
             </motion.button>
@@ -226,7 +205,10 @@ export function WelcomeScreen() {
             <motion.button
               whileHover={{ y: -8, scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setLanguage("cn")}
+              onClick={() => {
+                setLanguage("cn")
+                setHasConfirmedLanguage(true)
+              }}
               className="group relative flex flex-col items-center p-6 md:p-10 bg-white/[0.03] backdrop-blur-xl rounded-[2rem] md:rounded-[2.5rem] border border-white/10 transition-all duration-500 hover:bg-white/[0.08] hover:border-white/20 shadow-2xl overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -244,7 +226,7 @@ export function WelcomeScreen() {
                 transition={{ delay: 0.9 }}
                 className="text-xl md:text-2xl font-bold text-white mb-1 md:mb-2"
               >
-                中文
+                {t("welcome.chinese")}
               </motion.span>
               <motion.span 
                 initial={{ opacity: 0 }}
@@ -252,10 +234,10 @@ export function WelcomeScreen() {
                 transition={{ delay: 1.0 }}
                 className="text-xs md:text-sm text-slate-400 font-light"
               >
-                中国用户请点击
+                {t("welcome.chineseDesc")}
               </motion.span>
               <div className="mt-4 md:mt-6 flex items-center text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-2 group-hover:translate-y-0">
-                <span className="text-xs md:text-sm font-medium mr-2">继续</span>
+                <span className="text-xs md:text-sm font-medium mr-2">{t("welcome.continue")}</span>
                 <ArrowRight className="h-3.5 w-3.5 md:h-4 md:w-4" />
               </div>
             </motion.button>
@@ -268,7 +250,7 @@ export function WelcomeScreen() {
           transition={{ delay: 1.2 }}
           className="absolute bottom-10 text-slate-500 text-sm tracking-widest font-light"
         >
-          GOLDEN RUSSIA &copy; {new Date().getFullYear()} • ELITE BUSINESS NETWORK
+          {t("welcome.footer").replace("{year}", new Date().getFullYear().toString())}
         </motion.div>
       </div>
     )
@@ -307,7 +289,7 @@ export function WelcomeScreen() {
                 <div className="p-3 bg-secondary rounded-2xl shadow-[0_0_30px_rgba(251,191,36,0.2)]">
                   <Building2 className="h-8 w-8 text-primary" />
                 </div>
-                <span className="text-2xl font-black tracking-[0.2em]">GOLDEN RUSSIA</span>
+                <span className="text-2xl font-black tracking-[0.2em]">{t("welcome.brandName")}</span>
               </motion.div>
               
               <div className="space-y-6">
@@ -317,7 +299,7 @@ export function WelcomeScreen() {
                   transition={{ delay: 0.5 }}
                   className="text-5xl font-black leading-[1.1] tracking-tight"
                 >
-                  {t.heroTitle}
+                  {t("welcome.heroTitle")}
                 </motion.h2>
                 <motion.p 
                   initial={{ opacity: 0, y: 20 }}
@@ -325,12 +307,12 @@ export function WelcomeScreen() {
                   transition={{ delay: 0.7 }}
                   className="text-xl text-slate-400 font-light leading-relaxed"
                 >
-                  {t.heroSubtitle}
+                  {t("welcome.heroSubtitle")}
                 </motion.p>
               </div>
 
               <div className="space-y-8 pt-10">
-                {t.features.map((feature, idx) => (
+                {features.map((feature, idx) => (
                   <motion.div 
                     key={idx}
                     initial={{ opacity: 0, x: -20 }}
@@ -366,11 +348,11 @@ export function WelcomeScreen() {
                <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => setLanguage(null)} 
+                  onClick={() => setHasConfirmedLanguage(false)} 
                   className="gap-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl border border-white/5 text-xs md:text-sm"
                >
                   <Languages className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                  {language === 'ru' ? 'Сменить язык' : '切换语言'}
+                  {t("welcome.changeLanguage")}
                </Button>
             </div>
 
@@ -381,7 +363,7 @@ export function WelcomeScreen() {
                   animate={{ opacity: 1, y: 0 }}
                   className="text-3xl md:text-4xl font-black text-white tracking-tight"
                 >
-                  {t.welcome}
+                  {t("welcome.welcomeBack")}
                 </motion.h2>
                 <motion.p 
                   initial={{ opacity: 0, y: -10 }}
@@ -389,18 +371,18 @@ export function WelcomeScreen() {
                   transition={{ delay: 0.1 }}
                   className="text-slate-500 font-light text-sm md:text-base"
                 >
-                  {t.subtitle}
+                  {t("welcome.subtitle")}
                 </motion.p>
               </div>
 
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 md:space-y-6">
                 <div className="space-y-4 md:space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t.email}</Label>
+                    <Label htmlFor="email" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.email")}</Label>
                     <Input
                       id="email"
                       type="email"
-                      placeholder="name@company.com"
+                      placeholder={t("welcome.emailPlaceholder")}
                       {...form.register("email")}
                       className="h-12 md:h-14 bg-white/[0.03] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-600 text-sm md:text-base"
                       required
@@ -408,11 +390,11 @@ export function WelcomeScreen() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="password"className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t.password}</Label>
+                    <Label htmlFor="password"className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.password")}</Label>
                     <Input
                       id="password"
                       type="password"
-                      placeholder="••••••••"
+                      placeholder={t("welcome.passwordPlaceholder")}
                       {...form.register("password")}
                       className="h-12 md:h-14 bg-white/[0.03] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-600 text-sm md:text-base"
                       required
@@ -425,10 +407,10 @@ export function WelcomeScreen() {
                       animate={{ opacity: 1, height: "auto" }}
                       className="space-y-2 overflow-hidden"
                     >
-                      <Label htmlFor="fullName" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t.fullName}</Label>
+                      <Label htmlFor="fullName" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.fullName")}</Label>
                       <Input
                         id="fullName"
-                        placeholder="Имя Фамилия"
+                        placeholder={t("welcome.fullNamePlaceholder")}
                         {...form.register("fullName")}
                         className="h-12 md:h-14 bg-white/[0.03] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-600 text-sm md:text-base"
                         required={!isLogin}
@@ -443,46 +425,34 @@ export function WelcomeScreen() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="p-3 md:p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-xs md:text-sm flex items-center"
                   >
-                    <ShieldCheck className="h-4 w-4 md:h-5 md:w-5 mr-2 md:mr-3 flex-shrink-0" />
+                    <ShieldCheck className="h-4 w-4 mr-2 flex-shrink-0" />
                     {error}
                   </motion.div>
                 )}
 
-                <Button 
-                  className="w-full h-12 md:h-14 text-base md:text-lg font-bold rounded-2xl bg-secondary text-slate-950 [text-shadow:0_0.5px_0_rgba(255,255,255,0.4)] hover:bg-secondary/90 shadow-[0_10px_30px_rgba(251,191,36,0.15)] hover:shadow-[0_15px_40px_rgba(251,191,36,0.25)] transition-all transform hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0c10]" 
-                  type="submit" 
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="mr-2 h-5 w-5 md:h-6 md:w-6 animate-spin" />
-                  ) : (
-                    <span className="flex items-center justify-center">
-                      {t.submit} <ArrowRight className="ml-2 md:ml-3 h-4 w-4 md:h-5 md:w-5" />
-                    </span>
-                  )}
-                </Button>
+                <div className="space-y-4 pt-2">
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full h-12 md:h-14 bg-secondary hover:bg-amber-500 text-primary font-bold rounded-2xl shadow-xl shadow-secondary/20 transition-all duration-300 text-sm md:text-base"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      isLogin ? t("welcome.submitLogin") : t("welcome.submitRegister")
+                    )}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setIsLogin(!isLogin)}
+                    className="w-full h-12 md:h-14 text-slate-400 hover:text-white hover:bg-white/5 rounded-2xl transition-all text-xs md:text-sm"
+                  >
+                    {isLogin ? t("welcome.toggleToRegister") : t("welcome.toggleToLogin")}
+                  </Button>
+                </div>
               </form>
-
-              <div className="relative pt-4">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-white/5" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase tracking-widest">
-                  <span className="bg-[#0a0c10] px-4 text-slate-600">
-                    {isLogin ? "Или" : "Аккаунт"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setIsLogin(!isLogin)}
-                  className="text-slate-400 hover:text-secondary text-sm font-medium transition-colors"
-                >
-                  {t.toggle}
-                </button>
-              </div>
             </div>
           </motion.div>
         </motion.div>

@@ -2,8 +2,11 @@
 
 import { motion } from "framer-motion"
 import { MessageSquare, ArrowLeft } from "lucide-react"
+import { useTranslation } from "@/lib/language-context"
 
 export default function DashboardPage() {
+  const { t } = useTranslation()
+
   return (
     <div className="flex h-full items-center justify-center bg-slate-50/50 p-6 relative overflow-hidden">
       {/* Background decorative elements */}
@@ -54,10 +57,10 @@ export default function DashboardPage() {
         
         <div className="space-y-4">
           <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
-            Выберите чат
+            {t("dashboard.selectChat")}
           </h2>
           <p className="text-slate-500 text-lg md:text-xl leading-relaxed font-medium">
-            Выберите комнату в меню слева, чтобы начать общение с вашими партнерами.
+            {t("dashboard.selectRoomDesc")}
           </p>
         </div>
 
@@ -68,7 +71,7 @@ export default function DashboardPage() {
           className="flex items-center justify-center gap-3 text-blue-600 font-semibold md:hidden bg-blue-50 py-3 px-6 rounded-2xl"
         >
           <ArrowLeft className="h-5 w-5 animate-pulse" />
-          <span>Откройте меню</span>
+          <span>{t("dashboard.openMenu")}</span>
         </motion.div>
       </motion.div>
     </div>

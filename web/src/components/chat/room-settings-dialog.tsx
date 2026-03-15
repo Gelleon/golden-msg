@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Settings, Trash2, UserPlus, Users, X, Search, ShieldCheck } from "lucide-react"
+import { useTranslation } from "@/lib/language-context"
 import { 
   getRoomParticipants, 
   addParticipant, 
@@ -38,6 +39,13 @@ export function RoomSettingsDialog({
   currentUserRole,
   roomName,
 }: RoomSettingsDialogProps) {
+  const { t } = useTranslation()
+  const roleLabels: Record<string, string> = {
+    admin: t("roles.admin"),
+    manager: t("roles.manager"),
+    partner: t("roles.partner"),
+    client: t("roles.client"),
+  }
   const [participants, setParticipants] = useState<any[]>([])
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -80,7 +88,7 @@ export function RoomSettingsDialog({
   }
 
   const handleRemoveParticipant = async (userId: string) => {
-    if (!confirm("Вы уверены, что хотите удалить этого пользователя?")) return
+    if (!confirm(t("roomSettings.removeConfirm"))) return
 
     const result = await removeParticipant(roomId, userId)
 
@@ -124,7 +132,7 @@ export function RoomSettingsDialog({
               <ShieldCheck className="h-6 w-6 text-amber-500" />
             </motion.div>
             <div>
-              <DialogTitle className="text-2xl font-bold tracking-tight">Управление комнатой</DialogTitle>
+              <DialogTitle className="text-2xl font-bold tracking-tight">{t("roomSettings.title")}</DialogTitle>
               <DialogDescription className="text-slate-400 font-medium">
                 {roomName}
               </DialogDescription>
@@ -140,14 +148,14 @@ export function RoomSettingsDialog({
                 className="rounded-xl data-[state=active]:bg-amber-500 data-[state=active]:text-white font-bold transition-all relative z-10"
               >
                 <Users className="h-4 w-4 mr-2" />
-                Участники
+                {t("roomSettings.participants")}
               </TabsTrigger>
               <TabsTrigger 
                 value="invite" 
                 className="rounded-xl data-[state=active]:bg-amber-500 data-[state=active]:text-white font-bold transition-all relative z-10"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
-                Пригласить
+                {t("roomSettings.invite")}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -162,7 +170,7 @@ export function RoomSettingsDialog({
               >
                 <div className="flex items-center justify-between mb-4 px-1">
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">
-                    Всего участников: {participants.length}
+                    {t("roomSettings.totalParticipants")}: {participants.length}
                   </span>
                 </div>
                 <ScrollArea className="h-[320px] pr-4 -mr-4">
@@ -197,7 +205,7 @@ export function RoomSettingsDialog({
                             <div>
                               <p className="text-sm font-bold text-slate-100 group-hover:text-white transition-colors tracking-tight">{participant.full_name}</p>
                               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1 group-hover:text-amber-500/70 transition-colors">
-                                {participant.role}
+                                {roleLabels[participant.role] || participant.role}
                               </p>
                             </div>
                           </div>
@@ -221,7 +229,7 @@ export function RoomSettingsDialog({
                         <div className="p-4 bg-white/5 rounded-full mb-4">
                           <Users className="h-10 w-10 opacity-20" />
                         </div>
-                        <p className="text-sm font-bold tracking-tight text-slate-400">Участники не найдены</p>
+                        <p className="text-sm font-bold tracking-tight text-slate-400">{t("roomSettings.noParticipantsFound")}</p>
                       </motion.div>
                     )}
                   </div>
@@ -240,7 +248,7 @@ export function RoomSettingsDialog({
                   <div className="relative flex-1 group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-amber-500 transition-colors" />
                     <Input
-                      placeholder="Поиск по имени..."
+                      placeholder={t("sidebar.searchPlaceholder")}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -259,7 +267,7 @@ export function RoomSettingsDialog({
                       >
                         <Search className="h-4 w-4" />
                       </motion.div>
-                    ) : "Найти"}
+                    ) : t("sidebar.find")}
                   </Button>
                 </div>
                 
@@ -292,7 +300,7 @@ export function RoomSettingsDialog({
                             <div>
                               <p className="text-sm font-bold text-slate-100 group-hover:text-white transition-colors tracking-tight">{user.full_name}</p>
                               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1 group-hover:text-amber-500/70 transition-colors">
-                                {user.role}
+                                {roleLabels[user.role] || user.role}
                               </p>
                             </div>
                           </div>
@@ -302,7 +310,7 @@ export function RoomSettingsDialog({
                             onClick={() => handleAddParticipant(user.id)}
                           >
                             <UserPlus className="h-4 w-4 mr-2" />
-                            Добавить
+                            {t("roomSettings.add")}
                           </Button>
                         </motion.div>
                       ))}
@@ -317,7 +325,7 @@ export function RoomSettingsDialog({
                         <div className="p-4 bg-white/5 rounded-full mb-4">
                           <Search className="h-10 w-10 opacity-20" />
                         </div>
-                        <p className="text-sm font-bold text-slate-400">Пользователи не найдены</p>
+                        <p className="text-sm font-bold text-slate-400">{t("sidebar.noUsersFound")}</p>
                       </motion.div>
                     )}
                     
@@ -330,7 +338,7 @@ export function RoomSettingsDialog({
                         <div className="p-4 bg-white/5 rounded-full mb-4">
                           <Users className="h-10 w-10 opacity-20" />
                         </div>
-                        <p className="text-sm font-bold text-slate-400">Введите имя для поиска</p>
+                        <p className="text-sm font-bold text-slate-400">{t("sidebar.searchPrompt")}</p>
                       </motion.div>
                     )}
                   </div>

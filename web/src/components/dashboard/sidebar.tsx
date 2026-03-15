@@ -38,6 +38,7 @@ import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { EditRoomDialog } from "./edit-room-dialog"
+import { useTranslation } from "@/lib/language-context"
 
 interface SidebarProps {
   user: any
@@ -48,6 +49,7 @@ interface SidebarProps {
 
 export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   const router = useRouter()
+  const { t } = useTranslation()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [rooms, setRooms] = useState<any[]>([])
@@ -60,6 +62,13 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   const [isSearching, setIsSearching] = useState(false)
   const [editingRoom, setEditingRoom] = useState<any>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+
+  const roleLabels: Record<string, string> = {
+    admin: t('roles.admin'),
+    manager: t('roles.manager'),
+    partner: t('roles.partner'),
+    client: t('roles.client'),
+  }
 
   const fetchRoomsAndDMs = async () => {
     try {
@@ -191,7 +200,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
             <div className="flex items-center justify-between mb-3 px-2">
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                  Комнаты
+                  {t('common.rooms')}
                 </span>
                 <span className="px-1.5 py-0.5 bg-slate-800 text-[10px] text-slate-400 rounded-md font-bold">
                   {rooms.length}
@@ -215,22 +224,22 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                     <DialogHeader className="pt-4">
                       <DialogTitle className="text-xl font-bold flex items-center gap-2">
                         <Plus className="h-5 w-5 text-amber-500" />
-                        Создать комнату
+                        {t('sidebar.createRoom')}
                       </DialogTitle>
                       <DialogDescription className="text-slate-400">
-                        Создайте новое пространство для обсуждения проектов и идей.
+                        {t('sidebar.createRoomDesc')}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-6 py-6">
                       <div className="space-y-2">
-                        <Label htmlFor="name" className="text-sm font-semibold text-slate-300">Название комнаты</Label>
+                        <Label htmlFor="name" className="text-sm font-semibold text-slate-300">{t('sidebar.roomName')}</Label>
                         <div className="relative">
                           <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                           <Input
                             id="name"
                             value={newRoomName}
                             onChange={(e) => setNewRoomName(e.target.value)}
-                            placeholder="Например: Переговоры Москва"
+                            placeholder={t('sidebar.roomNamePlaceholder')}
                             className="pl-10 bg-white/5 border-white/10 focus:border-amber-500 focus:ring-amber-500/20 text-white h-11 rounded-xl"
                           />
                         </div>
@@ -241,7 +250,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                         onClick={handleCreateRoom} 
                         className="w-full h-11 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold shadow-lg shadow-amber-500/20 border-0 transition-all duration-300 active:scale-[0.98]"
                       >
-                        Создать комнату
+                        {t('sidebar.createRoom')}
                       </Button>
                     </DialogFooter>
                   </DialogContent>
@@ -269,7 +278,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                             <Button
                               variant="ghost"
                               className={cn(
-                                "w-full justify-start font-medium transition-all duration-300 group rounded-xl px-3 h-10",
+                                "w-full justify-start font-medium transition-all duration-300 group rounded-xl px-3 h-10 relative",
                                 pathname === `/dashboard/rooms/${room.id}` 
                                   ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10" 
                                   : "text-slate-400 hover:text-white hover:bg-white/5"
@@ -280,6 +289,11 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                                 pathname === `/dashboard/rooms/${room.id}` ? "bg-amber-500 scale-125" : "bg-slate-700 group-hover:bg-slate-500"
                               )} />
                               <span className="truncate flex-1 text-left">{room.name}</span>
+                              {room.unreadCount > 0 && pathname !== `/dashboard/rooms/${room.id}` && (
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20">
+                                  {room.unreadCount}
+                                </span>
+                              )}
                               {pathname === `/dashboard/rooms/${room.id}` && (
                                 <motion.div 
                                   layoutId="activeRoomGlow"
@@ -297,7 +311,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                             className="hover:bg-amber-500 hover:text-white focus:bg-amber-500 focus:text-white cursor-pointer"
                           >
                             <Edit className="mr-2 h-4 w-4" />
-                            <span>Редактировать комнату</span>
+                            <span>{t('sidebar.editRoom')}</span>
                           </ContextMenuItem>
                         </ContextMenuContent>
                       )}
@@ -311,7 +325,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                   animate={{ opacity: 1 }}
                   className="text-xs text-slate-500 px-4 py-3 bg-white/5 rounded-xl border border-white/5 italic text-center"
                 >
-                  Нет активных комнат
+                  {t('sidebar.noRooms')}
                 </motion.div>
               )}
             </div>
@@ -326,10 +340,10 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
             >
               <div className="flex items-center justify-between mb-3 px-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                    Личные сообщения
-                  </span>
-                  <span className="px-1.5 py-0.5 bg-slate-800 text-[10px] text-slate-400 rounded-md font-bold">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                  {t('common.directMessages')}
+                </span>
+                <span className="px-1.5 py-0.5 bg-slate-800 text-[10px] text-slate-400 rounded-md font-bold">
                     {dms.length}
                   </span>
                 </div>
@@ -350,10 +364,10 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                     <DialogHeader className="pt-4">
                       <DialogTitle className="text-xl font-bold flex items-center gap-2">
                         <MessageSquare className="h-5 w-5 text-amber-500" />
-                        Новое сообщение
+                        {t('sidebar.newDM')}
                       </DialogTitle>
                       <DialogDescription className="text-slate-400">
-                        Найдите пользователя для начала личного диалога.
+                        {t('sidebar.newDMDesc')}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-6 py-6">
@@ -361,7 +375,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                         <div className="relative flex-1">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                           <Input
-                            placeholder="Поиск по имени..."
+                            placeholder={t('sidebar.searchPlaceholder')}
                             value={dmSearchQuery}
                             onChange={(e) => setDmSearchQuery(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleSearchUsers()}
@@ -374,7 +388,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                           className="h-11 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white border-white/10"
                         >
                           {isSearching ? <span className="animate-spin mr-2">◌</span> : <Search className="h-4 w-4" />}
-                          Найти
+                          {t('sidebar.find')}
                         </Button>
                       </div>
                       <ScrollArea className="h-[250px] rounded-xl border border-white/5 bg-white/5 p-2">
@@ -404,7 +418,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                                   </div>
                                   <div className="flex flex-col items-start text-sm">
                                     <span className="font-semibold text-slate-200 group-hover:text-white transition-colors">{u.full_name}</span>
-                                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">{u.role}</span>
+                                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">{roleLabels[u.role] || u.role}</span>
                                   </div>
                                   <ChevronRight className="h-4 w-4 ml-auto text-slate-600 group-hover:text-amber-500 transition-all group-hover:translate-x-1" />
                                 </Button>
@@ -418,7 +432,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                               className="flex flex-col items-center justify-center py-10 text-slate-500"
                             >
                               <Search className="h-8 w-8 mb-2 opacity-20" />
-                              <p className="text-sm">Пользователи не найдены</p>
+                              <p className="text-sm">{t('sidebar.noUsersFound')}</p>
                             </motion.div>
                           )}
                           {!dmSearchQuery && (
@@ -428,7 +442,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                               className="flex flex-col items-center justify-center py-10 text-slate-500"
                             >
                               <Users className="h-8 w-8 mb-2 opacity-20" />
-                              <p className="text-sm">Введите имя для поиска</p>
+                              <p className="text-sm">{t('sidebar.searchPrompt')}</p>
                             </motion.div>
                           )}
                         </div>
@@ -456,7 +470,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                           <Button
                             variant="ghost"
                             className={cn(
-                              "w-full justify-start font-medium transition-all duration-300 group rounded-xl px-3 h-12",
+                              "w-full justify-start font-medium transition-all duration-300 group rounded-xl px-3 h-12 relative",
                               pathname === `/dashboard/rooms/${dm.id}` 
                                 ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10" 
                                 : "text-slate-400 hover:text-white hover:bg-white/5"
@@ -475,32 +489,37 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                               <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#0F172A] rounded-full" />
                             </div>
                             <div className="flex flex-col items-start min-w-0 flex-1">
-                              <span className="truncate w-full text-left">{dm.otherUser?.full_name || "Неизвестный"}</span>
-                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mt-1">
-                                {dm.otherUser?.role}
-                              </span>
-                            </div>
-                            {pathname === `/dashboard/rooms/${dm.id}` && (
-                              <motion.div 
-                                layoutId="activeDMGlow"
-                                className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse ml-2" 
-                              />
-                            )}
-                          </Button>
-                        </motion.div>
-                      </Link>
+                          <span className="truncate w-full text-left">{dm.otherUser?.full_name || t('common.unknown')}</span>
+                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mt-1">
+                            {roleLabels[dm.otherUser?.role] || dm.otherUser?.role}
+                          </span>
+                        </div>
+                        {dm.unreadCount > 0 && pathname !== `/dashboard/rooms/${dm.id}` && (
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20">
+                            {dm.unreadCount}
+                          </span>
+                        )}
+                        {pathname === `/dashboard/rooms/${dm.id}` && (
+                          <motion.div 
+                            layoutId="activeDMGlow"
+                            className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse ml-2" 
+                          />
+                        )}
+                      </Button>
                     </motion.div>
-                  ))}
-                </AnimatePresence>
-                {dms.length === 0 && (
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-xs text-slate-500 px-4 py-3 bg-white/5 rounded-xl border border-white/5 italic text-center"
-                  >
-                    Нет активных диалогов
-                  </motion.div>
-                )}
+                  </Link>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {dms.length === 0 && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-xs text-slate-500 px-4 py-3 bg-white/5 rounded-xl border border-white/5 italic text-center"
+              >
+                {t('sidebar.noActiveDMs')}
+              </motion.div>
+            )}
               </div>
             </motion.div>
           )}
@@ -530,14 +549,14 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                 </div>
                 <div className="flex flex-col items-start text-xs truncate flex-1 overflow-hidden">
                   <span className="font-bold text-white truncate w-full text-left group-hover:text-amber-400 transition-colors">
-                    {profile?.full_name || "Пользователь"}
+                    {profile?.full_name || t('common.user')}
                   </span>
                   <span className="text-slate-500 font-bold uppercase tracking-widest text-[9px] mt-1 flex items-center gap-1.5">
                     <span className={cn(
                       "w-1.5 h-1.5 rounded-full",
                       profile?.role === 'admin' ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" : "bg-slate-600"
                     )} />
-                    {profile?.role}
+                    {roleLabels[profile?.role] || profile?.role}
                   </span>
                 </div>
                 <Settings className="h-4 w-4 ml-2 text-slate-600 group-hover:text-slate-400 transition-colors" />
@@ -546,14 +565,14 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-64 bg-[#0F172A] border-white/10 text-white p-2 rounded-2xl shadow-2xl" align="end" side="top" sideOffset={10}>
             <DropdownMenuLabel className="px-3 py-2">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Аккаунт</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">{t('common.account')}</p>
               <p className="text-sm font-semibold truncate">{user.email}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-white/5" />
             <Link href="/dashboard/settings?tab=profile">
               <DropdownMenuItem className="px-3 py-2.5 rounded-xl focus:bg-white/10 focus:text-white cursor-pointer group transition-all">
                 <User className="mr-3 h-4 w-4 text-slate-400 group-hover:text-amber-500" />
-                <span className="font-medium">Мой профиль</span>
+                <span className="font-medium">{t('tabs.profile')}</span>
               </DropdownMenuItem>
             </Link>
             <DropdownMenuSeparator className="bg-white/5" />
@@ -562,7 +581,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
               className="px-3 py-2.5 rounded-xl focus:bg-red-500/10 focus:text-red-500 text-red-400 cursor-pointer group transition-all"
             >
               <LogOut className="mr-3 h-4 w-4 text-red-400/70 group-hover:text-red-500" />
-              <span className="font-medium">Выйти из системы</span>
+              <span className="font-medium">{t('sidebar.logout')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

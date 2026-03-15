@@ -28,14 +28,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { updateRoom } from "@/app/actions/room"
 
+import { useTranslation } from "@/lib/language-context"
+
 const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Название должно содержать минимум 2 символа.",
-  }),
+  name: z.string().min(2),
   description: z.string().optional(),
-  capacity: z.coerce.number().min(0, {
-    message: "Вместимость не может быть отрицательной.",
-  }),
+  capacity: z.coerce.number().min(0),
   equipment: z.string().optional(),
 })
 
@@ -54,6 +52,7 @@ interface EditRoomDialogProps {
 
 export function EditRoomDialog({ room, open, onOpenChange, onSuccess }: EditRoomDialogProps) {
   const { toast } = useToast()
+  const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -73,22 +72,22 @@ export function EditRoomDialog({ room, open, onOpenChange, onSuccess }: EditRoom
       
       if (result.success) {
         toast({
-          title: "Успех",
-          description: "Информация о комнате обновлена.",
+          title: t('settings_status.success'),
+          description: t('sidebar.roomUpdated'),
         })
         onOpenChange(false)
         onSuccess?.()
       } else {
         toast({
-          title: "Ошибка",
-          description: result.error || "Не удалось обновить комнату.",
+          title: t('settings_status.error'),
+          description: result.error || t('sidebar.roomUpdateError'),
           variant: "destructive" as any,
         })
       }
     } catch (error) {
       toast({
-        title: "Ошибка",
-        description: "Произошла непредвиденная ошибка.",
+        title: t('settings_status.error'),
+        description: t('sidebar.unexpectedError'),
         variant: "destructive" as any,
       })
     } finally {
@@ -102,10 +101,10 @@ export function EditRoomDialog({ room, open, onOpenChange, onSuccess }: EditRoom
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-amber-600" />
         <DialogHeader className="pt-4">
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
-            Редактировать комнату
+            {t('sidebar.editRoom')}
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            Измените параметры помещения. Все изменения будут зафиксированы в логах.
+            {t('sidebar.editRoomDesc')}
           </DialogDescription>
         </DialogHeader>
 
@@ -116,7 +115,7 @@ export function EditRoomDialog({ room, open, onOpenChange, onSuccess }: EditRoom
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-slate-300">Название</FormLabel>
+                  <FormLabel className="text-slate-300">{t('sidebar.roomName')}</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
@@ -126,7 +125,9 @@ export function EditRoomDialog({ room, open, onOpenChange, onSuccess }: EditRoom
                       />
                     </div>
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage>
+                    {form.formState.errors.name && t('sidebar.nameMinLength')}
+                  </FormMessage>
                 </FormItem>
               )}
             />
@@ -136,7 +137,7 @@ export function EditRoomDialog({ room, open, onOpenChange, onSuccess }: EditRoom
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-slate-300">Описание</FormLabel>
+                  <FormLabel className="text-slate-300">{t('sidebar.roomDescription')}</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <AlignLeft className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
@@ -157,7 +158,7 @@ export function EditRoomDialog({ room, open, onOpenChange, onSuccess }: EditRoom
                 name="capacity"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-slate-300">Вместимость</FormLabel>
+                    <FormLabel className="text-slate-300">{t('sidebar.roomCapacity')}</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
@@ -168,7 +169,9 @@ export function EditRoomDialog({ room, open, onOpenChange, onSuccess }: EditRoom
                         />
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage>
+                      {form.formState.errors.capacity && t('sidebar.capacityMin')}
+                    </FormMessage>
                   </FormItem>
                 )}
               />
@@ -178,13 +181,13 @@ export function EditRoomDialog({ room, open, onOpenChange, onSuccess }: EditRoom
                 name="equipment"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-slate-300">Оборудование</FormLabel>
+                    <FormLabel className="text-slate-300">{t('sidebar.roomEquipment')}</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Wrench className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                         <Input
                           {...field}
-                          placeholder="ТВ, Кондиционер..."
+                          placeholder={t('sidebar.roomEquipmentPlaceholder')}
                           className="pl-10 bg-white/5 border-white/10 focus:border-amber-500 focus:ring-amber-500/20 text-white h-11 rounded-xl"
                         />
                       </div>
@@ -202,14 +205,14 @@ export function EditRoomDialog({ room, open, onOpenChange, onSuccess }: EditRoom
                 onClick={() => onOpenChange(false)}
                 className="rounded-xl text-slate-400 hover:text-white hover:bg-white/5"
               >
-                Отмена
+                {t('common.cancel')}
               </Button>
               <Button
                 type="submit"
                 disabled={isLoading}
                 className="rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold shadow-lg shadow-amber-500/20 border-0 transition-all duration-300"
               >
-                {isLoading ? "Сохранение..." : "Сохранить изменения"}
+                {isLoading ? t('common.saving') : t('sidebar.saveChanges')}
               </Button>
             </DialogFooter>
           </form>
