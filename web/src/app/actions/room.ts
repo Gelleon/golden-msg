@@ -53,7 +53,7 @@ export async function createRoomInvite(roomId: string, role: "client" | "partner
     // Log the action
     console.log(`[LOG] User ${session.user.id} (${currentUser?.role}) created an invite for room ${roomId} with role ${role}. Token: ${token}`)
 
-    const domain = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    const domain = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
     const inviteUrl = `${domain}/invite/${roomId}/${token}`
 
     return { success: true, inviteUrl }
