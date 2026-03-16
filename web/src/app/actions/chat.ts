@@ -8,34 +8,16 @@ import fs from "fs/promises"
 import path from "path"
 import { translateText } from "@/lib/dewiar"
 
-export async function writeDebugLog(msg: string) {
-  try {
-    const timestamp = new Date().toISOString()
-    const logLine = `[${timestamp}] ${msg}\n`
-    // Write to root for IDE view
-    await fs.appendFile(path.join(process.cwd(), "debug_api.log"), logLine)
-    // Write to public for potential browser access (not ideal for prod, but good for debug)
-    await fs.appendFile(path.join(process.cwd(), "public", "debug_api.log"), logLine)
-  } catch (e) {
-    console.error("LOGGING ERROR:", e)
-  }
-}
-
 async function translateWithDewiar(text: string, fromLang: string, toLang: string) {
-  await writeDebugLog(`translateWithDewiar CALLED with: "${text.substring(0, 30)}..." from ${fromLang} to ${toLang}`);
-  
   try {
     const translation = await translateText(text, fromLang, toLang);
     
     if (translation) {
-      await writeDebugLog(`Dewiar SUCCESS: ${translation.substring(0, 30)}...`);
       return translation;
     }
     
-    await writeDebugLog(`Dewiar translation returned null`);
     return null;
   } catch (error) {
-    await writeDebugLog(`Dewiar translation error: ${error instanceof Error ? error.message : String(error)}`);
     return null;
   }
 }
@@ -168,6 +150,7 @@ export async function updateTypingStatus(roomId: string) {
       },
       data: {
         typing_at: new Date(),
+        last_active_at: new Date(),
       },
     })
     return { success: true }
@@ -292,6 +275,7 @@ export async function markAsRead(roomId: string) {
       },
       data: {
         last_read_at: new Date(),
+        last_active_at: new Date(),
       },
     })
     revalidatePath("/dashboard")
@@ -316,7 +300,6 @@ export async function sendMessageAction({
   fileUrl?: string
   replyToId?: string
 }) {
-  await writeDebugLog(`sendMessageAction CALLED for room ${roomId}, type ${messageType}, replyToId: ${replyToId}, content: "${content.substring(0, 20)}..."`);
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
 
@@ -393,6 +376,11 @@ export async function sendMessageAction({
         if (!response.ok) throw new Error("Failed to fetch audio file")
         const blob = await response.blob()
         file = new File([blob], "voice.webm", { type: "audio/webm" })
+      }
+
+      if (!openai) {
+        console.error("OpenAI client is not initialized");
+        throw new Error("OpenAI client is missing");
       }
 
       const transcription = await openai.audio.transcriptions.create({
@@ -478,6 +466,21 @@ export async function sendMessageAction({
     })
 
     revalidatePath(`/dashboard/rooms/${roomId}`)
+    
+    // Update last_active_at for the sender
+    await prisma.roomParticipant.update({
+      where: {
+        room_id_user_id: {
+          room_id: roomId,
+          user_id: user.id,
+        },
+      },
+      data: {
+        last_active_at: new Date(),
+        last_read_at: new Date(),
+      },
+    })
+
     return { 
       success: true, 
       message: {

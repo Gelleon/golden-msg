@@ -14,11 +14,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ChinaRussiaBackground } from "@/components/china-russia-background"
+import { ForgotPasswordForm } from "@/components/forgot-password-form"
 
 export function WelcomeScreen() {
   const { t, setLanguage, language } = useTranslation()
   const [hasConfirmedLanguage, setHasConfirmedLanguage] = useState(false)
   const [isLogin, setIsLogin] = useState(true)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -335,104 +337,121 @@ export function WelcomeScreen() {
                </Button>
             </div>
 
-            <div className="max-w-md w-full mx-auto space-y-8 md:space-y-10">
-              <div className="space-y-2 text-center lg:text-left">
-                <motion.h2 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-3xl md:text-4xl font-black text-white tracking-tight"
-                >
-                  {t("welcome.welcomeBack")}
-                </motion.h2>
-                <motion.p 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-slate-500 font-light text-sm md:text-base"
-                >
-                  {t("welcome.subtitle")}
-                </motion.p>
-              </div>
+              <div className="max-w-md w-full mx-auto space-y-8 md:space-y-10">
+                {showForgotPassword ? (
+                  <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />
+                ) : (
+                  <>
+                    <div className="space-y-2 text-center lg:text-left">
+                      <motion.h2 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-3xl md:text-4xl font-black text-white tracking-tight"
+                      >
+                        {isLogin ? t("welcome.welcomeBack") : t("welcome.createAccount")}
+                      </motion.h2>
+                      <motion.p 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="text-slate-500 font-light text-sm md:text-base"
+                      >
+                        {isLogin ? t("welcome.subtitle") : t("welcome.registerSubtitle")}
+                      </motion.p>
+                    </div>
 
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 md:space-y-6">
-                <div className="space-y-4 md:space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.email")}</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder={t("welcome.emailPlaceholder")}
-                      {...form.register("email")}
-                      className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="password"className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.password")}</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder={t("welcome.passwordPlaceholder")}
-                      {...form.register("password")}
-                      className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
-                      required
-                    />
-                  </div>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 md:space-y-6">
+                      <div className="space-y-4 md:space-y-5">
+                        <div className="space-y-2">
+                          <Label htmlFor="email" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.email")}</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            placeholder={t("welcome.emailPlaceholder")}
+                            {...form.register("email")}
+                            className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
+                            required
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between ml-1">
+                            <Label htmlFor="password"className="text-slate-300 text-xs md:text-sm font-medium">{t("welcome.password")}</Label>
+                            {isLogin && (
+                              <button
+                                type="button"
+                                onClick={() => setShowForgotPassword(true)}
+                                className="text-[10px] md:text-xs text-secondary hover:text-amber-400 transition-colors font-medium"
+                              >
+                                {t("welcome.forgotPassword")}
+                              </button>
+                            )}
+                          </div>
+                          <Input
+                            id="password"
+                            type="password"
+                            placeholder={t("welcome.passwordPlaceholder")}
+                            {...form.register("password")}
+                            className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
+                            required
+                          />
+                        </div>
 
-                  {!isLogin && (
-                    <motion.div 
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      className="space-y-2 overflow-hidden"
-                    >
-                      <Label htmlFor="fullName" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.fullName")}</Label>
-                      <Input
-                        id="fullName"
-                        placeholder={t("welcome.fullNamePlaceholder")}
-                        {...form.register("fullName")}
-                        className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
-                        required={!isLogin}
-                      />
-                    </motion.div>
-                  )}
-                </div>
+                        {!isLogin && (
+                          <motion.div 
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            className="space-y-2 overflow-hidden"
+                          >
+                            <Label htmlFor="fullName" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.fullName")}</Label>
+                            <Input
+                              id="fullName"
+                              placeholder={t("welcome.fullNamePlaceholder")}
+                              {...form.register("fullName")}
+                              className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
+                              required={!isLogin}
+                            />
+                          </motion.div>
+                        )}
+                      </div>
 
-                {error && (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="p-3 md:p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-xs md:text-sm flex items-center"
-                  >
-                    <ShieldCheck className="h-4 w-4 mr-2 flex-shrink-0" />
-                    {error}
-                  </motion.div>
+                      {error && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="p-3 md:p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-xs md:text-sm flex items-center"
+                        >
+                          <ShieldCheck className="h-4 w-4 mr-2 flex-shrink-0" />
+                          {error}
+                        </motion.div>
+                      )}
+
+                      <div className="space-y-4 pt-2">
+                        <Button
+                          type="submit"
+                          disabled={isLoading}
+                          className="w-full h-12 md:h-14 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-2xl shadow-xl shadow-amber-500/20 transition-all duration-300 text-sm md:text-base"
+                        >
+                          {isLoading ? (
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                          ) : (
+                            isLogin ? t("welcome.submitLogin") : t("welcome.submitRegister")
+                          )}
+                        </Button>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => setIsLogin(!isLogin)}
+                          className="w-full h-12 md:h-14 text-slate-400 hover:text-white hover:bg-white/5 rounded-2xl transition-all text-xs md:text-sm"
+                        >
+                          {isLogin ? t("welcome.toggleToRegister") : t("welcome.toggleToLogin")}
+                        </Button>
+                      </div>
+                    </form>
+                  </>
                 )}
-
-                <div className="space-y-4 pt-2">
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full h-12 md:h-14 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-2xl shadow-xl shadow-amber-500/20 transition-all duration-300 text-sm md:text-base"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      isLogin ? t("welcome.submitLogin") : t("welcome.submitRegister")
-                    )}
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setIsLogin(!isLogin)}
-                    className="w-full h-12 md:h-14 text-slate-400 hover:text-white hover:bg-white/5 rounded-2xl transition-all text-xs md:text-sm"
-                  >
-                    {isLogin ? t("welcome.toggleToRegister") : t("welcome.toggleToLogin")}
-                  </Button>
-                </div>
-              </form>
-            </div>
+              </div>
           </motion.div>
         </motion.div>
       </AnimatePresence>

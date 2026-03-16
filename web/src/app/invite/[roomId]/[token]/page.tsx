@@ -27,7 +27,6 @@ export default function InvitePage() {
           setStatus("success")
           toast({
             title: t('roomSettings.inviteSuccess'),
-            variant: "default",
           })
           // Redirect to the room after 2 seconds
           setTimeout(() => {

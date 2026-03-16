@@ -127,6 +127,26 @@ exports.Prisma.UserScalarFieldEnum = {
   role: 'role',
   preferred_language: 'preferred_language',
   password_hash: 'password_hash',
+  created_at: 'created_at',
+  email_notifications_enabled: 'email_notifications_enabled',
+  last_email_notification_at: 'last_email_notification_at',
+  last_password_reset_at: 'last_password_reset_at'
+};
+
+exports.Prisma.PasswordResetTokenScalarFieldEnum = {
+  id: 'id',
+  token: 'token',
+  user_id: 'user_id',
+  expires_at: 'expires_at',
+  created_at: 'created_at'
+};
+
+exports.Prisma.AuditLogScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  ip_address: 'ip_address',
+  action: 'action',
+  details: 'details',
   created_at: 'created_at'
 };
 
@@ -149,6 +169,7 @@ exports.Prisma.RoomParticipantScalarFieldEnum = {
   role: 'role',
   joined_at: 'joined_at',
   last_read_at: 'last_read_at',
+  last_active_at: 'last_active_at',
   typing_at: 'typing_at'
 };
 
@@ -178,6 +199,17 @@ exports.Prisma.RoomInviteScalarFieldEnum = {
   created_at: 'created_at'
 };
 
+exports.Prisma.NotificationLogScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  email: 'email',
+  type: 'type',
+  status: 'status',
+  error: 'error',
+  sent_at: 'sent_at',
+  metadata: 'metadata'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -191,10 +223,13 @@ exports.Prisma.NullsOrder = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  PasswordResetToken: 'PasswordResetToken',
+  AuditLog: 'AuditLog',
   Room: 'Room',
   RoomParticipant: 'RoomParticipant',
   Message: 'Message',
-  RoomInvite: 'RoomInvite'
+  RoomInvite: 'RoomInvite',
+  NotificationLog: 'NotificationLog'
 };
 
 /**

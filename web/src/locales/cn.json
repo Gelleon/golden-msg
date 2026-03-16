@@ -37,7 +37,9 @@
     "profile": "个人资料",
     "security": "安全",
     "language": "语言",
-    "users": "用户管理"
+    "users": "用户管理",
+    "notifications": "通知",
+    "notifications_admin": "统计数据"
   },
   "settings": {
     "personalCabinet": "个人中心",
@@ -56,7 +58,9 @@
       "photoUploadError": "无法上传照片",
       "updated": "个人资料已更新",
       "updatedDesc": "您的数据已成功保存。",
-      "updateError": "无法更新个人资料。"
+      "updateError": "无法更新个人资料。",
+      "emailNotifications": "电子邮件通知",
+      "emailNotificationsDesc": "当您离线时接收未读消息通知。"
     },
     "security": {
       "title": "安全",
@@ -205,6 +209,40 @@
     "online": "在线",
     "participantsCount": "人"
   },
+  "settings_status": {
+    "success": "成功",
+    "error": "错误"
+  },
+  "notifications_admin": {
+    "stats": {
+      "total": "总发送量",
+      "totalDesc": "累计发送邮件数",
+      "success": "成功",
+      "successDesc": "成功送达用户",
+      "errors": "错误",
+      "errorsDesc": "发送失败次数"
+    },
+    "logs": {
+      "title": "通知日志",
+      "description": "所有已发送电子邮件通知的历史记录",
+      "refresh": "刷新",
+      "triggerScan": "开始扫描",
+      "loading": "正在加载日志...",
+      "noLogs": "暂无日志",
+      "table": {
+        "user": "用户",
+        "status": "状态",
+        "date": "日期",
+        "details": "详情"
+      },
+      "status": {
+        "sent": "已发送",
+        "error": "错误"
+      },
+      "scanSuccess": "扫描已成功启动",
+      "scanError": "无法启动扫描"
+    }
+  },
   "welcome": {
     "heroTitle": "商业无国界",
     "heroSubtitle": "支持AI翻译的俄罗斯与中国之间的高效互动。",
@@ -238,10 +276,49 @@
     "errorLoginFailed": "登录失败",
     "errorRegistrationFailed": "注册失败",
     "errorUnknown": "未知错误",
-    "emailError": "电子邮件格式不正确",
-    "passwordError": "密码长度不能少于 6 个字符",
+    "emailError": "电子邮件格式无效",
+    "passwordError": "密码必须至少为 6 个字符",
+    "forgotPassword": "忘记密码？",
     "brandName": "GOLDEN RUSSIA",
     "footer": "GOLDEN RUSSIA &copy; {year} • ELITE BUSINESS NETWORK",
+    "emailNotifications": {
+      "unreadMessagesSubject": "您在 Golden Russia 有 {count} 条未读消息",
+      "hello": "您好，{name}！",
+      "inactiveMessage": "您已超过一小时未进入聊天。在此期间，您的房间中有新消息：",
+      "roomMessage": "条新消息",
+      "goToMessages": "前往查看消息",
+      "unsubscribeNote": "您收到此邮件是因为您的个人资料中开启了通知。",
+      "unsubscribeLink": "退订通知"
+    },
+    "recovery": {
+      "title": "找回密码",
+      "description": "请输入您的电子邮件以接收重置密码的链接。",
+      "email": "电子邮件地址",
+      "emailPlaceholder": "name@company.com",
+      "submit": "发送链接",
+      "backToLogin": "返回登录",
+      "success": "链接已发送",
+      "successDesc": "请检查您的电子邮件以继续。",
+      "resetTitle": "设置新密码",
+      "resetDesc": "请为您的账户设置一个安全的新密码。",
+      "newPassword": "新密码",
+      "confirmPassword": "确认密码",
+      "confirmPasswordError": "密码不匹配。",
+      "resetSubmit": "更新密码",
+      "resetSuccess": "密码已重置",
+      "resetSuccessDesc": "您现在可以使用新密码登录。",
+      "passwordComplexity": "至少 8 个字符，包含大写字母、数字和特殊字符。",
+      "errorTokenInvalid": "链接无效或已过期。",
+      "errorRateLimit": "尝试次数过多，请一小时后再试。",
+      "emailSubject": "找回密码 - Golden Russia",
+      "emailHello": "您好！",
+      "emailBody": "您收到这封邮件是因为我们收到了重置您账户密码的请求。",
+      "emailAction": "重置密码",
+      "emailExpire": "该链接的有效期为 24 小时。",
+      "emailSecurity": "如果您没有请求重置密码，请忽略此邮件。",
+      "changeNotificationSubject": "您的密码已更改",
+      "changeNotificationBody": "您的 Golden Russia 账户密码已成功更改。如果这不是您本人的操作，请立即联系支持团队。"
+    },
     "features": {
       "translation": {
         "title": "实时 AI 翻译 (俄语/中文)",

@@ -4,6 +4,8 @@ import { useSearchParams } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
 import { getUsers, updateUserRole, updateProfile } from "@/app/actions/users"
 import { uploadFile } from "@/app/actions/upload"
+import { NotificationManagementForm } from "./notification-management-form"
+import { NotificationSettingsForm } from "./notification-settings-form"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -39,7 +41,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Loader2, User, Lock, Camera, Check, AlertCircle, Globe, Users, ShieldCheck, Briefcase, UserCheck, UserCog, Search, Filter, MoreHorizontal, ChevronDown, Save } from "lucide-react"
+import { Loader2, User, Lock, Camera, Check, AlertCircle, Globe, Users, ShieldCheck, Briefcase, UserCheck, UserCog, Search, Filter, MoreHorizontal, ChevronDown, Save, Bell, BarChart3 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { motion, AnimatePresence } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -75,8 +77,8 @@ export function SettingsForm({ user }: { user: any }) {
 
   useEffect(() => {
     const tab = searchParams.get("tab")
-    if (tab && ["profile", "security", "language", "users"].includes(tab)) {
-      if (tab === "users" && user?.role !== "admin") {
+    if (tab && ["profile", "security", "language", "users", "notifications", "notifications_admin"].includes(tab)) {
+      if (["users", "notifications_admin"].includes(tab) && user?.role !== "admin") {
         setActiveTab("profile")
       } else {
         setActiveTab(tab)
@@ -147,19 +149,35 @@ export function SettingsForm({ user }: { user: any }) {
               </TabsTrigger>
               <TabsTrigger 
                 value="language" 
-                className="flex items-center gap-2 rounded-lg data-[state=active]:bg-slate-900 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
+                className="flex items-center gap-2 rounded-lg data-[state=active]:bg-emerald-600 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
               >
                 <Globe className="h-3.5 w-3.5" />
                 {t('tabs.language')}
               </TabsTrigger>
+              <TabsTrigger 
+                value="notifications" 
+                className="flex items-center gap-2 rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
+              >
+                <Bell className="h-3.5 w-3.5" />
+                {t('tabs.notifications')}
+              </TabsTrigger>
               {user?.role === "admin" && (
-                <TabsTrigger 
-                  value="users" 
-                  className="flex items-center gap-2 rounded-lg data-[state=active]:bg-amber-600 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
-                >
-                  <UserCog className="h-3.5 w-3.5" />
-                  {t('tabs.users')}
-                </TabsTrigger>
+                <>
+                  <TabsTrigger 
+                    value="users" 
+                    className="flex items-center gap-2 rounded-lg data-[state=active]:bg-amber-600 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
+                  >
+                    <UserCog className="h-3.5 w-3.5" />
+                    {t('tabs.users')}
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="notifications_admin" 
+                    className="flex items-center gap-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
+                  >
+                    <BarChart3 className="h-3.5 w-3.5" />
+                    {t('tabs.notifications_admin')}
+                  </TabsTrigger>
+                </>
               )}
             </TabsList>
           </div>
@@ -184,10 +202,19 @@ export function SettingsForm({ user }: { user: any }) {
                 <LanguageForm user={user} toast={toast} />
               </TabsContent>
 
+              <TabsContent value="notifications" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                <NotificationSettingsForm user={user} />
+              </TabsContent>
+
               {user?.role === "admin" && (
-                <TabsContent value="users" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-                  <UsersManagementForm toast={toast} roleLabels={roleLabels} roleIcons={roleIcons} roleColors={roleColors} />
-                </TabsContent>
+                <>
+                  <TabsContent value="users" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                    <UsersManagementForm toast={toast} roleLabels={roleLabels} roleIcons={roleIcons} roleColors={roleColors} />
+                  </TabsContent>
+                  <TabsContent value="notifications_admin" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                    <NotificationManagementForm />
+                  </TabsContent>
+                </>
               )}
             </motion.div>
           </AnimatePresence>
@@ -642,6 +669,32 @@ function ProfileForm({ user, toast, roleLabels, roleColors }: { user: any, toast
                 <AlertCircle className="h-3 w-3 text-amber-600" />
                 {t('settings.profile.emailNoChange')}
               </p>
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-6 border-t border-slate-100">
+            <div className="flex items-center justify-between gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100 group transition-all hover:bg-white hover:shadow-md">
+              <div className="flex items-start gap-4">
+                <div className="p-2.5 bg-blue-50 rounded-xl border border-blue-100 group-hover:scale-110 transition-transform">
+                  <ShieldCheck className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-black text-slate-900 tracking-tight">{t('settings.profile.emailNotifications')}</h4>
+                  <p className="text-[11px] text-slate-500 font-bold leading-relaxed max-w-md">
+                    {t('settings.profile.emailNotificationsDesc')}
+                  </p>
+                </div>
+              </div>
+              <div className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  name="emailNotifications"
+                  value="true"
+                  defaultChecked={user?.email_notifications_enabled}
+                  className="sr-only peer"
+                />
+                <div className="w-12 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 shadow-inner" />
+              </div>
             </div>
           </div>
 

@@ -37,7 +37,9 @@
     "profile": "Профиль",
     "security": "Безопасность",
     "language": "Язык",
-    "users": "Пользователи"
+    "users": "Пользователи",
+    "notifications": "Уведомления",
+    "notifications_admin": "Статистика"
   },
   "settings": {
     "personalCabinet": "Личный кабинет",
@@ -56,7 +58,9 @@
       "photoUploadError": "Не удалось загрузить фото",
       "updated": "Профиль обновлен",
       "updatedDesc": "Ваши данные успешно сохранены.",
-      "updateError": "Не удалось обновить профиль."
+      "updateError": "Не удалось обновить профиль.",
+      "emailNotifications": "Email-уведомления",
+      "emailNotificationsDesc": "Получать уведомления о непрочитанных сообщениях, когда вы не в сети."
     },
     "security": {
       "title": "Безопасность",
@@ -205,6 +209,40 @@
     "online": "В сети",
     "participantsCount": "уч."
   },
+  "settings_status": {
+    "success": "Успешно",
+    "error": "Ошибка"
+  },
+  "notifications_admin": {
+    "stats": {
+      "total": "Всего отправлено",
+      "totalDesc": "Писем за все время",
+      "success": "Успешно",
+      "successDesc": "Доставлено пользователям",
+      "errors": "Ошибки",
+      "errorsDesc": "Сбоев при отправке"
+    },
+    "logs": {
+      "title": "Логи уведомлений",
+      "description": "История всех отправленных email-уведомлений",
+      "refresh": "Обновить",
+      "triggerScan": "Запустить скан",
+      "loading": "Загрузка логов...",
+      "noLogs": "Логов пока нет",
+      "table": {
+        "user": "Пользователь",
+        "status": "Статус",
+        "date": "Дата",
+        "details": "Детали"
+      },
+      "status": {
+        "sent": "Отправлено",
+        "error": "Ошибка"
+      },
+      "scanSuccess": "Скан успешно запущен",
+      "scanError": "Не удалось запустить скан"
+    }
+  },
   "welcome": {
     "heroTitle": "Бизнес без границ",
     "heroSubtitle": "Эффективное взаимодействие между Россией и Китаем с поддержкой ИИ-перевода.",
@@ -240,8 +278,47 @@
     "errorUnknown": "Неизвестная ошибка",
     "emailError": "Неверный формат email",
     "passwordError": "Пароль должен быть не менее 6 символов",
+    "forgotPassword": "Забыли пароль?",
     "brandName": "GOLDEN RUSSIA",
     "footer": "GOLDEN RUSSIA &copy; {year} • ELITE BUSINESS NETWORK",
+    "emailNotifications": {
+      "unreadMessagesSubject": "У вас {count} непрочитанных сообщений в Golden Russia",
+      "hello": "Здравствуйте, {name}!",
+      "inactiveMessage": "Вы не заходили в чат более часа. За это время в ваших комнатах накопились новые сообщения:",
+      "roomMessage": "новых сообщений",
+      "goToMessages": "Перейти к сообщениям",
+      "unsubscribeNote": "Вы получили это письмо, так как в вашем профиле включены уведомления.",
+      "unsubscribeLink": "Отписаться от уведомлений"
+    },
+    "recovery": {
+      "title": "Восстановление пароля",
+      "description": "Введите ваш email для получения ссылки на сброс пароля.",
+      "email": "Email адрес",
+      "emailPlaceholder": "name@company.com",
+      "submit": "Отправить ссылку",
+      "backToLogin": "Вернуться ко входу",
+      "success": "Ссылка отправлена",
+      "successDesc": "Проверьте вашу почту для продолжения.",
+      "resetTitle": "Новый пароль",
+      "resetDesc": "Придумайте надежный пароль для вашего аккаунта.",
+      "newPassword": "Новый пароль",
+      "confirmPassword": "Подтвердите пароль",
+      "confirmPasswordError": "Пароли не совпадают.",
+      "resetSubmit": "Обновить пароль",
+      "resetSuccess": "Пароль изменен",
+      "resetSuccessDesc": "Теперь вы можете войти с новым паролем.",
+      "passwordComplexity": "Минимум 8 символов, заглавная буква, цифра и спецсимвол.",
+      "errorTokenInvalid": "Ссылка недействительна или истекла.",
+      "errorRateLimit": "Слишком много попыток. Попробуйте через час.",
+      "emailSubject": "Восстановление пароля - Golden Russia",
+      "emailHello": "Здравствуйте!",
+      "emailBody": "Вы получили это письмо, так как мы получили запрос на сброс пароля для вашего аккаунта.",
+      "emailAction": "Сбросить пароль",
+      "emailExpire": "Срок действия ссылки — 24 часа.",
+      "emailSecurity": "Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.",
+      "changeNotificationSubject": "Ваш пароль был изменен",
+      "changeNotificationBody": "Пароль для вашего аккаунта Golden Russia был успешно изменен. Если это были не вы, немедленно свяжитесь с поддержкой."
+    },
     "features": {
       "translation": {
         "title": "Мгновенный ИИ-перевод (RU/CN)",

@@ -1,5 +1,4 @@
 
-import { writeDebugLog } from "@/app/actions/chat";
 
 export interface DewiarMessage {
   role: "user" | "assistant" | "system";
@@ -49,13 +48,8 @@ export async function callDewiar(message: string): Promise<any | null> {
   const token = process.env.DEWIAR_API_TOKEN;
   
   if (!token) {
-    await writeDebugLog("DEWIAR CLIENT ERROR: DEWIAR_API_TOKEN is missing");
     return null;
   }
-
-  // Debug: check token format (masking sensitive part)
-  const maskedToken = `${token.substring(0, 4)}...${token.substring(token.length - 4)}`;
-  await writeDebugLog(`DEWIAR CLIENT: Using token ${maskedToken}, length: ${token.length}`);
 
   try {
     const body = {
@@ -70,10 +64,6 @@ export async function callDewiar(message: string): Promise<any | null> {
 
     const url = `${DEWIAR_ENDPOINT}?key=${token}`;
     
-    // Log the actual URL and headers (masked)
-    await writeDebugLog(`DEWIAR REQUEST: POST ${DEWIAR_ENDPOINT}?key=${maskedToken}`);
-    await writeDebugLog(`DEWIAR BODY: ${JSON.stringify(body)}`);
-    
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -83,16 +73,12 @@ export async function callDewiar(message: string): Promise<any | null> {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      await writeDebugLog(`DEWIAR CLIENT ERROR ${response.status}: ${errorText}`);
       return null;
     }
 
     const data = await response.json();
-    await writeDebugLog(`DEWIAR RESPONSE: ${JSON.stringify(data)}`);
     return data;
   } catch (error) {
-    await writeDebugLog(`DEWIAR CLIENT EXCEPTION: ${error instanceof Error ? error.message : String(error)}`);
     return null;
   }
 }
