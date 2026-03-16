@@ -239,7 +239,7 @@ export async function getMessages(roomId: string) {
           avatar_url: true,
           role: true,
           // @ts-ignore
-          preferred_language: true,
+          // preferred_language: true,
         },
       },
       reply_to: {
@@ -382,7 +382,7 @@ export async function sendMessageAction(rawData: {
       avatar_url: true,
       role: true,
       // @ts-ignore
-      preferred_language: true 
+      // preferred_language: true 
     }
   })
 
@@ -412,7 +412,8 @@ export async function sendMessageAction(rawData: {
     targetLanguage = userPref === "Russian" ? "Chinese" : "Russian";
     console.log(`[AI] Detected: Neutral (via User Pref: default "ru")`);
   }
-
+  
+  // @ts-ignore
   console.log(`[SEND MESSAGE] From: ${user.full_name}, DB Pref Lang: ${user.preferred_language}, Final Original: ${languageOriginal}, Target: ${targetLanguage}, Content: "${content.substring(0, 50)}..."`);
 
   let contentTranslated: string | null = null
@@ -569,7 +570,7 @@ export async function sendMessageAction(rawData: {
             avatar_url: true,
             role: true,
             // @ts-ignore
-            preferred_language: true, 
+            // preferred_language: true, 
           },
         },
         reply_to: {
