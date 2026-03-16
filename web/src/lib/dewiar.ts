@@ -48,6 +48,7 @@ export async function callDewiar(message: string): Promise<any | null> {
   const token = process.env.DEWIAR_API_TOKEN;
   
   if (!token) {
+    console.error("DEWIAR_API_TOKEN is missing in environment variables!");
     return null;
   }
 
@@ -62,8 +63,8 @@ export async function callDewiar(message: string): Promise<any | null> {
       }
     };
 
-    console.log(`Calling Dewiar with body: ${JSON.stringify(body)}`);
     const url = `${DEWIAR_ENDPOINT}?key=${token}`;
+    console.log(`[DEWIAR DEBUG] Calling API. Endpoint: ${DEWIAR_ENDPOINT}, Token exists: ${!!token}`);
     
     const response = await fetch(url, {
       method: "POST",
@@ -74,18 +75,19 @@ export async function callDewiar(message: string): Promise<any | null> {
       body: JSON.stringify(body)
     });
 
+    console.log(`[DEWIAR DEBUG] Status: ${response.status} ${response.statusText}`);
+
     if (!response.ok) {
-      console.error(`Dewiar API error: ${response.status} ${response.statusText}`);
       const errorText = await response.text();
-      console.error(`Dewiar error response: ${errorText}`);
+      console.error(`[DEWIAR DEBUG] Error body: ${errorText}`);
       return null;
     }
 
     const data = await response.json();
-    console.log("Dewiar response data:", JSON.stringify(data));
+    console.log("[DEWIAR DEBUG] Response received:", JSON.stringify(data).substring(0, 200) + "...");
     return data;
   } catch (error) {
-    console.error("Dewiar API call exception:", error);
+    console.error("[DEWIAR DEBUG] Exception during API call:", error);
     return null;
   }
 }
