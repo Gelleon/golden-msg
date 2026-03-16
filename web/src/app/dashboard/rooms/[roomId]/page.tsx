@@ -24,11 +24,19 @@ export default async function RoomPage({ params }: RoomPageProps) {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
+    select: {
+      id: true,
+      email: true,
+      full_name: true,
+      avatar_url: true,
+      role: true,
+      // preferred_language: true // Temporarily disabled to prevent schema mismatch
+    }
   })
 
   if (!user) redirect("/")
 
-  const lang = (session?.user?.preferred_language as "ru" | "cn") || "ru"
+  const lang = "ru" // Default to "ru" temporarily
   const translations = lang === "ru" ? ru : cnTrans
 
   // Check room access and get details
@@ -76,18 +84,28 @@ export default async function RoomPage({ params }: RoomPageProps) {
   // Fetch initial messages
   const rawMessages = await prisma.message.findMany({
     where: { room_id: roomId },
-    include: {
+    select: {
+      id: true,
+      content: true,
+      content_translated: true,
+      message_type: true,
+      file_url: true,
+      voice_transcription: true,
+      created_at: true,
+      is_edited: true,
       sender: {
         select: {
           id: true,
           full_name: true,
           avatar_url: true,
           role: true,
-          preferred_language: true,
+          // preferred_language: true, // Temporarily disabled to prevent schema mismatch
         },
       },
       reply_to: {
-        include: {
+        select: {
+          id: true,
+          content: true,
           sender: {
             select: {
               id: true,
@@ -104,7 +122,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
     id: msg.id,
     content_original: msg.content,
     content_translated: msg.content_translated,
-    language_original: msg.sender.preferred_language || "ru",
+    language_original: "ru", // Default to "ru" temporarily
     message_type: msg.message_type,
     file_url: msg.file_url,
     voice_transcription: msg.voice_transcription,

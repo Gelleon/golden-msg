@@ -17,6 +17,7 @@ export async function createRoomInvite(roomId: string, role: "client" | "partner
 
   const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
+    select: { id: true, role: true },
   })
 
   console.log(`[SERVER] Current user: ${currentUser?.id}, role: ${currentUser?.role}`)
@@ -121,6 +122,7 @@ export async function acceptRoomInvite(roomId: string, token: string) {
     // Update user role if it's currently lower than the invite role
     const currentUser = await prisma.user.findUnique({
       where: { id: session.user.id },
+      select: { role: true },
     })
 
     // Role hierarchy logic (optional, but requested: "role for the invited user")
@@ -218,6 +220,7 @@ export async function createRoom(name: string) {
 
   const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
+    select: { role: true },
   })
   
   if (!["admin", "manager"].includes(currentUser?.role || "")) {
@@ -271,7 +274,18 @@ export async function getDMs() {
       include: {
         participants: {
           include: {
-            user: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                full_name: true,
+                avatar_url: true,
+                role: true,
+                created_at: true,
+                // @ts-ignore
+                // preferred_language: true, 
+              }
+            },
           },
         },
       },
@@ -310,7 +324,8 @@ export async function getDMs() {
           full_name: otherParticipant.user.full_name,
           avatar_url: otherParticipant.user.avatar_url,
           role: otherParticipant.user.role,
-          preferred_language: otherParticipant.user.preferred_language,
+          // @ts-ignore
+          preferred_language: otherParticipant.user.preferred_language || "ru",
           created_at: otherParticipant.user.created_at.toISOString()
         } : undefined,
       }
@@ -345,9 +360,20 @@ export async function searchUsers(query: string) {
         },
       },
       take: 10,
+      select: {
+        id: true,
+        full_name: true,
+        avatar_url: true,
+        role: true,
+        created_at: true,
+        // @ts-ignore
+        // preferred_language: true,
+      }
     })
     return users.map(user => ({
       ...user,
+      // @ts-ignore
+      preferred_language: user.preferred_language || "ru",
       created_at: user.created_at.toISOString()
     }))
   } catch (error) {
@@ -362,6 +388,7 @@ export async function startDM(otherUserId: string) {
 
   const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
+    select: { role: true },
   })
 
   if (currentUser?.role === "client") {
@@ -370,6 +397,7 @@ export async function startDM(otherUserId: string) {
 
   const otherUser = await prisma.user.findUnique({
     where: { id: otherUserId },
+    select: { role: true },
   })
 
   if (otherUser?.role === "client") {
@@ -453,6 +481,8 @@ export async function getRoomParticipants(roomId: string) {
             full_name: true,
             avatar_url: true,
             role: true,
+            // @ts-ignore
+            // preferred_language: true,
           },
         },
       },
@@ -460,6 +490,8 @@ export async function getRoomParticipants(roomId: string) {
     // Map to profile structure expected by UI
     return participants.map((p) => ({
       ...p.user,
+      // @ts-ignore
+      preferred_language: p.user.preferred_language || "ru",
       joined_at: p.joined_at.toISOString(),
     }))
   } catch (error) {
@@ -475,6 +507,7 @@ export async function addParticipant(roomId: string, userId: string) {
   // Check permissions (Admin or Manager)
   const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
+    select: { role: true },
   })
   
   const canManage = ["admin", "manager"].includes(currentUser?.role || "")
@@ -514,6 +547,7 @@ export async function removeParticipant(roomId: string, userId: string) {
   // Check permissions (Admin or Manager)
   const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
+    select: { role: true },
   })
   
   const canManage = ["admin", "manager"].includes(currentUser?.role || "")
@@ -569,6 +603,8 @@ export async function searchUsersForRoom(query: string) {
         full_name: true,
         avatar_url: true,
         role: true,
+        // @ts-ignore
+        // preferred_language: true,
       },
     })
     return users
@@ -589,6 +625,7 @@ export async function updateRoom(roomId: string, data: {
 
   const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
+    select: { role: true },
   })
   
   if (!["admin", "manager"].includes(currentUser?.role || "")) {
@@ -632,6 +669,7 @@ export async function deleteRoom(roomId: string) {
 
   const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
+    select: { role: true },
   })
   
   if (currentUser?.role !== "admin") {

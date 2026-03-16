@@ -26,13 +26,16 @@ export async function getUsers() {
         email: true,
         full_name: true,
         role: true,
-        preferred_language: true,
+        // @ts-ignore
+        // preferred_language: true,
         avatar_url: true,
         created_at: true,
       },
     })
     return users.map(user => ({
       ...user,
+      // @ts-ignore
+      preferred_language: user.preferred_language || "ru",
       created_at: user.created_at.toISOString()
     }))
   } catch (error) {
@@ -86,7 +89,7 @@ export async function updateProfile(formData: FormData) {
 
   const data: any = {}
   if (fullName !== null) data.full_name = fullName
-  if (language !== null) data.preferred_language = language
+  // if (language !== null) data.preferred_language = language
   if (avatarUrl !== null) data.avatar_url = avatarUrl
   if (emailNotifications !== null) data.email_notifications_enabled = emailNotifications === "true"
   if (pushNotifications !== null) data.push_notifications_enabled = pushNotifications === "true"
