@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache"
 import prisma from "@/lib/db"
 import { getSession } from "./auth"
 import { randomBytes } from "crypto"
-
 import { headers } from "next/headers"
+import { ensureSchemaFixed } from "@/lib/schema-fix"
 
 export async function createRoomInvite(roomId: string, role: "client" | "partner", maxUses: number = 1) {
+  await ensureSchemaFixed()
   console.log(`[SERVER] Creating invite for room ${roomId}, role ${role}`)
   const session = await getSession()
   if (!session?.user) {

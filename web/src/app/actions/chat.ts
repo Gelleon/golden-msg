@@ -9,6 +9,7 @@ import fs from "fs/promises"
 import path from "path"
 import { translateText } from "@/lib/dewiar"
 import { z } from "zod"
+import { ensureSchemaFixed } from "@/lib/schema-fix"
 
 const sendMessageSchema = z.object({
   roomId: z.string().uuid(),
@@ -37,6 +38,7 @@ async function translateWithDewiar(text: string, fromLang: string, toLang: strin
 }
 
 export async function deleteMessage(messageId: string) {
+  await ensureSchemaFixed()
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
 
@@ -82,6 +84,7 @@ export async function deleteMessage(messageId: string) {
 }
 
 export async function updateMessage(messageId: string, content: string) {
+  await ensureSchemaFixed()
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
 
@@ -96,7 +99,7 @@ export async function updateMessage(messageId: string, content: string) {
 
     // Re-translate if content changed
     let contentTranslated = message.content_translated
-    const user = await prisma.user.findUnique({ 
+    await prisma.user.findUnique({ 
       where: { id: session.user.id },
       select: {
         id: true,
@@ -132,27 +135,6 @@ export async function updateMessage(messageId: string, content: string) {
 
       if (dewiarTranslation) {
         contentTranslated = dewiarTranslation;
-      } else if (openai) {
-        try {
-          const completion = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-              {
-                role: "system",
-                content: `You are a professional translator. Translate the following text from ${
-                  languageOriginal === "Russian" ? "Russian" : "Chinese"
-                } to ${targetLanguage}. Return only the translated text.`,
-              },
-              {
-                role: "user",
-                content: content,
-              },
-            ],
-          })
-          contentTranslated = completion.choices[0].message.content
-        } catch (e) {
-          console.error("Translation error during update:", e)
-        }
       }
     }
 
@@ -200,6 +182,7 @@ export async function updateTypingStatus(roomId: string) {
 }
 
 export async function getMessages(roomId: string) {
+  await ensureSchemaFixed()
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
 
@@ -346,6 +329,7 @@ export async function sendMessageAction(rawData: {
   fileUrl?: string
   replyToId?: string
 }) {
+  await ensureSchemaFixed()
   console.log(`[ACTION] sendMessageAction start: ${JSON.stringify(rawData).substring(0, 100)}...`);
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
@@ -421,8 +405,7 @@ export async function sendMessageAction(rawData: {
 
   // AI Processing
   const dewarTokenExists = !!process.env.DEWIAR_API_TOKEN;
-  const openaiTokenExists = !!process.env.OPENAI_API_KEY;
-  console.log(`[AI] Processing tokens check: Dewiar=${dewarTokenExists}, OpenAI=${openaiTokenExists}`);
+  console.log(`[AI] Processing tokens check: Dewiar=${dewarTokenExists}`);
 
   try {
     if (messageType === "text" || (messageType === "voice" && voiceTranscription)) {
@@ -442,26 +425,6 @@ export async function sendMessageAction(rawData: {
         console.log(`[AI] Dewiar translation SUCCESS: "${contentTranslated.substring(0, 30)}..."`);
       } else {
         console.warn(`[AI] Dewiar FAILED (returned null) for text: "${textToTranslate?.substring(0, 30)}..."`);
-        if (openai) {
-          console.log("[AI] Falling back to OpenAI...");
-          const completion = await openai.chat.completions.create({
-            model: "gpt-4o",
-            messages: [
-              {
-                role: "system",
-                content: `You are a professional translator. Translate the following text from ${languageOriginal} to ${targetLanguage}. Return only the translated text.`,
-              },
-              {
-                role: "user",
-                content: textToTranslate!,
-              },
-            ],
-          })
-          contentTranslated = completion.choices[0].message.content
-          console.log(`[AI] OpenAI SUCCESS: "${contentTranslated?.substring(0, 30)}..."`);
-        } else {
-          console.warn("[AI] OpenAI fallback NOT available");
-        }
       }
     }
 
@@ -507,21 +470,6 @@ export async function sendMessageAction(rawData: {
 
       if (dewiarTranslation) {
         contentTranslated = dewiarTranslation;
-      } else if (openai) {
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            {
-              role: "system",
-              content: `You are a professional translator. Translate the following text from ${languageOriginal} to ${targetLanguage}. Return only the translated text.`,
-            },
-            {
-              role: "user",
-              content: voiceTranscription,
-            },
-          ],
-        })
-        contentTranslated = completion.choices[0].message.content
       }
     }
   } catch (error) {
@@ -531,8 +479,7 @@ export async function sendMessageAction(rawData: {
 
   // Final fallback if still null
   if (!contentTranslated && messageType === "text") {
-    const reason = !dewarTokenExists ? "Dewiar Token Missing" : 
-                   (!openaiTokenExists ? "OpenAI Token Missing" : "Both services returned null");
+    const reason = !dewarTokenExists ? "Dewiar Token Missing" : "Dewiar returned null";
     contentTranslated = `DEBUG: No translation (${reason}) for: ${content.substring(0, 10)}...`
   }
 
@@ -540,19 +487,19 @@ export async function sendMessageAction(rawData: {
 
   // Insert Message into Database
   try {
+    const messageData: any = {
+      room_id: roomId,
+      sender_id: user.id,
+      content: content,
+      content_translated: contentTranslated,
+      message_type: messageType,
+      file_url: fileUrl,
+      voice_transcription: voiceTranscription,
+      reply_to_id: replyToId,
+    };
+
     const message = await prisma.message.create({
-      data: {
-        room_id: roomId,
-        sender_id: user.id,
-        content: content,
-        content_translated: contentTranslated,
-        // @ts-ignore
-        // language_original: languageOriginal === "Russian" ? "ru" : "cn", 
-        message_type: messageType,
-        file_url: fileUrl,
-        voice_transcription: voiceTranscription,
-        reply_to_id: replyToId,
-      },
+      data: messageData,
       select: {
         id: true,
         content: true,

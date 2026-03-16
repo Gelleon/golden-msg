@@ -81,9 +81,16 @@ export async function callDewiar(message: string): Promise<any | null> {
       return null;
     }
 
-    const data = await response.json();
+    const rawText = await response.text();
+    let parsed: any = null;
+    try {
+      parsed = JSON.parse(rawText);
+    } catch {
+      parsed = { response: rawText };
+    }
+
     console.log("[DEWIAR] Response received from API");
-    return data;
+    return parsed;
   } catch (error) {
     console.error("[DEWIAR] Network exception:", error);
     return null;
@@ -121,13 +128,21 @@ Text to translate: ${text}`;
   }
 
   // Handle various response formats from Dewiar API
-  const translatedText = 
-    response.response || 
-    response.data?.message || 
-    response.data?.response || // Added key
-    response.message || 
-    response.choices?.[0]?.message?.content || // OpenAI format
-    (typeof response.result === 'string' ? response.result : null);
+  const translatedText =
+    (typeof response === "string" ? response : null) ||
+    response.response ||
+    response.message ||
+    response.result ||
+    response.answer ||
+    response.output ||
+    response.text ||
+    response.data?.message ||
+    response.data?.response ||
+    response.data?.result ||
+    response.data?.answer ||
+    response.data?.output ||
+    response.data?.text ||
+    response.choices?.[0]?.message?.content;
 
   console.log(`[DEWIAR] Extracted translatedText: "${translatedText}"`);
 

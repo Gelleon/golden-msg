@@ -9,6 +9,7 @@ import crypto from "crypto" // for tokens
 import { sendEmail } from "@/lib/email"
 import { logAuditAction, checkRateLimit, securityDelay, detectSuspiciousActivity } from "@/lib/security"
 import { headers } from "next/headers"
+import { ensureSchemaFixed } from "@/lib/schema-fix"
 
 import ru from '@/locales/ru.json'
 import cn from '@/locales/cn.json'
@@ -38,6 +39,7 @@ const authSchema = z.object({
 })
 
 export async function login(formData: FormData) {
+  await ensureSchemaFixed()
   console.log("LOGIN ATTEMPT", formData.get("email"))
   const email = formData.get("email") as string
   const password = formData.get("password") as string
@@ -132,6 +134,7 @@ export async function login(formData: FormData) {
 }
 
 export async function register(formData: FormData) {
+  await ensureSchemaFixed()
   console.log("REGISTER ATTEMPT", formData.get("email"))
   const email = formData.get("email") as string
   const password = formData.get("password") as string
@@ -178,15 +181,22 @@ export async function register(formData: FormData) {
     const role = userCount === 0 ? "admin" : "client"
 
     console.log("CREATING USER", email, role)
+    const userData: any = {
+      email,
+      password_hash: hashedPassword,
+      full_name: fullName,
+      role: role,
+    };
+
+    // Try to add preferred_language safely
+    try {
+      userData.preferred_language = language || "ru";
+    } catch (e) {
+      console.warn("Could not set preferred_language on user data", e);
+    }
+
     const user = await prisma.user.create({
-      data: {
-        email,
-        password_hash: hashedPassword,
-        full_name: fullName,
-        // @ts-ignore
-        // preferred_language: language || "ru",
-        role: role,
-      },
+      data: userData,
     })
 
     await logAuditAction({
@@ -220,6 +230,7 @@ export async function logout() {
 }
 
 export async function getSession() {
+  await ensureSchemaFixed()
   const cookieStore = await cookies()
   const userId = cookieStore.get("session_user_id")?.value
 
@@ -323,7 +334,7 @@ export async function forgotPassword(formData: FormData) {
     
     // Simple template selection based on user language
     // @ts-ignore
-    const lang = user.preferred_language === 'cn' ? 'cn' : 'ru';
+    const lang = (user as any).preferred_language === 'cn' ? 'cn' : 'ru';
     const subjects = {
       ru: t("welcome.recovery.emailSubject", "ru"),
       cn: t("welcome.recovery.emailSubject", "cn")
@@ -424,7 +435,7 @@ export async function resetPassword(formData: FormData) {
 
     // 5. Notify user of change
     // @ts-ignore
-    const lang = user.preferred_language === 'cn' ? 'cn' : 'ru';
+    const lang = (user as any).preferred_language === 'cn' ? 'cn' : 'ru';
     await sendEmail({
       to: user.email,
       subject: t("welcome.recovery.changeNotificationSubject", lang),

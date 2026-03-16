@@ -89,7 +89,14 @@ export async function updateProfile(formData: FormData) {
 
   const data: any = {}
   if (fullName !== null) data.full_name = fullName
-  // if (language !== null) data.preferred_language = language
+  // Try to add language safely
+  if (language !== null) {
+    try {
+      data.preferred_language = language;
+    } catch (e) {
+      console.warn("Could not set preferred_language in updateProfile", e);
+    }
+  }
   if (avatarUrl !== null) data.avatar_url = avatarUrl
   if (emailNotifications !== null) data.email_notifications_enabled = emailNotifications === "true"
   if (pushNotifications !== null) data.push_notifications_enabled = pushNotifications === "true"
