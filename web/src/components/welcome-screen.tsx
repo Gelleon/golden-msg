@@ -13,6 +13,7 @@ import { useTranslation } from "@/lib/language-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { ChinaRussiaBackground } from "@/components/china-russia-background"
 
 export function WelcomeScreen() {
   const { t, setLanguage, language } = useTranslation()
@@ -96,30 +97,10 @@ export function WelcomeScreen() {
   // Language Selection Screen
   if (!hasConfirmedLanguage) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0c10] relative overflow-hidden font-sans">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 z-0">
-          <motion.div 
-            animate={{ 
-              scale: [1, 1.2, 1],
-              opacity: [0.3, 0.5, 0.3],
-              x: [0, 50, 0],
-              y: [0, -50, 0]
-            }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-blue-900/20 rounded-full blur-[120px]" 
-          />
-          <motion.div 
-            animate={{ 
-              scale: [1, 1.3, 1],
-              opacity: [0.2, 0.4, 0.2],
-              x: [0, -70, 0],
-              y: [0, 70, 0]
-            }}
-            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-            className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-amber-500/10 rounded-full blur-[120px]" 
-          />
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/asfalt-dark.png')] opacity-[0.03] mix-blend-overlay" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0d1117] relative overflow-hidden font-sans">
+        {/* Cultural Background Component */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <ChinaRussiaBackground />
         </div>
 
         <motion.div 
@@ -258,15 +239,20 @@ export function WelcomeScreen() {
 
   // Auth Screen
   return (
-    <div className="min-h-screen flex bg-[#0a0c10] overflow-hidden font-sans">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-[#0d1117] relative overflow-hidden font-sans">
+      {/* Cultural Background Component for full screen */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <ChinaRussiaBackground />
+      </div>
+      
       <AnimatePresence mode="wait">
         <motion.div 
-          key={language}
+          key={isLogin ? "login" : "register"}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex w-full min-h-screen"
+          className="flex w-full min-h-screen relative z-10"
         >
           {/* Left Panel - Hero (Hidden on Mobile) */}
           <motion.div 
@@ -275,9 +261,6 @@ export function WelcomeScreen() {
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
             className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-20 overflow-hidden border-r border-white/5"
           >
-            {/* Background Layers */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#0a0c10] via-primary to-black" />
-            <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] mix-blend-overlay" />
             
             <div className="relative z-10 max-w-lg w-full text-white space-y-12">
               <motion.div 
@@ -331,10 +314,6 @@ export function WelcomeScreen() {
                 ))}
               </div>
             </div>
-
-            {/* Abstract Decorations */}
-            <div className="absolute -top-20 -right-20 w-80 h-80 bg-secondary/10 rounded-full blur-[100px]" />
-            <div className="absolute -bottom-40 -left-20 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px]" />
           </motion.div>
 
           {/* Right Panel - Form */}
@@ -342,7 +321,7 @@ export function WelcomeScreen() {
             initial={{ x: 100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="flex-1 flex flex-col justify-center px-4 sm:px-12 md:px-16 lg:px-24 bg-[#0a0c10] relative"
+            className="flex-1 flex flex-col justify-center px-4 sm:px-12 md:px-16 lg:px-24 bg-transparent relative"
           >
             <div className="absolute top-6 right-6 md:top-10 md:right-10">
                <Button 
@@ -384,7 +363,7 @@ export function WelcomeScreen() {
                       type="email"
                       placeholder={t("welcome.emailPlaceholder")}
                       {...form.register("email")}
-                      className="h-12 md:h-14 bg-white/[0.03] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-600 text-sm md:text-base"
+                      className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
                       required
                     />
                   </div>
@@ -396,7 +375,7 @@ export function WelcomeScreen() {
                       type="password"
                       placeholder={t("welcome.passwordPlaceholder")}
                       {...form.register("password")}
-                      className="h-12 md:h-14 bg-white/[0.03] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-600 text-sm md:text-base"
+                      className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
                       required
                     />
                   </div>
@@ -412,7 +391,7 @@ export function WelcomeScreen() {
                         id="fullName"
                         placeholder={t("welcome.fullNamePlaceholder")}
                         {...form.register("fullName")}
-                        className="h-12 md:h-14 bg-white/[0.03] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-600 text-sm md:text-base"
+                        className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
                         required={!isLogin}
                       />
                     </motion.div>
@@ -434,7 +413,7 @@ export function WelcomeScreen() {
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full h-12 md:h-14 bg-secondary hover:bg-amber-500 text-primary font-bold rounded-2xl shadow-xl shadow-secondary/20 transition-all duration-300 text-sm md:text-base"
+                    className="w-full h-12 md:h-14 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-2xl shadow-xl shadow-amber-500/20 transition-all duration-300 text-sm md:text-base"
                   >
                     {isLoading ? (
                       <Loader2 className="h-5 w-5 animate-spin" />

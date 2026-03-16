@@ -107,7 +107,7 @@ export function RoomSettingsDialog({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-all">
+          <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-all">
             <Settings className="h-5 w-5" />
           </Button>
         </motion.div>
