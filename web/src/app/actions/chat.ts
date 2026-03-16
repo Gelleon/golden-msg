@@ -461,7 +461,7 @@ export async function sendMessageAction(rawData: {
       const transcription = await openai.audio.transcriptions.create({
         file: file,
         model: "whisper-1",
-        language: languageOriginal === "ru" ? "ru" : "zh",
+        language: languageOriginal === "Russian" ? "ru" : "zh",
       })
       
       voiceTranscription = transcription.text
