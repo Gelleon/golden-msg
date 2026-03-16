@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import '@testing-library/jest-dom'
 import { ResetPasswordForm } from '@/components/reset-password-form'
 import { resetPassword } from '@/app/actions/auth'
 import { useRouter, useSearchParams } from 'next/navigation'

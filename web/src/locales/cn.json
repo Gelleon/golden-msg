@@ -209,10 +209,6 @@
     "online": "在线",
     "participantsCount": "人"
   },
-  "settings_status": {
-    "success": "成功",
-    "error": "错误"
-  },
   "notifications_admin": {
     "stats": {
       "total": "总发送量",

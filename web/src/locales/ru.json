@@ -209,10 +209,6 @@
     "online": "В сети",
     "participantsCount": "уч."
   },
-  "settings_status": {
-    "success": "Успешно",
-    "error": "Ошибка"
-  },
   "notifications_admin": {
     "stats": {
       "total": "Всего отправлено",

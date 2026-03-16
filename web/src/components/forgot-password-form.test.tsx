@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import '@testing-library/jest-dom'
 import userEvent from '@testing-library/user-event'
 import { ForgotPasswordForm } from '@/components/forgot-password-form'
 import { forgotPassword } from '@/app/actions/auth'
