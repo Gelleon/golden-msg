@@ -1,6 +1,7 @@
 import prisma from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { subMinutes } from 'date-fns';
+import crypto from 'crypto';
 import ruTranslations from '@/locales/ru.json';
 import cnTranslations from '@/locales/cn.json';
 
@@ -118,7 +119,9 @@ async function sendNotificationEmail(user: any, rooms: { roomName: string; unrea
     .map(r => `<li><strong>${r.roomName}</strong>: ${r.unreadCount} ${t.roomMessage}</li>`)
     .join('');
 
-  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/notifications/unsubscribe?token=${user.id}`;
+  const secret = process.env.CRON_SECRET || 'fallback_secret';
+  const h = crypto.createHmac('sha256', secret).update(`unsubscribe-${user.id}`).digest('hex');
+  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/notifications/unsubscribe?token=${user.id}&h=${h}`;
 
   const html = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">

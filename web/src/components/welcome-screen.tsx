@@ -40,6 +40,7 @@ export function WelcomeScreen() {
       password: "",
       fullName: "",
     },
+    mode: "onChange",
   })
 
   const features = [
@@ -370,8 +371,10 @@ export function WelcomeScreen() {
                             placeholder={t("welcome.emailPlaceholder")}
                             {...form.register("email")}
                             className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
-                            required
                           />
+                          {form.formState.errors.email && (
+                            <p className="text-xs text-red-400 ml-1">{form.formState.errors.email.message}</p>
+                          )}
                         </div>
                         
                         <div className="space-y-2">
@@ -393,8 +396,10 @@ export function WelcomeScreen() {
                             placeholder={t("welcome.passwordPlaceholder")}
                             {...form.register("password")}
                             className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
-                            required
                           />
+                          {form.formState.errors.password && (
+                            <p className="text-xs text-red-400 ml-1">{form.formState.errors.password.message}</p>
+                          )}
                         </div>
 
                         {!isLogin && (
@@ -409,8 +414,10 @@ export function WelcomeScreen() {
                               placeholder={t("welcome.fullNamePlaceholder")}
                               {...form.register("fullName")}
                               className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
-                              required={!isLogin}
                             />
+                            {form.formState.errors.fullName && (
+                              <p className="text-xs text-red-400 ml-1">{form.formState.errors.fullName.message}</p>
+                            )}
                           </motion.div>
                         )}
                       </div>

@@ -8,6 +8,15 @@ import { sendPushNotification } from "@/lib/push-service"
 import fs from "fs/promises"
 import path from "path"
 import { translateText } from "@/lib/dewiar"
+import { z } from "zod"
+
+const sendMessageSchema = z.object({
+  roomId: z.string().uuid(),
+  content: z.string().min(1).max(5000),
+  messageType: z.enum(["text", "voice", "file"]),
+  fileUrl: z.string().optional(),
+  replyToId: z.string().uuid().optional(),
+})
 
 async function translateWithDewiar(text: string, fromLang: string, toLang: string) {
   try {
@@ -288,13 +297,7 @@ export async function markAsRead(roomId: string) {
   }
 }
 
-export async function sendMessageAction({
-  roomId,
-  content,
-  messageType,
-  fileUrl,
-  replyToId,
-}: {
+export async function sendMessageAction(rawData: {
   roomId: string
   content: string
   messageType: "text" | "voice" | "file"
@@ -303,6 +306,28 @@ export async function sendMessageAction({
 }) {
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
+
+  // 1. Validate Input
+  const validated = sendMessageSchema.safeParse(rawData)
+  if (!validated.success) {
+    return { error: "Invalid message data" }
+  }
+
+  const { roomId, content, messageType, fileUrl, replyToId } = validated.data
+
+  // 2. Check Participation
+  const participation = await prisma.roomParticipant.findUnique({
+    where: {
+      room_id_user_id: {
+        room_id: roomId,
+        user_id: session.user.id,
+      },
+    },
+  })
+
+  if (!participation) {
+    return { error: "You are not a member of this room" }
+  }
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },

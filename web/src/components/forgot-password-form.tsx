@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -29,12 +29,37 @@ export function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) {
 
   type Schema = z.infer<typeof schema>
 
-  const form = useForm<Schema>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<Schema>({
     resolver: zodResolver(schema),
     defaultValues: { email: "" },
+    mode: "onChange",
   })
 
+  const [captchaAnswer, setCaptchaAnswer] = useState<{ num1: number, num2: number, sum: number } | null>(null)
+  const [captchaInput, setCaptchaInput] = useState("")
+
+  useEffect(() => {
+    generateCaptcha()
+  }, [])
+
+  function generateCaptcha() {
+    const num1 = Math.floor(Math.random() * 10) + 1
+    const num2 = Math.floor(Math.random() * 10) + 1
+    setCaptchaAnswer({ num1, num2, sum: num1 + num2 })
+    setCaptchaInput("")
+  }
+
   async function onSubmit(data: Schema) {
+    if (!captchaAnswer || parseInt(captchaInput) !== captchaAnswer.sum) {
+      setError(t("welcome.recovery.errorCaptcha") || "Incorrect captcha")
+      generateCaptcha()
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
@@ -101,7 +126,7 @@ export function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) {
         </p>
       </div>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="email" className="text-slate-300 text-xs md:text-sm font-medium ml-1">
             {t("welcome.recovery.email")}
@@ -111,13 +136,36 @@ export function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) {
               id="email"
               type="email"
               placeholder={t("welcome.recovery.emailPlaceholder")}
-              {...form.register("email")}
+              {...register("email")}
               className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all pl-12"
-              required
             />
             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
           </div>
+          {errors.email && (
+            <p className="text-xs text-red-400 ml-1">{errors.email.message}</p>
+          )}
         </div>
+
+        {captchaAnswer && (
+          <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+            <Label className="text-slate-300 text-xs md:text-sm font-medium ml-1">
+              {t("welcome.recovery.captchaLabel") || "Security Check"}
+            </Label>
+            <div className="flex gap-4 items-center">
+              <div className="flex-1 h-12 md:h-14 bg-white/[0.05] border border-white/10 text-white rounded-2xl flex items-center justify-center font-bold text-lg tracking-wider select-none">
+                {captchaAnswer.num1} + {captchaAnswer.num2} = ?
+              </div>
+              <Input
+                type="number"
+                value={captchaInput}
+                onChange={(e) => setCaptchaInput(e.target.value)}
+                placeholder="?"
+                className="w-24 h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all text-center text-lg font-bold"
+                required
+              />
+            </div>
+          </div>
+        )}
 
         {error && (
           <motion.div 

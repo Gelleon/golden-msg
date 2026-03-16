@@ -1,15 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
+import crypto from 'crypto';
 
 /**
  * Handle unsubscribe requests from email notifications.
+ * Uses a secure hash to verify the user ID and prevent ID enumeration/unauthorized unsubscribing.
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get('token');
+  const hash = searchParams.get('h');
 
-  if (!userId) {
-    return NextResponse.json({ error: 'Missing token' }, { status: 400 });
+  if (!userId || !hash) {
+    return NextResponse.json({ error: 'Invalid or missing parameters' }, { status: 400 });
+  }
+
+  // Verify hash to prevent unauthorized unsubscribing
+  const secret = process.env.CRON_SECRET || 'fallback_secret';
+  const expectedHash = crypto
+    .createHmac('sha256', secret)
+    .update(`unsubscribe-${userId}`)
+    .digest('hex');
+
+  if (hash !== expectedHash) {
+    console.error(`Invalid unsubscribe hash attempt for user ${userId}`);
+    return NextResponse.json({ error: 'Invalid security token' }, { status: 403 });
   }
 
   try {

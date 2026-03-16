@@ -35,9 +35,14 @@ export function ResetPasswordForm() {
 
   type Schema = z.infer<typeof schema>
 
-  const form = useForm<Schema>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<Schema>({
     resolver: zodResolver(schema),
     defaultValues: { password: "", confirmPassword: "" },
+    mode: "onChange",
   })
 
   async function onSubmit(data: Schema) {
@@ -115,7 +120,7 @@ export function ResetPasswordForm() {
             {t("welcome.recovery.errorTokenInvalid")}
           </div>
         ) : (
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="password" title={t("welcome.recovery.passwordComplexity")} className="text-slate-300 text-xs md:text-sm font-medium ml-1">
@@ -126,12 +131,15 @@ export function ResetPasswordForm() {
                     id="password"
                     type="password"
                     placeholder="••••••••"
-                    {...form.register("password")}
+                    {...register("password")}
                     className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all pl-12"
                     required
                   />
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
                 </div>
+                {errors.password && (
+                  <p className="text-xs text-red-400 ml-1">{errors.password.message}</p>
+                )}
                 <p className="text-[10px] text-slate-500 ml-1 font-light italic">
                   {t("recovery.passwordComplexity")}
                 </p>
@@ -145,12 +153,15 @@ export function ResetPasswordForm() {
                   <Input
                     id="confirmPassword"
                     type="password"
-                    {...form.register("confirmPassword")}
+                    {...register("confirmPassword")}
                     className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all pl-12"
                     required
                   />
                   <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
                 </div>
+                {errors.confirmPassword && (
+                  <p className="text-xs text-red-400 ml-1">{errors.confirmPassword.message}</p>
+                )}
               </div>
             </div>
 

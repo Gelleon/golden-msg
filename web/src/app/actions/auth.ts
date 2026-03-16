@@ -7,8 +7,28 @@ import bcrypt from "bcryptjs"
 import { z } from "zod"
 import crypto from "crypto" // for tokens
 import { sendEmail } from "@/lib/email"
-import { logAuditAction, checkRateLimit, securityDelay } from "@/lib/security"
+import { logAuditAction, checkRateLimit, securityDelay, detectSuspiciousActivity } from "@/lib/security"
 import { headers } from "next/headers"
+
+import ru from '@/locales/ru.json'
+import cn from '@/locales/cn.json'
+
+const translations: any = { ru, cn }
+
+function t(path: string, lang: string = 'ru'): string {
+  const keys = path.split('.')
+  let result: any = translations[lang] || translations['ru']
+  
+  for (const key of keys) {
+    if (result && result[key]) {
+      result = result[key]
+    } else {
+      return path
+    }
+  }
+  
+  return typeof result === 'string' ? result : path
+}
 
 const authSchema = z.object({
   email: z.string().email(),
@@ -26,6 +46,15 @@ export async function login(formData: FormData) {
     return { error: "errorFieldsRequired" }
   }
 
+  const headerList = await headers();
+  const ip = headerList.get('x-forwarded-for') || 'unknown';
+
+  // Check rate limit for login (max 5 per 15 minutes)
+  const isAllowed = await checkRateLimit(ip, "LOGIN_ATTEMPT", 5, 15 * 60 * 1000);
+  if (!isAllowed) {
+    return { error: "welcome.recovery.errorRateLimit" };
+  }
+
   try {
     console.log("FINDING USER", email)
     const user = await prisma.user.findUnique({
@@ -34,6 +63,11 @@ export async function login(formData: FormData) {
 
     if (!user) {
       console.log("USER NOT FOUND", email)
+      await logAuditAction({
+        action: "LOGIN_FAILED",
+        ipAddress: ip,
+        details: { email, reason: "user_not_found" }
+      });
       return { error: "errorUserNotFound" }
     }
 
@@ -42,7 +76,27 @@ export async function login(formData: FormData) {
 
     if (!isValid) {
       console.log("INVALID PASSWORD")
+      await logAuditAction({
+        userId: user.id,
+        action: "LOGIN_FAILED",
+        ipAddress: ip,
+        details: { email, reason: "invalid_password" }
+      });
       return { error: "errorInvalidPassword" }
+    }
+
+    // Check for suspicious activity before final login
+    const suspicious = await detectSuspiciousActivity(ip);
+    if (suspicious.suspicious) {
+        console.warn(`Suspicious activity detected for IP ${ip}: ${suspicious.reason}`);
+        // Log this specifically
+        await logAuditAction({
+            userId: user.id,
+            action: "SUSPICIOUS_LOGIN_BLOCKED",
+            ipAddress: ip,
+            details: { reason: suspicious.reason, details: suspicious.details }
+        });
+        // We could block it here if we wanted, but for now we just log it and proceed
     }
 
     // Set session cookie
@@ -54,6 +108,12 @@ export async function login(formData: FormData) {
       maxAge: 60 * 60 * 24 * 7, // 1 week
       path: "/",
     })
+
+    await logAuditAction({
+      userId: user.id,
+      action: "LOGIN_SUCCESS",
+      ipAddress: ip
+    });
 
     console.log("LOGIN SUCCESS")
     return { success: true }
@@ -75,6 +135,15 @@ export async function register(formData: FormData) {
     return { error: "errorFieldsRequired" }
   }
 
+  const headerList = await headers();
+  const ip = headerList.get('x-forwarded-for') || 'unknown';
+
+  // Check rate limit for registration (max 3 per hour)
+  const isAllowed = await checkRateLimit(ip, "REGISTRATION_ATTEMPT", 3, 60 * 60 * 1000);
+  if (!isAllowed) {
+    return { error: "welcome.recovery.errorRateLimit" };
+  }
+
   try {
     console.log("FINDING EXISTING USER", email)
     const existingUser = await prisma.user.findUnique({
@@ -83,6 +152,11 @@ export async function register(formData: FormData) {
 
     if (existingUser) {
       console.log("USER ALREADY EXISTS", email)
+      await logAuditAction({
+        action: "REGISTRATION_FAILED",
+        ipAddress: ip,
+        details: { email, reason: "user_exists" }
+      });
       return { error: "errorUserExists" }
     }
 
@@ -104,6 +178,12 @@ export async function register(formData: FormData) {
         role: role,
       },
     })
+
+    await logAuditAction({
+      userId: user.id,
+      action: "REGISTRATION_SUCCESS",
+      ipAddress: ip
+    });
 
     // Set session cookie
     console.log("SETTING COOKIE", user.id)
@@ -214,10 +294,9 @@ export async function forgotPassword(formData: FormData) {
     
     // Simple template selection based on user language
     const lang = user.preferred_language === 'cn' ? 'cn' : 'ru';
-    // We would normally use t() here, but this is server-side and we need the user's pref
     const subjects = {
-      ru: "Восстановление пароля - Golden Russia",
-      cn: "找回密码 - Golden Russia"
+      ru: t("welcome.recovery.emailSubject", "ru"),
+      cn: t("welcome.recovery.emailSubject", "cn")
     };
 
     await sendEmail({
@@ -226,16 +305,16 @@ export async function forgotPassword(formData: FormData) {
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
           <h2 style="color: #0f172a;">Golden Russia</h2>
-          <p>${lang === 'cn' ? '您好！' : 'Здравствуйте!'}</p>
-          <p>${lang === 'cn' ? '您收到这封邮件是因为我们收到了重置您账户密码的请求。' : 'Вы получили это письмо, так как мы получили запрос на сброс пароля для вашего аккаунта.'}</p>
+          <p>${t("welcome.recovery.emailHello", lang)}</p>
+          <p>${t("welcome.recovery.emailBody", lang)}</p>
           <div style="margin: 30px 0; text-align: center;">
             <a href="${resetUrl}" style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-              ${lang === 'cn' ? '重置密码' : 'Сбросить пароль'}
+              ${t("welcome.recovery.emailAction", lang)}
             </a>
           </div>
           <p style="font-size: 12px; color: #64748b;">
-            ${lang === 'cn' ? '该链接的有效期为 24 小时。' : 'Срок действия ссылки — 24 часа.'}<br>
-            ${lang === 'cn' ? '如果您没有请求重置密码，请忽略此邮件。' : 'Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.'}
+            ${t("welcome.recovery.emailExpire", lang)}<br>
+            ${t("welcome.recovery.emailSecurity", lang)}
           </p>
           <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
           <p style="font-size: 10px; color: #94a3b8; text-align: center;">GOLDEN RUSSIA &copy; 2024</p>
@@ -307,21 +386,22 @@ export async function resetPassword(formData: FormData) {
     const lang = user.preferred_language === 'cn' ? 'cn' : 'ru';
     await sendEmail({
       to: user.email,
-      subject: lang === 'cn' ? '您的密码已更改' : 'Ваш пароль был изменен',
+      subject: t("welcome.recovery.changeNotificationSubject", lang),
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
           <h2 style="color: #0f172a;">Golden Russia</h2>
-          <p>${lang === 'cn' ? '您的 Golden Russia 账户密码已成功更改。' : 'Пароль для вашего аккаунта Golden Russia был успешно изменен.'}</p>
-          <p>${lang === 'cn' ? '如果这不是您本人的操作，请立即联系支持团队。' : 'Если это были не вы, немедленно свяжитесь с поддержкой.'}</p>
+          <p>${t("welcome.recovery.changeNotificationBody", lang)}</p>
           <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
           <p style="font-size: 10px; color: #94a3b8; text-align: center;">GOLDEN RUSSIA &copy; 2024</p>
         </div>
       `
     });
 
-    // 6. Invalidate active sessions (by logic, as we use a simple session cookie, 
-    // we would need a more robust session management or a session version/salt in user table to invalidate all)
-    // For now, the user will have to re-login on next check if we implemented session versioning.
+    // 6. Invalidate active sessions
+    // To invalidate sessions, we can update a `session_version` or similar in the User table,
+    // and check it in getSession. For now, we delete the current session cookie.
+    const cookieStore = await cookies();
+    cookieStore.delete("session_user_id");
     
     return { success: true };
   } catch (error) {

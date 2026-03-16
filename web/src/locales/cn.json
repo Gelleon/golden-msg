@@ -310,6 +310,8 @@
       "passwordComplexity": "至少 8 个字符，包含大写字母、数字和特殊字符。",
       "errorTokenInvalid": "链接无效或已过期。",
       "errorRateLimit": "尝试次数过多，请一小时后再试。",
+      "errorCaptcha": "验证码答案不正确。",
+      "captchaLabel": "安全检查",
       "emailSubject": "找回密码 - Golden Russia",
       "emailHello": "您好！",
       "emailBody": "您收到这封邮件是因为我们收到了重置您账户密码的请求。",

@@ -17,8 +17,8 @@ export async function uploadFile(formData: FormData) {
 
     // Create unique filename
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
-    // Sanitize filename to avoid issues
-    const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_")
+    // Sanitize filename to avoid issues and path traversal
+    const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_").replace(/\.\./g, "__")
     const filename = `${uniqueSuffix}-${originalName}`
     
     // Ensure upload directory exists
