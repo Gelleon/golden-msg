@@ -1,11 +1,12 @@
 @echo off
 setlocal enabledelayedexpansion
-
-echo Запуск PowerShell скрипта...
+chcp 1251 >nul
+echo ========================================
+echo   ЗАПУСК ПОЛНОГО ЦИКЛА ДЕПЛОЯ
+echo ========================================
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\deploy.ps1"
-
 if %errorlevel% neq 0 (
     echo.
-    echo [ERROR] Скрипт завершился с ошибкой %errorlevel%.
+    echo [!] Скрипт завершился с ошибкой.
     pause
 )
