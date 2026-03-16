@@ -5,6 +5,7 @@ import { LanguageProvider } from "@/lib/language-context";
 import { getSession } from "@/app/actions/auth";
 import ru from "@/locales/ru.json";
 import cn from "@/locales/cn.json";
+import { PWAService } from "@/components/pwa-service";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,6 +25,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Golden Russia",
     description: translations.welcome.heroTitle + " - " + translations.welcome.heroSubtitle,
+    manifest: "/manifest.json",
+    themeColor: "#020617",
+    viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0",
   };
 }
 
@@ -41,6 +45,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <LanguageProvider initialLanguage={initialLanguage}>
+          <PWAService />
           {children}
         </LanguageProvider>
       </body>

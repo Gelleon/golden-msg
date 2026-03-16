@@ -19,6 +19,11 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
+ * Model PushSubscription
+ * 
+ */
+export type PushSubscription = $Result.DefaultSelection<Prisma.$PushSubscriptionPayload>
+/**
  * Model PasswordResetToken
  * 
  */
@@ -186,6 +191,16 @@ export class PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<ExtArgs>;
+
+  /**
+   * `prisma.pushSubscription`: Exposes CRUD operations for the **PushSubscription** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PushSubscriptions
+    * const pushSubscriptions = await prisma.pushSubscription.findMany()
+    * ```
+    */
+  get pushSubscription(): Prisma.PushSubscriptionDelegate<ExtArgs>;
 
   /**
    * `prisma.passwordResetToken`: Exposes CRUD operations for the **PasswordResetToken** model.
@@ -698,6 +713,7 @@ export namespace Prisma {
 
   export const ModelName: {
     User: 'User',
+    PushSubscription: 'PushSubscription',
     PasswordResetToken: 'PasswordResetToken',
     AuditLog: 'AuditLog',
     Room: 'Room',
@@ -720,7 +736,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "user" | "passwordResetToken" | "auditLog" | "room" | "roomParticipant" | "message" | "roomInvite" | "notificationLog"
+      modelProps: "user" | "pushSubscription" | "passwordResetToken" | "auditLog" | "room" | "roomParticipant" | "message" | "roomInvite" | "notificationLog"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -791,6 +807,76 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>
             result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      PushSubscription: {
+        payload: Prisma.$PushSubscriptionPayload<ExtArgs>
+        fields: Prisma.PushSubscriptionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PushSubscriptionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PushSubscriptionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PushSubscriptionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PushSubscriptionPayload>
+          }
+          findFirst: {
+            args: Prisma.PushSubscriptionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PushSubscriptionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PushSubscriptionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PushSubscriptionPayload>
+          }
+          findMany: {
+            args: Prisma.PushSubscriptionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PushSubscriptionPayload>[]
+          }
+          create: {
+            args: Prisma.PushSubscriptionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PushSubscriptionPayload>
+          }
+          createMany: {
+            args: Prisma.PushSubscriptionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PushSubscriptionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PushSubscriptionPayload>[]
+          }
+          delete: {
+            args: Prisma.PushSubscriptionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PushSubscriptionPayload>
+          }
+          update: {
+            args: Prisma.PushSubscriptionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PushSubscriptionPayload>
+          }
+          deleteMany: {
+            args: Prisma.PushSubscriptionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PushSubscriptionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.PushSubscriptionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PushSubscriptionPayload>
+          }
+          aggregate: {
+            args: Prisma.PushSubscriptionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePushSubscription>
+          }
+          groupBy: {
+            args: Prisma.PushSubscriptionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PushSubscriptionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PushSubscriptionCountArgs<ExtArgs>
+            result: $Utils.Optional<PushSubscriptionCountAggregateOutputType> | number
           }
         }
       }
@@ -1452,6 +1538,7 @@ export namespace Prisma {
     sent_notifications: number
     reset_tokens: number
     audit_logs: number
+    push_subscriptions: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -1462,6 +1549,7 @@ export namespace Prisma {
     sent_notifications?: boolean | UserCountOutputTypeCountSent_notificationsArgs
     reset_tokens?: boolean | UserCountOutputTypeCountReset_tokensArgs
     audit_logs?: boolean | UserCountOutputTypeCountAudit_logsArgs
+    push_subscriptions?: boolean | UserCountOutputTypeCountPush_subscriptionsArgs
   }
 
   // Custom InputTypes
@@ -1522,6 +1610,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountAudit_logsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: AuditLogWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountPush_subscriptionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PushSubscriptionWhereInput
   }
 
 
@@ -1629,7 +1724,9 @@ export namespace Prisma {
     password_hash: string | null
     created_at: Date | null
     email_notifications_enabled: boolean | null
+    push_notifications_enabled: boolean | null
     last_email_notification_at: Date | null
+    last_push_notification_at: Date | null
     last_password_reset_at: Date | null
   }
 
@@ -1643,7 +1740,9 @@ export namespace Prisma {
     password_hash: string | null
     created_at: Date | null
     email_notifications_enabled: boolean | null
+    push_notifications_enabled: boolean | null
     last_email_notification_at: Date | null
+    last_push_notification_at: Date | null
     last_password_reset_at: Date | null
   }
 
@@ -1657,7 +1756,9 @@ export namespace Prisma {
     password_hash: number
     created_at: number
     email_notifications_enabled: number
+    push_notifications_enabled: number
     last_email_notification_at: number
+    last_push_notification_at: number
     last_password_reset_at: number
     _all: number
   }
@@ -1673,7 +1774,9 @@ export namespace Prisma {
     password_hash?: true
     created_at?: true
     email_notifications_enabled?: true
+    push_notifications_enabled?: true
     last_email_notification_at?: true
+    last_push_notification_at?: true
     last_password_reset_at?: true
   }
 
@@ -1687,7 +1790,9 @@ export namespace Prisma {
     password_hash?: true
     created_at?: true
     email_notifications_enabled?: true
+    push_notifications_enabled?: true
     last_email_notification_at?: true
+    last_push_notification_at?: true
     last_password_reset_at?: true
   }
 
@@ -1701,7 +1806,9 @@ export namespace Prisma {
     password_hash?: true
     created_at?: true
     email_notifications_enabled?: true
+    push_notifications_enabled?: true
     last_email_notification_at?: true
+    last_push_notification_at?: true
     last_password_reset_at?: true
     _all?: true
   }
@@ -1788,7 +1895,9 @@ export namespace Prisma {
     password_hash: string
     created_at: Date
     email_notifications_enabled: boolean
+    push_notifications_enabled: boolean
     last_email_notification_at: Date | null
+    last_push_notification_at: Date | null
     last_password_reset_at: Date | null
     _count: UserCountAggregateOutputType | null
     _min: UserMinAggregateOutputType | null
@@ -1819,7 +1928,9 @@ export namespace Prisma {
     password_hash?: boolean
     created_at?: boolean
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: boolean
+    last_push_notification_at?: boolean
     last_password_reset_at?: boolean
     messages_sent?: boolean | User$messages_sentArgs<ExtArgs>
     room_participations?: boolean | User$room_participationsArgs<ExtArgs>
@@ -1828,6 +1939,7 @@ export namespace Prisma {
     sent_notifications?: boolean | User$sent_notificationsArgs<ExtArgs>
     reset_tokens?: boolean | User$reset_tokensArgs<ExtArgs>
     audit_logs?: boolean | User$audit_logsArgs<ExtArgs>
+    push_subscriptions?: boolean | User$push_subscriptionsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -1841,7 +1953,9 @@ export namespace Prisma {
     password_hash?: boolean
     created_at?: boolean
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: boolean
+    last_push_notification_at?: boolean
     last_password_reset_at?: boolean
   }, ExtArgs["result"]["user"]>
 
@@ -1855,7 +1969,9 @@ export namespace Prisma {
     password_hash?: boolean
     created_at?: boolean
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: boolean
+    last_push_notification_at?: boolean
     last_password_reset_at?: boolean
   }
 
@@ -1867,6 +1983,7 @@ export namespace Prisma {
     sent_notifications?: boolean | User$sent_notificationsArgs<ExtArgs>
     reset_tokens?: boolean | User$reset_tokensArgs<ExtArgs>
     audit_logs?: boolean | User$audit_logsArgs<ExtArgs>
+    push_subscriptions?: boolean | User$push_subscriptionsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -1881,6 +1998,7 @@ export namespace Prisma {
       sent_notifications: Prisma.$NotificationLogPayload<ExtArgs>[]
       reset_tokens: Prisma.$PasswordResetTokenPayload<ExtArgs>[]
       audit_logs: Prisma.$AuditLogPayload<ExtArgs>[]
+      push_subscriptions: Prisma.$PushSubscriptionPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -1892,7 +2010,9 @@ export namespace Prisma {
       password_hash: string
       created_at: Date
       email_notifications_enabled: boolean
+      push_notifications_enabled: boolean
       last_email_notification_at: Date | null
+      last_push_notification_at: Date | null
       last_password_reset_at: Date | null
     }, ExtArgs["result"]["user"]>
     composites: {}
@@ -2265,6 +2385,7 @@ export namespace Prisma {
     sent_notifications<T extends User$sent_notificationsArgs<ExtArgs> = {}>(args?: Subset<T, User$sent_notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationLogPayload<ExtArgs>, T, "findMany"> | Null>
     reset_tokens<T extends User$reset_tokensArgs<ExtArgs> = {}>(args?: Subset<T, User$reset_tokensArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PasswordResetTokenPayload<ExtArgs>, T, "findMany"> | Null>
     audit_logs<T extends User$audit_logsArgs<ExtArgs> = {}>(args?: Subset<T, User$audit_logsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany"> | Null>
+    push_subscriptions<T extends User$push_subscriptionsArgs<ExtArgs> = {}>(args?: Subset<T, User$push_subscriptionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PushSubscriptionPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2303,7 +2424,9 @@ export namespace Prisma {
     readonly password_hash: FieldRef<"User", 'String'>
     readonly created_at: FieldRef<"User", 'DateTime'>
     readonly email_notifications_enabled: FieldRef<"User", 'Boolean'>
+    readonly push_notifications_enabled: FieldRef<"User", 'Boolean'>
     readonly last_email_notification_at: FieldRef<"User", 'DateTime'>
+    readonly last_push_notification_at: FieldRef<"User", 'DateTime'>
     readonly last_password_reset_at: FieldRef<"User", 'DateTime'>
   }
     
@@ -2757,6 +2880,26 @@ export namespace Prisma {
   }
 
   /**
+   * User.push_subscriptions
+   */
+  export type User$push_subscriptionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    where?: PushSubscriptionWhereInput
+    orderBy?: PushSubscriptionOrderByWithRelationInput | PushSubscriptionOrderByWithRelationInput[]
+    cursor?: PushSubscriptionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PushSubscriptionScalarFieldEnum | PushSubscriptionScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2768,6 +2911,949 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PushSubscription
+   */
+
+  export type AggregatePushSubscription = {
+    _count: PushSubscriptionCountAggregateOutputType | null
+    _min: PushSubscriptionMinAggregateOutputType | null
+    _max: PushSubscriptionMaxAggregateOutputType | null
+  }
+
+  export type PushSubscriptionMinAggregateOutputType = {
+    id: string | null
+    user_id: string | null
+    endpoint: string | null
+    p256dh: string | null
+    auth: string | null
+    created_at: Date | null
+  }
+
+  export type PushSubscriptionMaxAggregateOutputType = {
+    id: string | null
+    user_id: string | null
+    endpoint: string | null
+    p256dh: string | null
+    auth: string | null
+    created_at: Date | null
+  }
+
+  export type PushSubscriptionCountAggregateOutputType = {
+    id: number
+    user_id: number
+    endpoint: number
+    p256dh: number
+    auth: number
+    created_at: number
+    _all: number
+  }
+
+
+  export type PushSubscriptionMinAggregateInputType = {
+    id?: true
+    user_id?: true
+    endpoint?: true
+    p256dh?: true
+    auth?: true
+    created_at?: true
+  }
+
+  export type PushSubscriptionMaxAggregateInputType = {
+    id?: true
+    user_id?: true
+    endpoint?: true
+    p256dh?: true
+    auth?: true
+    created_at?: true
+  }
+
+  export type PushSubscriptionCountAggregateInputType = {
+    id?: true
+    user_id?: true
+    endpoint?: true
+    p256dh?: true
+    auth?: true
+    created_at?: true
+    _all?: true
+  }
+
+  export type PushSubscriptionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PushSubscription to aggregate.
+     */
+    where?: PushSubscriptionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PushSubscriptions to fetch.
+     */
+    orderBy?: PushSubscriptionOrderByWithRelationInput | PushSubscriptionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PushSubscriptionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PushSubscriptions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PushSubscriptions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PushSubscriptions
+    **/
+    _count?: true | PushSubscriptionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PushSubscriptionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PushSubscriptionMaxAggregateInputType
+  }
+
+  export type GetPushSubscriptionAggregateType<T extends PushSubscriptionAggregateArgs> = {
+        [P in keyof T & keyof AggregatePushSubscription]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePushSubscription[P]>
+      : GetScalarType<T[P], AggregatePushSubscription[P]>
+  }
+
+
+
+
+  export type PushSubscriptionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PushSubscriptionWhereInput
+    orderBy?: PushSubscriptionOrderByWithAggregationInput | PushSubscriptionOrderByWithAggregationInput[]
+    by: PushSubscriptionScalarFieldEnum[] | PushSubscriptionScalarFieldEnum
+    having?: PushSubscriptionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PushSubscriptionCountAggregateInputType | true
+    _min?: PushSubscriptionMinAggregateInputType
+    _max?: PushSubscriptionMaxAggregateInputType
+  }
+
+  export type PushSubscriptionGroupByOutputType = {
+    id: string
+    user_id: string
+    endpoint: string
+    p256dh: string
+    auth: string
+    created_at: Date
+    _count: PushSubscriptionCountAggregateOutputType | null
+    _min: PushSubscriptionMinAggregateOutputType | null
+    _max: PushSubscriptionMaxAggregateOutputType | null
+  }
+
+  type GetPushSubscriptionGroupByPayload<T extends PushSubscriptionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PushSubscriptionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PushSubscriptionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PushSubscriptionGroupByOutputType[P]>
+            : GetScalarType<T[P], PushSubscriptionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PushSubscriptionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    user_id?: boolean
+    endpoint?: boolean
+    p256dh?: boolean
+    auth?: boolean
+    created_at?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["pushSubscription"]>
+
+  export type PushSubscriptionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    user_id?: boolean
+    endpoint?: boolean
+    p256dh?: boolean
+    auth?: boolean
+    created_at?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["pushSubscription"]>
+
+  export type PushSubscriptionSelectScalar = {
+    id?: boolean
+    user_id?: boolean
+    endpoint?: boolean
+    p256dh?: boolean
+    auth?: boolean
+    created_at?: boolean
+  }
+
+  export type PushSubscriptionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type PushSubscriptionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $PushSubscriptionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PushSubscription"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      user_id: string
+      endpoint: string
+      p256dh: string
+      auth: string
+      created_at: Date
+    }, ExtArgs["result"]["pushSubscription"]>
+    composites: {}
+  }
+
+  type PushSubscriptionGetPayload<S extends boolean | null | undefined | PushSubscriptionDefaultArgs> = $Result.GetResult<Prisma.$PushSubscriptionPayload, S>
+
+  type PushSubscriptionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<PushSubscriptionFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: PushSubscriptionCountAggregateInputType | true
+    }
+
+  export interface PushSubscriptionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PushSubscription'], meta: { name: 'PushSubscription' } }
+    /**
+     * Find zero or one PushSubscription that matches the filter.
+     * @param {PushSubscriptionFindUniqueArgs} args - Arguments to find a PushSubscription
+     * @example
+     * // Get one PushSubscription
+     * const pushSubscription = await prisma.pushSubscription.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PushSubscriptionFindUniqueArgs>(args: SelectSubset<T, PushSubscriptionFindUniqueArgs<ExtArgs>>): Prisma__PushSubscriptionClient<$Result.GetResult<Prisma.$PushSubscriptionPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one PushSubscription that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {PushSubscriptionFindUniqueOrThrowArgs} args - Arguments to find a PushSubscription
+     * @example
+     * // Get one PushSubscription
+     * const pushSubscription = await prisma.pushSubscription.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PushSubscriptionFindUniqueOrThrowArgs>(args: SelectSubset<T, PushSubscriptionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PushSubscriptionClient<$Result.GetResult<Prisma.$PushSubscriptionPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first PushSubscription that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushSubscriptionFindFirstArgs} args - Arguments to find a PushSubscription
+     * @example
+     * // Get one PushSubscription
+     * const pushSubscription = await prisma.pushSubscription.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PushSubscriptionFindFirstArgs>(args?: SelectSubset<T, PushSubscriptionFindFirstArgs<ExtArgs>>): Prisma__PushSubscriptionClient<$Result.GetResult<Prisma.$PushSubscriptionPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first PushSubscription that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushSubscriptionFindFirstOrThrowArgs} args - Arguments to find a PushSubscription
+     * @example
+     * // Get one PushSubscription
+     * const pushSubscription = await prisma.pushSubscription.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PushSubscriptionFindFirstOrThrowArgs>(args?: SelectSubset<T, PushSubscriptionFindFirstOrThrowArgs<ExtArgs>>): Prisma__PushSubscriptionClient<$Result.GetResult<Prisma.$PushSubscriptionPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more PushSubscriptions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushSubscriptionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PushSubscriptions
+     * const pushSubscriptions = await prisma.pushSubscription.findMany()
+     * 
+     * // Get first 10 PushSubscriptions
+     * const pushSubscriptions = await prisma.pushSubscription.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const pushSubscriptionWithIdOnly = await prisma.pushSubscription.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PushSubscriptionFindManyArgs>(args?: SelectSubset<T, PushSubscriptionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PushSubscriptionPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a PushSubscription.
+     * @param {PushSubscriptionCreateArgs} args - Arguments to create a PushSubscription.
+     * @example
+     * // Create one PushSubscription
+     * const PushSubscription = await prisma.pushSubscription.create({
+     *   data: {
+     *     // ... data to create a PushSubscription
+     *   }
+     * })
+     * 
+     */
+    create<T extends PushSubscriptionCreateArgs>(args: SelectSubset<T, PushSubscriptionCreateArgs<ExtArgs>>): Prisma__PushSubscriptionClient<$Result.GetResult<Prisma.$PushSubscriptionPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many PushSubscriptions.
+     * @param {PushSubscriptionCreateManyArgs} args - Arguments to create many PushSubscriptions.
+     * @example
+     * // Create many PushSubscriptions
+     * const pushSubscription = await prisma.pushSubscription.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PushSubscriptionCreateManyArgs>(args?: SelectSubset<T, PushSubscriptionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PushSubscriptions and returns the data saved in the database.
+     * @param {PushSubscriptionCreateManyAndReturnArgs} args - Arguments to create many PushSubscriptions.
+     * @example
+     * // Create many PushSubscriptions
+     * const pushSubscription = await prisma.pushSubscription.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PushSubscriptions and only return the `id`
+     * const pushSubscriptionWithIdOnly = await prisma.pushSubscription.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PushSubscriptionCreateManyAndReturnArgs>(args?: SelectSubset<T, PushSubscriptionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PushSubscriptionPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a PushSubscription.
+     * @param {PushSubscriptionDeleteArgs} args - Arguments to delete one PushSubscription.
+     * @example
+     * // Delete one PushSubscription
+     * const PushSubscription = await prisma.pushSubscription.delete({
+     *   where: {
+     *     // ... filter to delete one PushSubscription
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PushSubscriptionDeleteArgs>(args: SelectSubset<T, PushSubscriptionDeleteArgs<ExtArgs>>): Prisma__PushSubscriptionClient<$Result.GetResult<Prisma.$PushSubscriptionPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one PushSubscription.
+     * @param {PushSubscriptionUpdateArgs} args - Arguments to update one PushSubscription.
+     * @example
+     * // Update one PushSubscription
+     * const pushSubscription = await prisma.pushSubscription.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PushSubscriptionUpdateArgs>(args: SelectSubset<T, PushSubscriptionUpdateArgs<ExtArgs>>): Prisma__PushSubscriptionClient<$Result.GetResult<Prisma.$PushSubscriptionPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more PushSubscriptions.
+     * @param {PushSubscriptionDeleteManyArgs} args - Arguments to filter PushSubscriptions to delete.
+     * @example
+     * // Delete a few PushSubscriptions
+     * const { count } = await prisma.pushSubscription.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PushSubscriptionDeleteManyArgs>(args?: SelectSubset<T, PushSubscriptionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PushSubscriptions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushSubscriptionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PushSubscriptions
+     * const pushSubscription = await prisma.pushSubscription.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PushSubscriptionUpdateManyArgs>(args: SelectSubset<T, PushSubscriptionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one PushSubscription.
+     * @param {PushSubscriptionUpsertArgs} args - Arguments to update or create a PushSubscription.
+     * @example
+     * // Update or create a PushSubscription
+     * const pushSubscription = await prisma.pushSubscription.upsert({
+     *   create: {
+     *     // ... data to create a PushSubscription
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PushSubscription we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PushSubscriptionUpsertArgs>(args: SelectSubset<T, PushSubscriptionUpsertArgs<ExtArgs>>): Prisma__PushSubscriptionClient<$Result.GetResult<Prisma.$PushSubscriptionPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of PushSubscriptions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushSubscriptionCountArgs} args - Arguments to filter PushSubscriptions to count.
+     * @example
+     * // Count the number of PushSubscriptions
+     * const count = await prisma.pushSubscription.count({
+     *   where: {
+     *     // ... the filter for the PushSubscriptions we want to count
+     *   }
+     * })
+    **/
+    count<T extends PushSubscriptionCountArgs>(
+      args?: Subset<T, PushSubscriptionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PushSubscriptionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PushSubscription.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushSubscriptionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PushSubscriptionAggregateArgs>(args: Subset<T, PushSubscriptionAggregateArgs>): Prisma.PrismaPromise<GetPushSubscriptionAggregateType<T>>
+
+    /**
+     * Group by PushSubscription.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushSubscriptionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PushSubscriptionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PushSubscriptionGroupByArgs['orderBy'] }
+        : { orderBy?: PushSubscriptionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PushSubscriptionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPushSubscriptionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PushSubscription model
+   */
+  readonly fields: PushSubscriptionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PushSubscription.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PushSubscriptionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PushSubscription model
+   */ 
+  interface PushSubscriptionFieldRefs {
+    readonly id: FieldRef<"PushSubscription", 'String'>
+    readonly user_id: FieldRef<"PushSubscription", 'String'>
+    readonly endpoint: FieldRef<"PushSubscription", 'String'>
+    readonly p256dh: FieldRef<"PushSubscription", 'String'>
+    readonly auth: FieldRef<"PushSubscription", 'String'>
+    readonly created_at: FieldRef<"PushSubscription", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PushSubscription findUnique
+   */
+  export type PushSubscriptionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * Filter, which PushSubscription to fetch.
+     */
+    where: PushSubscriptionWhereUniqueInput
+  }
+
+  /**
+   * PushSubscription findUniqueOrThrow
+   */
+  export type PushSubscriptionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * Filter, which PushSubscription to fetch.
+     */
+    where: PushSubscriptionWhereUniqueInput
+  }
+
+  /**
+   * PushSubscription findFirst
+   */
+  export type PushSubscriptionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * Filter, which PushSubscription to fetch.
+     */
+    where?: PushSubscriptionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PushSubscriptions to fetch.
+     */
+    orderBy?: PushSubscriptionOrderByWithRelationInput | PushSubscriptionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PushSubscriptions.
+     */
+    cursor?: PushSubscriptionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PushSubscriptions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PushSubscriptions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PushSubscriptions.
+     */
+    distinct?: PushSubscriptionScalarFieldEnum | PushSubscriptionScalarFieldEnum[]
+  }
+
+  /**
+   * PushSubscription findFirstOrThrow
+   */
+  export type PushSubscriptionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * Filter, which PushSubscription to fetch.
+     */
+    where?: PushSubscriptionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PushSubscriptions to fetch.
+     */
+    orderBy?: PushSubscriptionOrderByWithRelationInput | PushSubscriptionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PushSubscriptions.
+     */
+    cursor?: PushSubscriptionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PushSubscriptions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PushSubscriptions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PushSubscriptions.
+     */
+    distinct?: PushSubscriptionScalarFieldEnum | PushSubscriptionScalarFieldEnum[]
+  }
+
+  /**
+   * PushSubscription findMany
+   */
+  export type PushSubscriptionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * Filter, which PushSubscriptions to fetch.
+     */
+    where?: PushSubscriptionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PushSubscriptions to fetch.
+     */
+    orderBy?: PushSubscriptionOrderByWithRelationInput | PushSubscriptionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PushSubscriptions.
+     */
+    cursor?: PushSubscriptionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PushSubscriptions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PushSubscriptions.
+     */
+    skip?: number
+    distinct?: PushSubscriptionScalarFieldEnum | PushSubscriptionScalarFieldEnum[]
+  }
+
+  /**
+   * PushSubscription create
+   */
+  export type PushSubscriptionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PushSubscription.
+     */
+    data: XOR<PushSubscriptionCreateInput, PushSubscriptionUncheckedCreateInput>
+  }
+
+  /**
+   * PushSubscription createMany
+   */
+  export type PushSubscriptionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PushSubscriptions.
+     */
+    data: PushSubscriptionCreateManyInput | PushSubscriptionCreateManyInput[]
+  }
+
+  /**
+   * PushSubscription createManyAndReturn
+   */
+  export type PushSubscriptionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many PushSubscriptions.
+     */
+    data: PushSubscriptionCreateManyInput | PushSubscriptionCreateManyInput[]
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PushSubscriptionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PushSubscription update
+   */
+  export type PushSubscriptionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PushSubscription.
+     */
+    data: XOR<PushSubscriptionUpdateInput, PushSubscriptionUncheckedUpdateInput>
+    /**
+     * Choose, which PushSubscription to update.
+     */
+    where: PushSubscriptionWhereUniqueInput
+  }
+
+  /**
+   * PushSubscription updateMany
+   */
+  export type PushSubscriptionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PushSubscriptions.
+     */
+    data: XOR<PushSubscriptionUpdateManyMutationInput, PushSubscriptionUncheckedUpdateManyInput>
+    /**
+     * Filter which PushSubscriptions to update
+     */
+    where?: PushSubscriptionWhereInput
+  }
+
+  /**
+   * PushSubscription upsert
+   */
+  export type PushSubscriptionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PushSubscription to update in case it exists.
+     */
+    where: PushSubscriptionWhereUniqueInput
+    /**
+     * In case the PushSubscription found by the `where` argument doesn't exist, create a new PushSubscription with this data.
+     */
+    create: XOR<PushSubscriptionCreateInput, PushSubscriptionUncheckedCreateInput>
+    /**
+     * In case the PushSubscription was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PushSubscriptionUpdateInput, PushSubscriptionUncheckedUpdateInput>
+  }
+
+  /**
+   * PushSubscription delete
+   */
+  export type PushSubscriptionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * Filter which PushSubscription to delete.
+     */
+    where: PushSubscriptionWhereUniqueInput
+  }
+
+  /**
+   * PushSubscription deleteMany
+   */
+  export type PushSubscriptionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PushSubscriptions to delete
+     */
+    where?: PushSubscriptionWhereInput
+  }
+
+  /**
+   * PushSubscription without action
+   */
+  export type PushSubscriptionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
   }
 
 
@@ -9802,11 +10888,25 @@ export namespace Prisma {
     password_hash: 'password_hash',
     created_at: 'created_at',
     email_notifications_enabled: 'email_notifications_enabled',
+    push_notifications_enabled: 'push_notifications_enabled',
     last_email_notification_at: 'last_email_notification_at',
+    last_push_notification_at: 'last_push_notification_at',
     last_password_reset_at: 'last_password_reset_at'
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+  export const PushSubscriptionScalarFieldEnum: {
+    id: 'id',
+    user_id: 'user_id',
+    endpoint: 'endpoint',
+    p256dh: 'p256dh',
+    auth: 'auth',
+    created_at: 'created_at'
+  };
+
+  export type PushSubscriptionScalarFieldEnum = (typeof PushSubscriptionScalarFieldEnum)[keyof typeof PushSubscriptionScalarFieldEnum]
 
 
   export const PasswordResetTokenScalarFieldEnum: {
@@ -9979,7 +11079,9 @@ export namespace Prisma {
     password_hash?: StringFilter<"User"> | string
     created_at?: DateTimeFilter<"User"> | Date | string
     email_notifications_enabled?: BoolFilter<"User"> | boolean
+    push_notifications_enabled?: BoolFilter<"User"> | boolean
     last_email_notification_at?: DateTimeNullableFilter<"User"> | Date | string | null
+    last_push_notification_at?: DateTimeNullableFilter<"User"> | Date | string | null
     last_password_reset_at?: DateTimeNullableFilter<"User"> | Date | string | null
     messages_sent?: MessageListRelationFilter
     room_participations?: RoomParticipantListRelationFilter
@@ -9988,6 +11090,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogListRelationFilter
     reset_tokens?: PasswordResetTokenListRelationFilter
     audit_logs?: AuditLogListRelationFilter
+    push_subscriptions?: PushSubscriptionListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -10000,7 +11103,9 @@ export namespace Prisma {
     password_hash?: SortOrder
     created_at?: SortOrder
     email_notifications_enabled?: SortOrder
+    push_notifications_enabled?: SortOrder
     last_email_notification_at?: SortOrderInput | SortOrder
+    last_push_notification_at?: SortOrderInput | SortOrder
     last_password_reset_at?: SortOrderInput | SortOrder
     messages_sent?: MessageOrderByRelationAggregateInput
     room_participations?: RoomParticipantOrderByRelationAggregateInput
@@ -10009,6 +11114,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogOrderByRelationAggregateInput
     reset_tokens?: PasswordResetTokenOrderByRelationAggregateInput
     audit_logs?: AuditLogOrderByRelationAggregateInput
+    push_subscriptions?: PushSubscriptionOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -10024,7 +11130,9 @@ export namespace Prisma {
     password_hash?: StringFilter<"User"> | string
     created_at?: DateTimeFilter<"User"> | Date | string
     email_notifications_enabled?: BoolFilter<"User"> | boolean
+    push_notifications_enabled?: BoolFilter<"User"> | boolean
     last_email_notification_at?: DateTimeNullableFilter<"User"> | Date | string | null
+    last_push_notification_at?: DateTimeNullableFilter<"User"> | Date | string | null
     last_password_reset_at?: DateTimeNullableFilter<"User"> | Date | string | null
     messages_sent?: MessageListRelationFilter
     room_participations?: RoomParticipantListRelationFilter
@@ -10033,6 +11141,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogListRelationFilter
     reset_tokens?: PasswordResetTokenListRelationFilter
     audit_logs?: AuditLogListRelationFilter
+    push_subscriptions?: PushSubscriptionListRelationFilter
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -10045,7 +11154,9 @@ export namespace Prisma {
     password_hash?: SortOrder
     created_at?: SortOrder
     email_notifications_enabled?: SortOrder
+    push_notifications_enabled?: SortOrder
     last_email_notification_at?: SortOrderInput | SortOrder
+    last_push_notification_at?: SortOrderInput | SortOrder
     last_password_reset_at?: SortOrderInput | SortOrder
     _count?: UserCountOrderByAggregateInput
     _max?: UserMaxOrderByAggregateInput
@@ -10065,8 +11176,70 @@ export namespace Prisma {
     password_hash?: StringWithAggregatesFilter<"User"> | string
     created_at?: DateTimeWithAggregatesFilter<"User"> | Date | string
     email_notifications_enabled?: BoolWithAggregatesFilter<"User"> | boolean
+    push_notifications_enabled?: BoolWithAggregatesFilter<"User"> | boolean
     last_email_notification_at?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+    last_push_notification_at?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     last_password_reset_at?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  }
+
+  export type PushSubscriptionWhereInput = {
+    AND?: PushSubscriptionWhereInput | PushSubscriptionWhereInput[]
+    OR?: PushSubscriptionWhereInput[]
+    NOT?: PushSubscriptionWhereInput | PushSubscriptionWhereInput[]
+    id?: StringFilter<"PushSubscription"> | string
+    user_id?: StringFilter<"PushSubscription"> | string
+    endpoint?: StringFilter<"PushSubscription"> | string
+    p256dh?: StringFilter<"PushSubscription"> | string
+    auth?: StringFilter<"PushSubscription"> | string
+    created_at?: DateTimeFilter<"PushSubscription"> | Date | string
+    user?: XOR<UserRelationFilter, UserWhereInput>
+  }
+
+  export type PushSubscriptionOrderByWithRelationInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    endpoint?: SortOrder
+    p256dh?: SortOrder
+    auth?: SortOrder
+    created_at?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type PushSubscriptionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    endpoint?: string
+    AND?: PushSubscriptionWhereInput | PushSubscriptionWhereInput[]
+    OR?: PushSubscriptionWhereInput[]
+    NOT?: PushSubscriptionWhereInput | PushSubscriptionWhereInput[]
+    user_id?: StringFilter<"PushSubscription"> | string
+    p256dh?: StringFilter<"PushSubscription"> | string
+    auth?: StringFilter<"PushSubscription"> | string
+    created_at?: DateTimeFilter<"PushSubscription"> | Date | string
+    user?: XOR<UserRelationFilter, UserWhereInput>
+  }, "id" | "endpoint">
+
+  export type PushSubscriptionOrderByWithAggregationInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    endpoint?: SortOrder
+    p256dh?: SortOrder
+    auth?: SortOrder
+    created_at?: SortOrder
+    _count?: PushSubscriptionCountOrderByAggregateInput
+    _max?: PushSubscriptionMaxOrderByAggregateInput
+    _min?: PushSubscriptionMinOrderByAggregateInput
+  }
+
+  export type PushSubscriptionScalarWhereWithAggregatesInput = {
+    AND?: PushSubscriptionScalarWhereWithAggregatesInput | PushSubscriptionScalarWhereWithAggregatesInput[]
+    OR?: PushSubscriptionScalarWhereWithAggregatesInput[]
+    NOT?: PushSubscriptionScalarWhereWithAggregatesInput | PushSubscriptionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"PushSubscription"> | string
+    user_id?: StringWithAggregatesFilter<"PushSubscription"> | string
+    endpoint?: StringWithAggregatesFilter<"PushSubscription"> | string
+    p256dh?: StringWithAggregatesFilter<"PushSubscription"> | string
+    auth?: StringWithAggregatesFilter<"PushSubscription"> | string
+    created_at?: DateTimeWithAggregatesFilter<"PushSubscription"> | Date | string
   }
 
   export type PasswordResetTokenWhereInput = {
@@ -10598,7 +11771,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     messages_sent?: MessageCreateNestedManyWithoutSenderInput
     room_participations?: RoomParticipantCreateNestedManyWithoutUserInput
@@ -10607,6 +11782,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
     reset_tokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
     audit_logs?: AuditLogCreateNestedManyWithoutUserInput
+    push_subscriptions?: PushSubscriptionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -10619,7 +11795,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
     room_participations?: RoomParticipantUncheckedCreateNestedManyWithoutUserInput
@@ -10628,6 +11806,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
     reset_tokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
     audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    push_subscriptions?: PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -10640,7 +11819,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     messages_sent?: MessageUpdateManyWithoutSenderNestedInput
     room_participations?: RoomParticipantUpdateManyWithoutUserNestedInput
@@ -10649,6 +11830,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
     reset_tokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
     audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
+    push_subscriptions?: PushSubscriptionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -10661,7 +11843,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     room_participations?: RoomParticipantUncheckedUpdateManyWithoutUserNestedInput
@@ -10670,6 +11854,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
     reset_tokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
     audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    push_subscriptions?: PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -10682,7 +11867,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
   }
 
@@ -10696,7 +11883,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
@@ -10710,8 +11899,72 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type PushSubscriptionCreateInput = {
+    id?: string
+    endpoint: string
+    p256dh: string
+    auth: string
+    created_at?: Date | string
+    user: UserCreateNestedOneWithoutPush_subscriptionsInput
+  }
+
+  export type PushSubscriptionUncheckedCreateInput = {
+    id?: string
+    user_id: string
+    endpoint: string
+    p256dh: string
+    auth: string
+    created_at?: Date | string
+  }
+
+  export type PushSubscriptionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    p256dh?: StringFieldUpdateOperationsInput | string
+    auth?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutPush_subscriptionsNestedInput
+  }
+
+  export type PushSubscriptionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    user_id?: StringFieldUpdateOperationsInput | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    p256dh?: StringFieldUpdateOperationsInput | string
+    auth?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PushSubscriptionCreateManyInput = {
+    id?: string
+    user_id: string
+    endpoint: string
+    p256dh: string
+    auth: string
+    created_at?: Date | string
+  }
+
+  export type PushSubscriptionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    p256dh?: StringFieldUpdateOperationsInput | string
+    auth?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PushSubscriptionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    user_id?: StringFieldUpdateOperationsInput | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    p256dh?: StringFieldUpdateOperationsInput | string
+    auth?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PasswordResetTokenCreateInput = {
@@ -11355,6 +12608,12 @@ export namespace Prisma {
     none?: AuditLogWhereInput
   }
 
+  export type PushSubscriptionListRelationFilter = {
+    every?: PushSubscriptionWhereInput
+    some?: PushSubscriptionWhereInput
+    none?: PushSubscriptionWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -11388,6 +12647,10 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type PushSubscriptionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type UserCountOrderByAggregateInput = {
     id?: SortOrder
     email?: SortOrder
@@ -11398,7 +12661,9 @@ export namespace Prisma {
     password_hash?: SortOrder
     created_at?: SortOrder
     email_notifications_enabled?: SortOrder
+    push_notifications_enabled?: SortOrder
     last_email_notification_at?: SortOrder
+    last_push_notification_at?: SortOrder
     last_password_reset_at?: SortOrder
   }
 
@@ -11412,7 +12677,9 @@ export namespace Prisma {
     password_hash?: SortOrder
     created_at?: SortOrder
     email_notifications_enabled?: SortOrder
+    push_notifications_enabled?: SortOrder
     last_email_notification_at?: SortOrder
+    last_push_notification_at?: SortOrder
     last_password_reset_at?: SortOrder
   }
 
@@ -11426,7 +12693,9 @@ export namespace Prisma {
     password_hash?: SortOrder
     created_at?: SortOrder
     email_notifications_enabled?: SortOrder
+    push_notifications_enabled?: SortOrder
     last_email_notification_at?: SortOrder
+    last_push_notification_at?: SortOrder
     last_password_reset_at?: SortOrder
   }
 
@@ -11503,6 +12772,33 @@ export namespace Prisma {
   export type UserRelationFilter = {
     is?: UserWhereInput
     isNot?: UserWhereInput
+  }
+
+  export type PushSubscriptionCountOrderByAggregateInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    endpoint?: SortOrder
+    p256dh?: SortOrder
+    auth?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type PushSubscriptionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    endpoint?: SortOrder
+    p256dh?: SortOrder
+    auth?: SortOrder
+    created_at?: SortOrder
+  }
+
+  export type PushSubscriptionMinOrderByAggregateInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    endpoint?: SortOrder
+    p256dh?: SortOrder
+    auth?: SortOrder
+    created_at?: SortOrder
   }
 
   export type PasswordResetTokenCountOrderByAggregateInput = {
@@ -11877,6 +13173,13 @@ export namespace Prisma {
     connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
   }
 
+  export type PushSubscriptionCreateNestedManyWithoutUserInput = {
+    create?: XOR<PushSubscriptionCreateWithoutUserInput, PushSubscriptionUncheckedCreateWithoutUserInput> | PushSubscriptionCreateWithoutUserInput[] | PushSubscriptionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: PushSubscriptionCreateOrConnectWithoutUserInput | PushSubscriptionCreateOrConnectWithoutUserInput[]
+    createMany?: PushSubscriptionCreateManyUserInputEnvelope
+    connect?: PushSubscriptionWhereUniqueInput | PushSubscriptionWhereUniqueInput[]
+  }
+
   export type MessageUncheckedCreateNestedManyWithoutSenderInput = {
     create?: XOR<MessageCreateWithoutSenderInput, MessageUncheckedCreateWithoutSenderInput> | MessageCreateWithoutSenderInput[] | MessageUncheckedCreateWithoutSenderInput[]
     connectOrCreate?: MessageCreateOrConnectWithoutSenderInput | MessageCreateOrConnectWithoutSenderInput[]
@@ -11924,6 +13227,13 @@ export namespace Prisma {
     connectOrCreate?: AuditLogCreateOrConnectWithoutUserInput | AuditLogCreateOrConnectWithoutUserInput[]
     createMany?: AuditLogCreateManyUserInputEnvelope
     connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+  }
+
+  export type PushSubscriptionUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<PushSubscriptionCreateWithoutUserInput, PushSubscriptionUncheckedCreateWithoutUserInput> | PushSubscriptionCreateWithoutUserInput[] | PushSubscriptionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: PushSubscriptionCreateOrConnectWithoutUserInput | PushSubscriptionCreateOrConnectWithoutUserInput[]
+    createMany?: PushSubscriptionCreateManyUserInputEnvelope
+    connect?: PushSubscriptionWhereUniqueInput | PushSubscriptionWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -12044,6 +13354,20 @@ export namespace Prisma {
     deleteMany?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
   }
 
+  export type PushSubscriptionUpdateManyWithoutUserNestedInput = {
+    create?: XOR<PushSubscriptionCreateWithoutUserInput, PushSubscriptionUncheckedCreateWithoutUserInput> | PushSubscriptionCreateWithoutUserInput[] | PushSubscriptionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: PushSubscriptionCreateOrConnectWithoutUserInput | PushSubscriptionCreateOrConnectWithoutUserInput[]
+    upsert?: PushSubscriptionUpsertWithWhereUniqueWithoutUserInput | PushSubscriptionUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: PushSubscriptionCreateManyUserInputEnvelope
+    set?: PushSubscriptionWhereUniqueInput | PushSubscriptionWhereUniqueInput[]
+    disconnect?: PushSubscriptionWhereUniqueInput | PushSubscriptionWhereUniqueInput[]
+    delete?: PushSubscriptionWhereUniqueInput | PushSubscriptionWhereUniqueInput[]
+    connect?: PushSubscriptionWhereUniqueInput | PushSubscriptionWhereUniqueInput[]
+    update?: PushSubscriptionUpdateWithWhereUniqueWithoutUserInput | PushSubscriptionUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: PushSubscriptionUpdateManyWithWhereWithoutUserInput | PushSubscriptionUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: PushSubscriptionScalarWhereInput | PushSubscriptionScalarWhereInput[]
+  }
+
   export type MessageUncheckedUpdateManyWithoutSenderNestedInput = {
     create?: XOR<MessageCreateWithoutSenderInput, MessageUncheckedCreateWithoutSenderInput> | MessageCreateWithoutSenderInput[] | MessageUncheckedCreateWithoutSenderInput[]
     connectOrCreate?: MessageCreateOrConnectWithoutSenderInput | MessageCreateOrConnectWithoutSenderInput[]
@@ -12140,6 +13464,34 @@ export namespace Prisma {
     update?: AuditLogUpdateWithWhereUniqueWithoutUserInput | AuditLogUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: AuditLogUpdateManyWithWhereWithoutUserInput | AuditLogUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
+  }
+
+  export type PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<PushSubscriptionCreateWithoutUserInput, PushSubscriptionUncheckedCreateWithoutUserInput> | PushSubscriptionCreateWithoutUserInput[] | PushSubscriptionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: PushSubscriptionCreateOrConnectWithoutUserInput | PushSubscriptionCreateOrConnectWithoutUserInput[]
+    upsert?: PushSubscriptionUpsertWithWhereUniqueWithoutUserInput | PushSubscriptionUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: PushSubscriptionCreateManyUserInputEnvelope
+    set?: PushSubscriptionWhereUniqueInput | PushSubscriptionWhereUniqueInput[]
+    disconnect?: PushSubscriptionWhereUniqueInput | PushSubscriptionWhereUniqueInput[]
+    delete?: PushSubscriptionWhereUniqueInput | PushSubscriptionWhereUniqueInput[]
+    connect?: PushSubscriptionWhereUniqueInput | PushSubscriptionWhereUniqueInput[]
+    update?: PushSubscriptionUpdateWithWhereUniqueWithoutUserInput | PushSubscriptionUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: PushSubscriptionUpdateManyWithWhereWithoutUserInput | PushSubscriptionUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: PushSubscriptionScalarWhereInput | PushSubscriptionScalarWhereInput[]
+  }
+
+  export type UserCreateNestedOneWithoutPush_subscriptionsInput = {
+    create?: XOR<UserCreateWithoutPush_subscriptionsInput, UserUncheckedCreateWithoutPush_subscriptionsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutPush_subscriptionsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutPush_subscriptionsNestedInput = {
+    create?: XOR<UserCreateWithoutPush_subscriptionsInput, UserUncheckedCreateWithoutPush_subscriptionsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutPush_subscriptionsInput
+    upsert?: UserUpsertWithoutPush_subscriptionsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutPush_subscriptionsInput, UserUpdateWithoutPush_subscriptionsInput>, UserUncheckedUpdateWithoutPush_subscriptionsInput>
   }
 
   export type UserCreateNestedOneWithoutReset_tokensInput = {
@@ -12898,6 +14250,31 @@ export namespace Prisma {
     data: AuditLogCreateManyUserInput | AuditLogCreateManyUserInput[]
   }
 
+  export type PushSubscriptionCreateWithoutUserInput = {
+    id?: string
+    endpoint: string
+    p256dh: string
+    auth: string
+    created_at?: Date | string
+  }
+
+  export type PushSubscriptionUncheckedCreateWithoutUserInput = {
+    id?: string
+    endpoint: string
+    p256dh: string
+    auth: string
+    created_at?: Date | string
+  }
+
+  export type PushSubscriptionCreateOrConnectWithoutUserInput = {
+    where: PushSubscriptionWhereUniqueInput
+    create: XOR<PushSubscriptionCreateWithoutUserInput, PushSubscriptionUncheckedCreateWithoutUserInput>
+  }
+
+  export type PushSubscriptionCreateManyUserInputEnvelope = {
+    data: PushSubscriptionCreateManyUserInput | PushSubscriptionCreateManyUserInput[]
+  }
+
   export type MessageUpsertWithWhereUniqueWithoutSenderInput = {
     where: MessageWhereUniqueInput
     update: XOR<MessageUpdateWithoutSenderInput, MessageUncheckedUpdateWithoutSenderInput>
@@ -13108,6 +14485,142 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"AuditLog"> | Date | string
   }
 
+  export type PushSubscriptionUpsertWithWhereUniqueWithoutUserInput = {
+    where: PushSubscriptionWhereUniqueInput
+    update: XOR<PushSubscriptionUpdateWithoutUserInput, PushSubscriptionUncheckedUpdateWithoutUserInput>
+    create: XOR<PushSubscriptionCreateWithoutUserInput, PushSubscriptionUncheckedCreateWithoutUserInput>
+  }
+
+  export type PushSubscriptionUpdateWithWhereUniqueWithoutUserInput = {
+    where: PushSubscriptionWhereUniqueInput
+    data: XOR<PushSubscriptionUpdateWithoutUserInput, PushSubscriptionUncheckedUpdateWithoutUserInput>
+  }
+
+  export type PushSubscriptionUpdateManyWithWhereWithoutUserInput = {
+    where: PushSubscriptionScalarWhereInput
+    data: XOR<PushSubscriptionUpdateManyMutationInput, PushSubscriptionUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type PushSubscriptionScalarWhereInput = {
+    AND?: PushSubscriptionScalarWhereInput | PushSubscriptionScalarWhereInput[]
+    OR?: PushSubscriptionScalarWhereInput[]
+    NOT?: PushSubscriptionScalarWhereInput | PushSubscriptionScalarWhereInput[]
+    id?: StringFilter<"PushSubscription"> | string
+    user_id?: StringFilter<"PushSubscription"> | string
+    endpoint?: StringFilter<"PushSubscription"> | string
+    p256dh?: StringFilter<"PushSubscription"> | string
+    auth?: StringFilter<"PushSubscription"> | string
+    created_at?: DateTimeFilter<"PushSubscription"> | Date | string
+  }
+
+  export type UserCreateWithoutPush_subscriptionsInput = {
+    id?: string
+    email: string
+    full_name?: string | null
+    avatar_url?: string | null
+    role?: string
+    preferred_language?: string
+    password_hash?: string
+    created_at?: Date | string
+    email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
+    last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
+    last_password_reset_at?: Date | string | null
+    messages_sent?: MessageCreateNestedManyWithoutSenderInput
+    room_participations?: RoomParticipantCreateNestedManyWithoutUserInput
+    owned_rooms?: RoomCreateNestedManyWithoutOwnerInput
+    created_invites?: RoomInviteCreateNestedManyWithoutCreatorInput
+    sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
+    reset_tokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    audit_logs?: AuditLogCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutPush_subscriptionsInput = {
+    id?: string
+    email: string
+    full_name?: string | null
+    avatar_url?: string | null
+    role?: string
+    preferred_language?: string
+    password_hash?: string
+    created_at?: Date | string
+    email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
+    last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
+    last_password_reset_at?: Date | string | null
+    messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
+    room_participations?: RoomParticipantUncheckedCreateNestedManyWithoutUserInput
+    owned_rooms?: RoomUncheckedCreateNestedManyWithoutOwnerInput
+    created_invites?: RoomInviteUncheckedCreateNestedManyWithoutCreatorInput
+    sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
+    reset_tokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutPush_subscriptionsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutPush_subscriptionsInput, UserUncheckedCreateWithoutPush_subscriptionsInput>
+  }
+
+  export type UserUpsertWithoutPush_subscriptionsInput = {
+    update: XOR<UserUpdateWithoutPush_subscriptionsInput, UserUncheckedUpdateWithoutPush_subscriptionsInput>
+    create: XOR<UserCreateWithoutPush_subscriptionsInput, UserUncheckedCreateWithoutPush_subscriptionsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutPush_subscriptionsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutPush_subscriptionsInput, UserUncheckedUpdateWithoutPush_subscriptionsInput>
+  }
+
+  export type UserUpdateWithoutPush_subscriptionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    full_name?: NullableStringFieldUpdateOperationsInput | string | null
+    avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    preferred_language?: StringFieldUpdateOperationsInput | string
+    password_hash?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    messages_sent?: MessageUpdateManyWithoutSenderNestedInput
+    room_participations?: RoomParticipantUpdateManyWithoutUserNestedInput
+    owned_rooms?: RoomUpdateManyWithoutOwnerNestedInput
+    created_invites?: RoomInviteUpdateManyWithoutCreatorNestedInput
+    sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
+    reset_tokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutPush_subscriptionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    full_name?: NullableStringFieldUpdateOperationsInput | string | null
+    avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    preferred_language?: StringFieldUpdateOperationsInput | string
+    password_hash?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
+    room_participations?: RoomParticipantUncheckedUpdateManyWithoutUserNestedInput
+    owned_rooms?: RoomUncheckedUpdateManyWithoutOwnerNestedInput
+    created_invites?: RoomInviteUncheckedUpdateManyWithoutCreatorNestedInput
+    sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
+    reset_tokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  }
+
   export type UserCreateWithoutReset_tokensInput = {
     id?: string
     email: string
@@ -13118,7 +14631,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     messages_sent?: MessageCreateNestedManyWithoutSenderInput
     room_participations?: RoomParticipantCreateNestedManyWithoutUserInput
@@ -13126,6 +14641,7 @@ export namespace Prisma {
     created_invites?: RoomInviteCreateNestedManyWithoutCreatorInput
     sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
     audit_logs?: AuditLogCreateNestedManyWithoutUserInput
+    push_subscriptions?: PushSubscriptionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutReset_tokensInput = {
@@ -13138,7 +14654,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
     room_participations?: RoomParticipantUncheckedCreateNestedManyWithoutUserInput
@@ -13146,6 +14664,7 @@ export namespace Prisma {
     created_invites?: RoomInviteUncheckedCreateNestedManyWithoutCreatorInput
     sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
     audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    push_subscriptions?: PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutReset_tokensInput = {
@@ -13174,7 +14693,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     messages_sent?: MessageUpdateManyWithoutSenderNestedInput
     room_participations?: RoomParticipantUpdateManyWithoutUserNestedInput
@@ -13182,6 +14703,7 @@ export namespace Prisma {
     created_invites?: RoomInviteUpdateManyWithoutCreatorNestedInput
     sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
     audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
+    push_subscriptions?: PushSubscriptionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutReset_tokensInput = {
@@ -13194,7 +14716,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     room_participations?: RoomParticipantUncheckedUpdateManyWithoutUserNestedInput
@@ -13202,6 +14726,7 @@ export namespace Prisma {
     created_invites?: RoomInviteUncheckedUpdateManyWithoutCreatorNestedInput
     sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
     audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    push_subscriptions?: PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutAudit_logsInput = {
@@ -13214,7 +14739,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     messages_sent?: MessageCreateNestedManyWithoutSenderInput
     room_participations?: RoomParticipantCreateNestedManyWithoutUserInput
@@ -13222,6 +14749,7 @@ export namespace Prisma {
     created_invites?: RoomInviteCreateNestedManyWithoutCreatorInput
     sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
     reset_tokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
+    push_subscriptions?: PushSubscriptionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAudit_logsInput = {
@@ -13234,7 +14762,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
     room_participations?: RoomParticipantUncheckedCreateNestedManyWithoutUserInput
@@ -13242,6 +14772,7 @@ export namespace Prisma {
     created_invites?: RoomInviteUncheckedCreateNestedManyWithoutCreatorInput
     sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
     reset_tokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+    push_subscriptions?: PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAudit_logsInput = {
@@ -13270,7 +14801,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     messages_sent?: MessageUpdateManyWithoutSenderNestedInput
     room_participations?: RoomParticipantUpdateManyWithoutUserNestedInput
@@ -13278,6 +14811,7 @@ export namespace Prisma {
     created_invites?: RoomInviteUpdateManyWithoutCreatorNestedInput
     sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
     reset_tokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
+    push_subscriptions?: PushSubscriptionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAudit_logsInput = {
@@ -13290,7 +14824,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     room_participations?: RoomParticipantUncheckedUpdateManyWithoutUserNestedInput
@@ -13298,6 +14834,7 @@ export namespace Prisma {
     created_invites?: RoomInviteUncheckedUpdateManyWithoutCreatorNestedInput
     sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
     reset_tokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+    push_subscriptions?: PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutOwned_roomsInput = {
@@ -13310,7 +14847,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     messages_sent?: MessageCreateNestedManyWithoutSenderInput
     room_participations?: RoomParticipantCreateNestedManyWithoutUserInput
@@ -13318,6 +14857,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
     reset_tokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
     audit_logs?: AuditLogCreateNestedManyWithoutUserInput
+    push_subscriptions?: PushSubscriptionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutOwned_roomsInput = {
@@ -13330,7 +14870,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
     room_participations?: RoomParticipantUncheckedCreateNestedManyWithoutUserInput
@@ -13338,6 +14880,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
     reset_tokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
     audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    push_subscriptions?: PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutOwned_roomsInput = {
@@ -13463,7 +15006,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     messages_sent?: MessageUpdateManyWithoutSenderNestedInput
     room_participations?: RoomParticipantUpdateManyWithoutUserNestedInput
@@ -13471,6 +15016,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
     reset_tokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
     audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
+    push_subscriptions?: PushSubscriptionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutOwned_roomsInput = {
@@ -13483,7 +15029,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     room_participations?: RoomParticipantUncheckedUpdateManyWithoutUserNestedInput
@@ -13491,6 +15039,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
     reset_tokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
     audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    push_subscriptions?: PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type RoomParticipantUpsertWithWhereUniqueWithoutRoomInput = {
@@ -13584,7 +15133,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     messages_sent?: MessageCreateNestedManyWithoutSenderInput
     owned_rooms?: RoomCreateNestedManyWithoutOwnerInput
@@ -13592,6 +15143,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
     reset_tokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
     audit_logs?: AuditLogCreateNestedManyWithoutUserInput
+    push_subscriptions?: PushSubscriptionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutRoom_participationsInput = {
@@ -13604,7 +15156,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
     owned_rooms?: RoomUncheckedCreateNestedManyWithoutOwnerInput
@@ -13612,6 +15166,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
     reset_tokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
     audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    push_subscriptions?: PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutRoom_participationsInput = {
@@ -13679,7 +15234,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     messages_sent?: MessageUpdateManyWithoutSenderNestedInput
     owned_rooms?: RoomUpdateManyWithoutOwnerNestedInput
@@ -13687,6 +15244,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
     reset_tokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
     audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
+    push_subscriptions?: PushSubscriptionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutRoom_participationsInput = {
@@ -13699,7 +15257,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     owned_rooms?: RoomUncheckedUpdateManyWithoutOwnerNestedInput
@@ -13707,6 +15267,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
     reset_tokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
     audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    push_subscriptions?: PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type RoomCreateWithoutMessagesInput = {
@@ -13752,7 +15313,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     room_participations?: RoomParticipantCreateNestedManyWithoutUserInput
     owned_rooms?: RoomCreateNestedManyWithoutOwnerInput
@@ -13760,6 +15323,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
     reset_tokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
     audit_logs?: AuditLogCreateNestedManyWithoutUserInput
+    push_subscriptions?: PushSubscriptionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutMessages_sentInput = {
@@ -13772,7 +15336,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     room_participations?: RoomParticipantUncheckedCreateNestedManyWithoutUserInput
     owned_rooms?: RoomUncheckedCreateNestedManyWithoutOwnerInput
@@ -13780,6 +15346,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
     reset_tokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
     audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    push_subscriptions?: PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutMessages_sentInput = {
@@ -13917,7 +15484,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     room_participations?: RoomParticipantUpdateManyWithoutUserNestedInput
     owned_rooms?: RoomUpdateManyWithoutOwnerNestedInput
@@ -13925,6 +15494,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
     reset_tokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
     audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
+    push_subscriptions?: PushSubscriptionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutMessages_sentInput = {
@@ -13937,7 +15507,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     room_participations?: RoomParticipantUncheckedUpdateManyWithoutUserNestedInput
     owned_rooms?: RoomUncheckedUpdateManyWithoutOwnerNestedInput
@@ -13945,6 +15517,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
     reset_tokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
     audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    push_subscriptions?: PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type MessageUpsertWithoutRepliesInput = {
@@ -14045,7 +15618,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     messages_sent?: MessageCreateNestedManyWithoutSenderInput
     room_participations?: RoomParticipantCreateNestedManyWithoutUserInput
@@ -14053,6 +15628,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
     reset_tokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
     audit_logs?: AuditLogCreateNestedManyWithoutUserInput
+    push_subscriptions?: PushSubscriptionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCreated_invitesInput = {
@@ -14065,7 +15641,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
     room_participations?: RoomParticipantUncheckedCreateNestedManyWithoutUserInput
@@ -14073,6 +15651,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
     reset_tokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
     audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    push_subscriptions?: PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCreated_invitesInput = {
@@ -14140,7 +15719,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     messages_sent?: MessageUpdateManyWithoutSenderNestedInput
     room_participations?: RoomParticipantUpdateManyWithoutUserNestedInput
@@ -14148,6 +15729,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
     reset_tokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
     audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
+    push_subscriptions?: PushSubscriptionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCreated_invitesInput = {
@@ -14160,7 +15742,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     room_participations?: RoomParticipantUncheckedUpdateManyWithoutUserNestedInput
@@ -14168,6 +15752,7 @@ export namespace Prisma {
     sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
     reset_tokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
     audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    push_subscriptions?: PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutSent_notificationsInput = {
@@ -14180,7 +15765,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     messages_sent?: MessageCreateNestedManyWithoutSenderInput
     room_participations?: RoomParticipantCreateNestedManyWithoutUserInput
@@ -14188,6 +15775,7 @@ export namespace Prisma {
     created_invites?: RoomInviteCreateNestedManyWithoutCreatorInput
     reset_tokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
     audit_logs?: AuditLogCreateNestedManyWithoutUserInput
+    push_subscriptions?: PushSubscriptionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutSent_notificationsInput = {
@@ -14200,7 +15788,9 @@ export namespace Prisma {
     password_hash?: string
     created_at?: Date | string
     email_notifications_enabled?: boolean
+    push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
+    last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
     room_participations?: RoomParticipantUncheckedCreateNestedManyWithoutUserInput
@@ -14208,6 +15798,7 @@ export namespace Prisma {
     created_invites?: RoomInviteUncheckedCreateNestedManyWithoutCreatorInput
     reset_tokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
     audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    push_subscriptions?: PushSubscriptionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutSent_notificationsInput = {
@@ -14236,7 +15827,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     messages_sent?: MessageUpdateManyWithoutSenderNestedInput
     room_participations?: RoomParticipantUpdateManyWithoutUserNestedInput
@@ -14244,6 +15837,7 @@ export namespace Prisma {
     created_invites?: RoomInviteUpdateManyWithoutCreatorNestedInput
     reset_tokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
     audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
+    push_subscriptions?: PushSubscriptionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSent_notificationsInput = {
@@ -14256,7 +15850,9 @@ export namespace Prisma {
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
+    push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     room_participations?: RoomParticipantUncheckedUpdateManyWithoutUserNestedInput
@@ -14264,6 +15860,7 @@ export namespace Prisma {
     created_invites?: RoomInviteUncheckedUpdateManyWithoutCreatorNestedInput
     reset_tokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
     audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    push_subscriptions?: PushSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type MessageCreateManySenderInput = {
@@ -14333,6 +15930,14 @@ export namespace Prisma {
     ip_address?: string | null
     action: string
     details?: string | null
+    created_at?: Date | string
+  }
+
+  export type PushSubscriptionCreateManyUserInput = {
+    id?: string
+    endpoint: string
+    p256dh: string
+    auth: string
     created_at?: Date | string
   }
 
@@ -14554,6 +16159,30 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type PushSubscriptionUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    p256dh?: StringFieldUpdateOperationsInput | string
+    auth?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PushSubscriptionUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    p256dh?: StringFieldUpdateOperationsInput | string
+    auth?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PushSubscriptionUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    p256dh?: StringFieldUpdateOperationsInput | string
+    auth?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type RoomParticipantCreateManyRoomInput = {
     id?: string
     user_id: string
@@ -14767,6 +16396,10 @@ export namespace Prisma {
      * @deprecated Use UserDefaultArgs instead
      */
     export type UserArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = UserDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use PushSubscriptionDefaultArgs instead
+     */
+    export type PushSubscriptionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PushSubscriptionDefaultArgs<ExtArgs>
     /**
      * @deprecated Use PasswordResetTokenDefaultArgs instead
      */

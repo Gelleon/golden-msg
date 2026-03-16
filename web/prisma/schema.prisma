@@ -22,9 +22,11 @@ model User {
   password_hash      String   @default("") // temporary default for migration
   created_at         DateTime @default(now())
 
-  // Email Notification Settings
+  // Notification Settings
   email_notifications_enabled Boolean @default(true)
+  push_notifications_enabled  Boolean @default(true)
   last_email_notification_at DateTime?
+  last_push_notification_at  DateTime?
   last_password_reset_at    DateTime?
 
   // Relations
@@ -35,6 +37,19 @@ model User {
   sent_notifications NotificationLog[]
   reset_tokens       PasswordResetToken[]
   audit_logs         AuditLog[]
+  push_subscriptions PushSubscription[]
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  user_id   String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  created_at DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model PasswordResetToken {

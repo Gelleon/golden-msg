@@ -4,6 +4,7 @@ import prisma from "@/lib/db"
 import { openai } from "@/lib/openai"
 import { getSession } from "./auth"
 import { revalidatePath } from "next/cache"
+import { sendPushNotification } from "@/lib/push-service"
 import fs from "fs/promises"
 import path from "path"
 import { translateText } from "@/lib/dewiar"
@@ -466,6 +467,45 @@ export async function sendMessageAction({
     })
 
     revalidatePath(`/dashboard/rooms/${roomId}`)
+    
+    // Push notifications for other room members
+    const room = await prisma.room.findUnique({
+      where: { id: roomId },
+      include: {
+        participants: {
+          where: {
+            user_id: { not: user.id }
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                push_notifications_enabled: true,
+                preferred_language: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (room) {
+      for (const participant of room.participants) {
+        if (participant.user.push_notifications_enabled) {
+          const lang = participant.user.preferred_language || 'ru';
+          const title = lang === 'cn' ? `新消息: ${room.name || '房间'}` : `Новое сообщение: ${room.name || 'Комната'}`;
+          const body = messageType === 'text' 
+            ? `${user.full_name}: ${content?.substring(0, 50)}${content && content.length > 50 ? '...' : ''}`
+            : `${user.full_name} отправил ${messageType === 'voice' ? 'голосовое сообщение' : 'файл'}`;
+          
+          await sendPushNotification(participant.user.id, {
+            title,
+            body,
+            url: `/dashboard/rooms/${roomId}`
+          });
+        }
+      }
+    }
     
     // Update last_active_at for the sender
     await prisma.roomParticipant.update({

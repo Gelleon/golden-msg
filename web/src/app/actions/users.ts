@@ -82,12 +82,14 @@ export async function updateProfile(formData: FormData) {
   const password = formData.get("password") as string
   const avatarUrl = formData.get("avatarUrl") as string
   const emailNotifications = formData.get("emailNotifications")
+  const pushNotifications = formData.get("pushNotifications")
 
   const data: any = {}
   if (fullName !== null) data.full_name = fullName
   if (language !== null) data.preferred_language = language
   if (avatarUrl !== null) data.avatar_url = avatarUrl
   if (emailNotifications !== null) data.email_notifications_enabled = emailNotifications === "true"
+  if (pushNotifications !== null) data.push_notifications_enabled = pushNotifications === "true"
   if (password) {
     if (password.length < 6) return { error: "Password must be at least 6 characters" }
     data.password_hash = await hash(password, 10)
