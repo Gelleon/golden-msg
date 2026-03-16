@@ -625,3 +625,32 @@ export async function updateRoom(roomId: string, data: {
     return { error: "Failed to update room" }
   }
 }
+
+export async function deleteRoom(roomId: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+  })
+  
+  if (currentUser?.role !== "admin") {
+    return { error: "Permission denied. Only admins can delete rooms." }
+  }
+
+  try {
+    await prisma.room.delete({
+      where: { id: roomId },
+    })
+
+    // Log the action
+    console.log(`[LOG] Admin ${session.user.id} deleted room ${roomId}`)
+
+    revalidatePath("/dashboard")
+    
+    return { success: true }
+  } catch (error) {
+    console.error("Delete room error:", error)
+    return { error: "Failed to delete room" }
+  }
+}

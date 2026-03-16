@@ -116,6 +116,7 @@ model Message {
   sender_id          String
   content            String?
   content_translated String?
+  language_original  String?  @default("ru") // ru, cn
   message_type       String   @default("text") // text, voice, file
   file_url           String?
   voice_transcription String?

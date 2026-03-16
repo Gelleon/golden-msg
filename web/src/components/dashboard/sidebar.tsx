@@ -4,9 +4,9 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { LogOut, Plus, Settings, User, MessageSquare, Users, Search, Building2, ChevronRight, Hash, Edit } from "lucide-react"
+import { LogOut, Plus, Settings, User, MessageSquare, Users, Search, Building2, ChevronRight, Hash, Edit, Trash2 } from "lucide-react"
 import { logout } from "@/app/actions/auth"
-import { getRooms, createRoom, getDMs, searchUsers, startDM } from "@/app/actions/room"
+import { getRooms, createRoom, getDMs, searchUsers, startDM, deleteRoom } from "@/app/actions/room"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -138,6 +138,21 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   const handleEditRoom = (room: any) => {
     setEditingRoom(room)
     setIsEditDialogOpen(true)
+  }
+
+  const handleDeleteRoom = async (roomId: string) => {
+    if (!confirm(t('sidebar.confirmDeleteRoom') || "Are you sure you want to delete this room?")) return
+
+    const result = await deleteRoom(roomId)
+
+    if (result.success) {
+      fetchRoomsAndDMs()
+      if (pathname === `/dashboard/rooms/${roomId}`) {
+        router.push("/dashboard")
+      }
+    } else {
+      alert(result.error || "Failed to delete room")
+    }
   }
 
   const canCreateRoom = ["admin", "manager"].includes(profile?.role)
@@ -313,6 +328,15 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                             <Edit className="mr-2 h-4 w-4" />
                             <span>{t('sidebar.editRoom')}</span>
                           </ContextMenuItem>
+                          {profile?.role === "admin" && (
+                            <ContextMenuItem 
+                              onClick={() => handleDeleteRoom(room.id)}
+                              className="hover:bg-red-500 hover:text-white focus:bg-red-500 focus:text-white cursor-pointer text-red-400"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>{t('sidebar.deleteRoom')}</span>
+                            </ContextMenuItem>
+                          )}
                         </ContextMenuContent>
                       )}
                     </ContextMenu>

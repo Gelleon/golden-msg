@@ -165,6 +165,8 @@
     "saveChanges": "保存更改",
     "roomUpdated": "房间信息已更新。",
     "roomUpdateError": "无法更新房间。",
+    "deleteRoom": "删除房间",
+    "confirmDeleteRoom": "您确定要彻底删除此房间吗？此操作无法撤销。",
     "unexpectedError": "发生意外错误。",
     "nameMinLength": "名称必须包含至少 2 个字符。",
     "capacityMin": "容纳人数不能为负数。",

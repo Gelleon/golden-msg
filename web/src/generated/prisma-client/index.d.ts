@@ -7837,6 +7837,7 @@ export namespace Prisma {
     sender_id: string | null
     content: string | null
     content_translated: string | null
+    language_original: string | null
     message_type: string | null
     file_url: string | null
     voice_transcription: string | null
@@ -7851,6 +7852,7 @@ export namespace Prisma {
     sender_id: string | null
     content: string | null
     content_translated: string | null
+    language_original: string | null
     message_type: string | null
     file_url: string | null
     voice_transcription: string | null
@@ -7865,6 +7867,7 @@ export namespace Prisma {
     sender_id: number
     content: number
     content_translated: number
+    language_original: number
     message_type: number
     file_url: number
     voice_transcription: number
@@ -7881,6 +7884,7 @@ export namespace Prisma {
     sender_id?: true
     content?: true
     content_translated?: true
+    language_original?: true
     message_type?: true
     file_url?: true
     voice_transcription?: true
@@ -7895,6 +7899,7 @@ export namespace Prisma {
     sender_id?: true
     content?: true
     content_translated?: true
+    language_original?: true
     message_type?: true
     file_url?: true
     voice_transcription?: true
@@ -7909,6 +7914,7 @@ export namespace Prisma {
     sender_id?: true
     content?: true
     content_translated?: true
+    language_original?: true
     message_type?: true
     file_url?: true
     voice_transcription?: true
@@ -7996,6 +8002,7 @@ export namespace Prisma {
     sender_id: string
     content: string | null
     content_translated: string | null
+    language_original: string | null
     message_type: string
     file_url: string | null
     voice_transcription: string | null
@@ -8027,6 +8034,7 @@ export namespace Prisma {
     sender_id?: boolean
     content?: boolean
     content_translated?: boolean
+    language_original?: boolean
     message_type?: boolean
     file_url?: boolean
     voice_transcription?: boolean
@@ -8046,6 +8054,7 @@ export namespace Prisma {
     sender_id?: boolean
     content?: boolean
     content_translated?: boolean
+    language_original?: boolean
     message_type?: boolean
     file_url?: boolean
     voice_transcription?: boolean
@@ -8063,6 +8072,7 @@ export namespace Prisma {
     sender_id?: boolean
     content?: boolean
     content_translated?: boolean
+    language_original?: boolean
     message_type?: boolean
     file_url?: boolean
     voice_transcription?: boolean
@@ -8098,6 +8108,7 @@ export namespace Prisma {
       sender_id: string
       content: string | null
       content_translated: string | null
+      language_original: string | null
       message_type: string
       file_url: string | null
       voice_transcription: string | null
@@ -8506,6 +8517,7 @@ export namespace Prisma {
     readonly sender_id: FieldRef<"Message", 'String'>
     readonly content: FieldRef<"Message", 'String'>
     readonly content_translated: FieldRef<"Message", 'String'>
+    readonly language_original: FieldRef<"Message", 'String'>
     readonly message_type: FieldRef<"Message", 'String'>
     readonly file_url: FieldRef<"Message", 'String'>
     readonly voice_transcription: FieldRef<"Message", 'String'>
@@ -10967,6 +10979,7 @@ export namespace Prisma {
     sender_id: 'sender_id',
     content: 'content',
     content_translated: 'content_translated',
+    language_original: 'language_original',
     message_type: 'message_type',
     file_url: 'file_url',
     voice_transcription: 'voice_transcription',
@@ -11526,6 +11539,7 @@ export namespace Prisma {
     sender_id?: StringFilter<"Message"> | string
     content?: StringNullableFilter<"Message"> | string | null
     content_translated?: StringNullableFilter<"Message"> | string | null
+    language_original?: StringNullableFilter<"Message"> | string | null
     message_type?: StringFilter<"Message"> | string
     file_url?: StringNullableFilter<"Message"> | string | null
     voice_transcription?: StringNullableFilter<"Message"> | string | null
@@ -11544,6 +11558,7 @@ export namespace Prisma {
     sender_id?: SortOrder
     content?: SortOrderInput | SortOrder
     content_translated?: SortOrderInput | SortOrder
+    language_original?: SortOrderInput | SortOrder
     message_type?: SortOrder
     file_url?: SortOrderInput | SortOrder
     voice_transcription?: SortOrderInput | SortOrder
@@ -11565,6 +11580,7 @@ export namespace Prisma {
     sender_id?: StringFilter<"Message"> | string
     content?: StringNullableFilter<"Message"> | string | null
     content_translated?: StringNullableFilter<"Message"> | string | null
+    language_original?: StringNullableFilter<"Message"> | string | null
     message_type?: StringFilter<"Message"> | string
     file_url?: StringNullableFilter<"Message"> | string | null
     voice_transcription?: StringNullableFilter<"Message"> | string | null
@@ -11583,6 +11599,7 @@ export namespace Prisma {
     sender_id?: SortOrder
     content?: SortOrderInput | SortOrder
     content_translated?: SortOrderInput | SortOrder
+    language_original?: SortOrderInput | SortOrder
     message_type?: SortOrder
     file_url?: SortOrderInput | SortOrder
     voice_transcription?: SortOrderInput | SortOrder
@@ -11603,6 +11620,7 @@ export namespace Prisma {
     sender_id?: StringWithAggregatesFilter<"Message"> | string
     content?: StringNullableWithAggregatesFilter<"Message"> | string | null
     content_translated?: StringNullableWithAggregatesFilter<"Message"> | string | null
+    language_original?: StringNullableWithAggregatesFilter<"Message"> | string | null
     message_type?: StringWithAggregatesFilter<"Message"> | string
     file_url?: StringNullableWithAggregatesFilter<"Message"> | string | null
     voice_transcription?: StringNullableWithAggregatesFilter<"Message"> | string | null
@@ -12258,6 +12276,7 @@ export namespace Prisma {
     id?: string
     content?: string | null
     content_translated?: string | null
+    language_original?: string | null
     message_type?: string
     file_url?: string | null
     voice_transcription?: string | null
@@ -12275,6 +12294,7 @@ export namespace Prisma {
     sender_id: string
     content?: string | null
     content_translated?: string | null
+    language_original?: string | null
     message_type?: string
     file_url?: string | null
     voice_transcription?: string | null
@@ -12288,6 +12308,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
     message_type?: StringFieldUpdateOperationsInput | string
     file_url?: NullableStringFieldUpdateOperationsInput | string | null
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
@@ -12305,6 +12326,7 @@ export namespace Prisma {
     sender_id?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
     message_type?: StringFieldUpdateOperationsInput | string
     file_url?: NullableStringFieldUpdateOperationsInput | string | null
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
@@ -12320,6 +12342,7 @@ export namespace Prisma {
     sender_id: string
     content?: string | null
     content_translated?: string | null
+    language_original?: string | null
     message_type?: string
     file_url?: string | null
     voice_transcription?: string | null
@@ -12332,6 +12355,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
     message_type?: StringFieldUpdateOperationsInput | string
     file_url?: NullableStringFieldUpdateOperationsInput | string | null
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
@@ -12345,6 +12369,7 @@ export namespace Prisma {
     sender_id?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
     message_type?: StringFieldUpdateOperationsInput | string
     file_url?: NullableStringFieldUpdateOperationsInput | string | null
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
@@ -12982,6 +13007,7 @@ export namespace Prisma {
     sender_id?: SortOrder
     content?: SortOrder
     content_translated?: SortOrder
+    language_original?: SortOrder
     message_type?: SortOrder
     file_url?: SortOrder
     voice_transcription?: SortOrder
@@ -12996,6 +13022,7 @@ export namespace Prisma {
     sender_id?: SortOrder
     content?: SortOrder
     content_translated?: SortOrder
+    language_original?: SortOrder
     message_type?: SortOrder
     file_url?: SortOrder
     voice_transcription?: SortOrder
@@ -13010,6 +13037,7 @@ export namespace Prisma {
     sender_id?: SortOrder
     content?: SortOrder
     content_translated?: SortOrder
+    language_original?: SortOrder
     message_type?: SortOrder
     file_url?: SortOrder
     voice_transcription?: SortOrder
@@ -14043,6 +14071,7 @@ export namespace Prisma {
     id?: string
     content?: string | null
     content_translated?: string | null
+    language_original?: string | null
     message_type?: string
     file_url?: string | null
     voice_transcription?: string | null
@@ -14058,6 +14087,7 @@ export namespace Prisma {
     room_id: string
     content?: string | null
     content_translated?: string | null
+    language_original?: string | null
     message_type?: string
     file_url?: string | null
     voice_transcription?: string | null
@@ -14300,6 +14330,7 @@ export namespace Prisma {
     sender_id?: StringFilter<"Message"> | string
     content?: StringNullableFilter<"Message"> | string | null
     content_translated?: StringNullableFilter<"Message"> | string | null
+    language_original?: StringNullableFilter<"Message"> | string | null
     message_type?: StringFilter<"Message"> | string
     file_url?: StringNullableFilter<"Message"> | string | null
     voice_transcription?: StringNullableFilter<"Message"> | string | null
@@ -14921,6 +14952,7 @@ export namespace Prisma {
     id?: string
     content?: string | null
     content_translated?: string | null
+    language_original?: string | null
     message_type?: string
     file_url?: string | null
     voice_transcription?: string | null
@@ -14936,6 +14968,7 @@ export namespace Prisma {
     sender_id: string
     content?: string | null
     content_translated?: string | null
+    language_original?: string | null
     message_type?: string
     file_url?: string | null
     voice_transcription?: string | null
@@ -15358,6 +15391,7 @@ export namespace Prisma {
     id?: string
     content?: string | null
     content_translated?: string | null
+    language_original?: string | null
     message_type?: string
     file_url?: string | null
     voice_transcription?: string | null
@@ -15374,6 +15408,7 @@ export namespace Prisma {
     sender_id: string
     content?: string | null
     content_translated?: string | null
+    language_original?: string | null
     message_type?: string
     file_url?: string | null
     voice_transcription?: string | null
@@ -15391,6 +15426,7 @@ export namespace Prisma {
     id?: string
     content?: string | null
     content_translated?: string | null
+    language_original?: string | null
     message_type?: string
     file_url?: string | null
     voice_transcription?: string | null
@@ -15407,6 +15443,7 @@ export namespace Prisma {
     sender_id: string
     content?: string | null
     content_translated?: string | null
+    language_original?: string | null
     message_type?: string
     file_url?: string | null
     voice_transcription?: string | null
@@ -15535,6 +15572,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
     message_type?: StringFieldUpdateOperationsInput | string
     file_url?: NullableStringFieldUpdateOperationsInput | string | null
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
@@ -15551,6 +15589,7 @@ export namespace Prisma {
     sender_id?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
     message_type?: StringFieldUpdateOperationsInput | string
     file_url?: NullableStringFieldUpdateOperationsInput | string | null
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
@@ -15868,6 +15907,7 @@ export namespace Prisma {
     room_id: string
     content?: string | null
     content_translated?: string | null
+    language_original?: string | null
     message_type?: string
     file_url?: string | null
     voice_transcription?: string | null
@@ -15945,6 +15985,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
     message_type?: StringFieldUpdateOperationsInput | string
     file_url?: NullableStringFieldUpdateOperationsInput | string | null
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
@@ -15960,6 +16001,7 @@ export namespace Prisma {
     room_id?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
     message_type?: StringFieldUpdateOperationsInput | string
     file_url?: NullableStringFieldUpdateOperationsInput | string | null
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
@@ -15974,6 +16016,7 @@ export namespace Prisma {
     room_id?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
     message_type?: StringFieldUpdateOperationsInput | string
     file_url?: NullableStringFieldUpdateOperationsInput | string | null
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
@@ -16198,6 +16241,7 @@ export namespace Prisma {
     sender_id: string
     content?: string | null
     content_translated?: string | null
+    language_original?: string | null
     message_type?: string
     file_url?: string | null
     voice_transcription?: string | null
@@ -16251,6 +16295,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
     message_type?: StringFieldUpdateOperationsInput | string
     file_url?: NullableStringFieldUpdateOperationsInput | string | null
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
@@ -16266,6 +16311,7 @@ export namespace Prisma {
     sender_id?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
     message_type?: StringFieldUpdateOperationsInput | string
     file_url?: NullableStringFieldUpdateOperationsInput | string | null
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
@@ -16280,6 +16326,7 @@ export namespace Prisma {
     sender_id?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
     message_type?: StringFieldUpdateOperationsInput | string
     file_url?: NullableStringFieldUpdateOperationsInput | string | null
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
@@ -16327,6 +16374,7 @@ export namespace Prisma {
     sender_id: string
     content?: string | null
     content_translated?: string | null
+    language_original?: string | null
     message_type?: string
     file_url?: string | null
     voice_transcription?: string | null
@@ -16338,6 +16386,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
     message_type?: StringFieldUpdateOperationsInput | string
     file_url?: NullableStringFieldUpdateOperationsInput | string | null
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
@@ -16354,6 +16403,7 @@ export namespace Prisma {
     sender_id?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
     message_type?: StringFieldUpdateOperationsInput | string
     file_url?: NullableStringFieldUpdateOperationsInput | string | null
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
@@ -16368,6 +16418,7 @@ export namespace Prisma {
     sender_id?: StringFieldUpdateOperationsInput | string
     content?: NullableStringFieldUpdateOperationsInput | string | null
     content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
     message_type?: StringFieldUpdateOperationsInput | string
     file_url?: NullableStringFieldUpdateOperationsInput | string | null
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null

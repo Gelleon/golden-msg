@@ -13,9 +13,10 @@ import { sendMessageAction, updateTypingStatus } from "@/app/actions/chat"
 interface MessageInputProps {
   roomId: string
   userId: string
-  userRole: string
+  userRole?: string
   replyTo?: any
   onCancelReply?: () => void
+  onMessageSent?: () => void
 }
 
 export function MessageInput({ 
@@ -23,7 +24,8 @@ export function MessageInput({
   userId, 
   userRole, 
   replyTo, 
-  onCancelReply 
+  onCancelReply,
+  onMessageSent
 }: MessageInputProps) {
   const { t } = useTranslation()
   const [message, setMessage] = useState("")
@@ -108,9 +110,14 @@ export function MessageInput({
       })
       console.log("sendMessageAction result:", result);
 
+      if (result.error) {
+        throw new Error(result.error)
+      }
+
       setMessage("")
       removeFile()
       if (onCancelReply) onCancelReply()
+      if (onMessageSent) onMessageSent()
     } catch (error) {
       console.error("Error sending message:", error)
       alert(t("chat.errorSendMessage"))
@@ -148,12 +155,18 @@ export function MessageInput({
           const result = await uploadFile(formData)
           if (result.error || !result.url) throw new Error(result.error || "Upload failed")
 
-          await sendMessageAction({
+          const sendResult = await sendMessageAction({
             roomId,
             content: t("chat.voiceMessageContent"),
             messageType: "voice",
             fileUrl: result.url,
           })
+
+          if (sendResult.error) {
+            throw new Error(sendResult.error)
+          }
+
+          if (onMessageSent) onMessageSent()
         } catch (error) {
           console.error("Error sending voice message:", error)
           alert(t("chat.errorSendVoice"))

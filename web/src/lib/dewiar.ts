@@ -48,7 +48,7 @@ export async function callDewiar(message: string): Promise<any | null> {
   const token = process.env.DEWIAR_API_TOKEN;
   
   if (!token) {
-    console.error("DEWIAR_API_TOKEN is missing in environment variables!");
+    console.error("[DEWIAR] CRITICAL: DEWIAR_API_TOKEN is missing in environment variables!");
     return null;
   }
 
@@ -64,7 +64,7 @@ export async function callDewiar(message: string): Promise<any | null> {
     };
 
     const url = `${DEWIAR_ENDPOINT}?key=${token}`;
-    console.log(`[DEWIAR DEBUG] Calling API. Endpoint: ${DEWIAR_ENDPOINT}, Token exists: ${!!token}`);
+    console.log(`[DEWIAR] Calling API for: "${message.substring(0, 50)}..."`);
     
     const response = await fetch(url, {
       method: "POST",
@@ -75,19 +75,17 @@ export async function callDewiar(message: string): Promise<any | null> {
       body: JSON.stringify(body)
     });
 
-    console.log(`[DEWIAR DEBUG] Status: ${response.status} ${response.statusText}`);
-
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[DEWIAR DEBUG] Error body: ${errorText}`);
+      console.error(`[DEWIAR] API error. Status: ${response.status} ${response.statusText}. Body: ${errorText}`);
       return null;
     }
 
     const data = await response.json();
-    console.log("[DEWIAR DEBUG] Response received:", JSON.stringify(data).substring(0, 200) + "...");
+    console.log("[DEWIAR] Response received from API");
     return data;
   } catch (error) {
-    console.error("[DEWIAR DEBUG] Exception during API call:", error);
+    console.error("[DEWIAR] Network exception:", error);
     return null;
   }
 }
@@ -100,25 +98,66 @@ export async function translateText(
   fromLang: string, 
   toLang: string
 ): Promise<string | null> {
-  const prompt = `Translate the following text from ${fromLang} to ${toLang}. Return ONLY the translated text: ${text}`;
+  // Use more specific language names for better AI understanding
+  const sourceLang = fromLang === "Chinese" ? "Simplified Chinese" : (fromLang === "Russian" ? "Russian language" : fromLang);
+  const targetLang = toLang === "Chinese" ? "Simplified Chinese" : (toLang === "Russian" ? "Russian language" : toLang);
+
+  console.log(`[DEWIAR] translateText called with: fromLang="${fromLang}" (${sourceLang}), toLang="${toLang}" (${targetLang})`);
+  const prompt = `Task: Translate the following text from ${sourceLang} to ${targetLang}.
+Instruction: Provide ONLY the translated text in ${targetLang}. Do not include any explanations, prefixes, quotes, or original text.
+Text to translate: ${text}`;
+
+  console.log(`[DEWIAR] Translating from ${sourceLang} to ${targetLang}`);
   const response = await callDewiar(prompt);
 
-  // Based on the log: {"reaction":"ok", "response":"你好", ...}
-  if (response?.response) {
-    return response.response.trim();
+  if (!response) {
+    console.error("[DEWIAR] No response received from API");
+    return null;
   }
 
-  if (response?.data?.message) {
-    return response.data.message.trim();
-  }
-  
-  if (response?.message) {
-    return response.message.trim();
+  // Log full response structure for debugging (especially for Chinese to Russian)
+  if (sourceLang === "Simplified Chinese") {
+    console.log("[DEWIAR DEBUG] Chinese to Russian FULL response:", JSON.stringify(response));
   }
 
-  if (response?.result) {
-    return typeof response.result === 'string' ? response.result.trim() : JSON.stringify(response.result);
+  // Handle various response formats from Dewiar API
+  const translatedText = 
+    response.response || 
+    response.data?.message || 
+    response.data?.response || // Added key
+    response.message || 
+    response.choices?.[0]?.message?.content || // OpenAI format
+    (typeof response.result === 'string' ? response.result : null);
+
+  console.log(`[DEWIAR] Extracted translatedText: "${translatedText}"`);
+
+  if (translatedText) {
+    let trimmed = translatedText.trim();
+    
+    // Remove common LLM prefixes if they appear despite instructions
+    const prefixesToRemove = [
+      "Перевод:", "Translation:", "Текст:", "Result:",
+      "Russian:", "Russian language:", "На русском:",
+    ];
+    
+    for (const prefix of prefixesToRemove) {
+      if (trimmed.toLowerCase().startsWith(prefix.toLowerCase())) {
+        trimmed = trimmed.substring(prefix.length).trim();
+      }
+    }
+
+    // Remove potential quotes if the LLM included them despite instructions
+    trimmed = trimmed.replace(/^["'«]|["'»]$/g, '');
+
+    // If it just repeated the source text (very common failure mode for some LLMs)
+    if (trimmed.toLowerCase() === text.trim().toLowerCase() && text.length > 3) {
+      console.warn("[DEWIAR] Translation returned identical text to source. Likely failed.");
+      return null;
+    }
+
+    return trimmed;
   }
 
+  console.warn("[DEWIAR] Could not find translated text in response keys:", JSON.stringify(Object.keys(response)));
   return null;
 }

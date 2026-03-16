@@ -190,6 +190,7 @@ exports.Prisma.MessageScalarFieldEnum = {
   sender_id: 'sender_id',
   content: 'content',
   content_translated: 'content_translated',
+  language_original: 'language_original',
   message_type: 'message_type',
   file_url: 'file_url',
   voice_transcription: 'voice_transcription',

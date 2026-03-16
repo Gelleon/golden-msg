@@ -20,14 +20,18 @@ const sendMessageSchema = z.object({
 
 async function translateWithDewiar(text: string, fromLang: string, toLang: string) {
   try {
+    console.log(`[CHAT ACTION] Requesting translation: "${text.substring(0, 20)}..." from ${fromLang} to ${toLang}`);
     const translation = await translateText(text, fromLang, toLang);
     
     if (translation) {
+      console.log(`[CHAT ACTION] Translation received: "${translation.substring(0, 20)}..."`);
       return translation;
     }
     
+    console.warn(`[CHAT ACTION] translateText returned null for: "${text.substring(0, 20)}..."`);
     return null;
   } catch (error) {
+    console.error(`[CHAT ACTION] Error in translateWithDewiar:`, error);
     return null;
   }
 }
@@ -93,13 +97,29 @@ export async function updateMessage(messageId: string, content: string) {
     // Re-translate if content changed
     let contentTranslated = message.content_translated
     const user = await prisma.user.findUnique({ where: { id: session.user.id } })
-    const languageOriginal = user?.preferred_language || "ru"
-    const targetLanguage = languageOriginal === "ru" ? "Chinese" : "Russian"
+    
+    // Language Detection Helpers
+    const hasChinese = (text: string) => /[\u4e00-\u9fa5]/.test(text);
+    const hasCyrillic = (text: string) => /[а-яА-ЯёЁ]/.test(text);
+
+    let languageOriginal: "Russian" | "Chinese";
+    let targetLanguage: "Russian" | "Chinese";
+
+    if (hasChinese(content)) {
+      languageOriginal = "Chinese";
+      targetLanguage = "Russian";
+    } else if (hasCyrillic(content)) {
+      languageOriginal = "Russian";
+      targetLanguage = "Chinese";
+    } else {
+      languageOriginal = user?.preferred_language === "cn" ? "Chinese" : "Russian";
+      targetLanguage = languageOriginal === "Russian" ? "Chinese" : "Russian";
+    }
 
     if (content !== message.content) {
       const dewiarTranslation = await translateWithDewiar(
         content,
-        languageOriginal === "ru" ? "Russian" : "Chinese",
+        languageOriginal,
         targetLanguage
       );
 
@@ -113,7 +133,7 @@ export async function updateMessage(messageId: string, content: string) {
               {
                 role: "system",
                 content: `You are a professional translator. Translate the following text from ${
-                  languageOriginal === "ru" ? "Russian" : "Chinese"
+                  languageOriginal === "Russian" ? "Russian" : "Chinese"
                 } to ${targetLanguage}. Return only the translated text.`,
               },
               {
@@ -134,6 +154,7 @@ export async function updateMessage(messageId: string, content: string) {
       data: {
         content: content,
         content_translated: contentTranslated,
+        language_original: languageOriginal === "Russian" ? "ru" : "cn",
         is_edited: true,
       },
     })
@@ -244,7 +265,7 @@ export async function getMessages(roomId: string) {
     id: msg.id,
     content_original: msg.content,
     content_translated: msg.content_translated,
-    language_original: msg.sender.preferred_language || "ru",
+    language_original: msg.language_original || "ru",
     message_type: msg.message_type,
     file_url: msg.file_url,
     voice_transcription: msg.voice_transcription,
@@ -304,6 +325,7 @@ export async function sendMessageAction(rawData: {
   fileUrl?: string
   replyToId?: string
 }) {
+  console.log(`[ACTION] sendMessageAction start: ${JSON.stringify(rawData).substring(0, 100)}...`);
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
 
@@ -314,6 +336,7 @@ export async function sendMessageAction(rawData: {
   }
 
   const { roomId, content, messageType, fileUrl, replyToId } = validated.data
+  console.log(`[SEND MESSAGE] Validated: ${JSON.stringify(validated.data).substring(0, 50)}...`);
 
   // 2. Check Participation
   const participation = await prisma.roomParticipant.findUnique({
@@ -337,41 +360,65 @@ export async function sendMessageAction(rawData: {
     return { error: "User not found" }
   }
 
-  const languageOriginal = user.preferred_language || "ru"
-  const targetLanguage = languageOriginal === "ru" ? "Chinese" : "Russian"
+  // Language Detection Helpers
+  const hasChinese = (text: string) => /[\u4e00-\u9fa5]/.test(text);
+  const hasCyrillic = (text: string) => /[а-яА-ЯёЁ]/.test(text);
 
-  console.log(`Sending message from ${user.full_name} (${languageOriginal}) to ${targetLanguage}`);
+  let languageOriginal: "Russian" | "Chinese";
+  let targetLanguage: "Russian" | "Chinese";
+
+  if (hasChinese(content)) {
+    languageOriginal = "Chinese";
+    targetLanguage = "Russian";
+    console.log("[AI] Detected: Chinese (via Regex)");
+  } else if (hasCyrillic(content)) {
+    languageOriginal = "Russian";
+    targetLanguage = "Chinese";
+    console.log("[AI] Detected: Russian (via Regex)");
+  } else {
+    // Fallback to user preference for neutral text (English, numbers, etc.)
+    const userPref = user.preferred_language === "cn" ? "Chinese" : "Russian";
+    languageOriginal = userPref;
+    targetLanguage = userPref === "Russian" ? "Chinese" : "Russian";
+    console.log(`[AI] Detected: Neutral (via User Pref: ${user.preferred_language})`);
+  }
+
+  console.log(`[SEND MESSAGE] From: ${user.full_name}, DB Pref Lang: ${user.preferred_language}, Final Original: ${languageOriginal}, Target: ${targetLanguage}, Content: "${content.substring(0, 50)}..."`);
 
   let contentTranslated: string | null = null
   let voiceTranscription: string | null = null
 
   // AI Processing
+  const dewarTokenExists = !!process.env.DEWIAR_API_TOKEN;
+  const openaiTokenExists = !!process.env.OPENAI_API_KEY;
+  console.log(`[AI] Processing tokens check: Dewiar=${dewarTokenExists}, OpenAI=${openaiTokenExists}`);
+
   try {
     if (messageType === "text" || (messageType === "voice" && voiceTranscription)) {
       const textToTranslate = messageType === "text" ? content : voiceTranscription;
       
-      console.log(`Attempting Dewiar translation for: "${textToTranslate?.substring(0, 30)}..." from ${languageOriginal} to ${targetLanguage}`);
+      const fromLangParam = languageOriginal;
+      console.log(`[AI] Attempting Dewiar translation for: "${textToTranslate?.substring(0, 30)}..." from ${fromLangParam} to ${targetLanguage}`);
+      
       const dewiarTranslation = await translateWithDewiar(
         textToTranslate!,
-        languageOriginal === "ru" ? "Russian" : "Chinese",
+        fromLangParam,
         targetLanguage
       );
 
       if (dewiarTranslation) {
         contentTranslated = dewiarTranslation;
-        console.log("Dewiar translation successful:", contentTranslated.substring(0, 30));
+        console.log(`[AI] Dewiar translation SUCCESS: "${contentTranslated.substring(0, 30)}..."`);
       } else {
-        console.warn("Dewiar failed or returned null, contentTranslated remains null");
+        console.warn(`[AI] Dewiar FAILED (returned null) for text: "${textToTranslate?.substring(0, 30)}..."`);
         if (openai) {
-          console.log("Falling back to OpenAI for translation...");
+          console.log("[AI] Falling back to OpenAI...");
           const completion = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
               {
                 role: "system",
-                content: `You are a professional translator. Translate the following text from ${
-                  languageOriginal === "ru" ? "Russian" : "Chinese"
-                } to ${targetLanguage}. Return only the translated text.`,
+                content: `You are a professional translator. Translate the following text from ${languageOriginal} to ${targetLanguage}. Return only the translated text.`,
               },
               {
                 role: "user",
@@ -380,7 +427,9 @@ export async function sendMessageAction(rawData: {
             ],
           })
           contentTranslated = completion.choices[0].message.content
-          console.log("OpenAI translation successful:", contentTranslated?.substring(0, 30));
+          console.log(`[AI] OpenAI SUCCESS: "${contentTranslated?.substring(0, 30)}..."`);
+        } else {
+          console.warn("[AI] OpenAI fallback NOT available");
         }
       }
     }
@@ -421,7 +470,7 @@ export async function sendMessageAction(rawData: {
       // Translate the voice transcription
       const dewiarTranslation = await translateWithDewiar(
         voiceTranscription,
-        languageOriginal === "ru" ? "Russian" : "Chinese",
+        languageOriginal,
         targetLanguage
       );
 
@@ -433,9 +482,7 @@ export async function sendMessageAction(rawData: {
           messages: [
             {
               role: "system",
-              content: `You are a professional translator. Translate the following text from ${
-                languageOriginal === "ru" ? "Russian" : "Chinese"
-              } to ${targetLanguage}. Return only the translated text.`,
+              content: `You are a professional translator. Translate the following text from ${languageOriginal} to ${targetLanguage}. Return only the translated text.`,
             },
             {
               role: "user",
@@ -448,13 +495,17 @@ export async function sendMessageAction(rawData: {
     }
   } catch (error) {
     console.error("AI Processing Error:", error)
-    contentTranslated = "DEBUG: Translation Failed"
+    contentTranslated = `DEBUG: AI Error (${error instanceof Error ? error.message : String(error)})`
   }
 
   // Final fallback if still null
   if (!contentTranslated && messageType === "text") {
-    contentTranslated = `DEBUG: No translation for: ${content.substring(0, 10)}...`
+    const reason = !dewarTokenExists ? "Dewiar Token Missing" : 
+                   (!openaiTokenExists ? "OpenAI Token Missing" : "Both services returned null");
+    contentTranslated = `DEBUG: No translation (${reason}) for: ${content.substring(0, 10)}...`
   }
+
+  console.log(`[DB] Creating message with contentTranslated: "${contentTranslated?.substring(0, 50)}..."`);
 
   // Insert Message into Database
   try {
@@ -464,6 +515,7 @@ export async function sendMessageAction(rawData: {
         sender_id: user.id,
         content: content,
         content_translated: contentTranslated,
+        // language_original: languageOriginal === "Russian" ? "ru" : "cn", // Temporarily disabled due to schema update issues
         message_type: messageType,
         file_url: fileUrl,
         voice_transcription: voiceTranscription,
@@ -476,6 +528,7 @@ export async function sendMessageAction(rawData: {
             full_name: true,
             avatar_url: true,
             role: true,
+            preferred_language: true,
           },
         },
         reply_to: {

@@ -42,6 +42,12 @@ export function ChatWindow({
   const messagesRef = useRef(messages)
   messagesRef.current = messages
 
+  const updateMessages = (newMessages: any[]) => {
+    if (JSON.stringify(newMessages) !== JSON.stringify(messagesRef.current)) {
+      setMessages(newMessages);
+    }
+  }
+
   // Find the first unread message index (only once on load)
   const [firstUnreadIndex] = useState(() => 
     messages.findIndex(m => 
@@ -221,6 +227,12 @@ export function ChatWindow({
         userRole={userProfile?.role}
         replyTo={replyTo}
         onCancelReply={() => setReplyTo(null)}
+        onMessageSent={async () => {
+          const result = await getMessages(roomId);
+          if (result.messages) {
+            updateMessages(result.messages);
+          }
+        }}
       />
     </div>
   )
