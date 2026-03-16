@@ -62,23 +62,30 @@ export async function callDewiar(message: string): Promise<any | null> {
       }
     };
 
+    console.log(`Calling Dewiar with body: ${JSON.stringify(body)}`);
     const url = `${DEWIAR_ENDPOINT}?key=${token}`;
     
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Accept": "application/json"
       },
       body: JSON.stringify(body)
     });
 
     if (!response.ok) {
+      console.error(`Dewiar API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`Dewiar error response: ${errorText}`);
       return null;
     }
 
     const data = await response.json();
+    console.log("Dewiar response data:", JSON.stringify(data));
     return data;
   } catch (error) {
+    console.error("Dewiar API call exception:", error);
     return null;
   }
 }
