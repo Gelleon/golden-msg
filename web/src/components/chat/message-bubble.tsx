@@ -36,6 +36,7 @@ interface Message {
   voice_transcription: string | null
   created_at: string
   is_edited?: boolean
+  translation_status?: string
   sender: {
     id: string
     full_name: string | null
@@ -333,7 +334,7 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
                   )}
                 </AnimatePresence>
                 
-                {!message.content_translated && (
+                {!message.content_translated && message.translation_status !== "failed" && (
                   <div className={cn(
                     "px-4 py-2 border-t text-[10px] font-bold uppercase tracking-wider flex flex-col gap-1",
                     isCurrentUser ? "bg-black/10 border-white/10 text-white/50" : "bg-slate-50 border-slate-100 text-slate-400"
@@ -344,6 +345,17 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
                     </div>
                     <div className="text-[8px] opacity-30">
                       ID: {message.id.substring(0, 8)} | Lang: {message.language_original}
+                    </div>
+                  </div>
+                )}
+                {message.translation_status === "failed" && (
+                  <div className={cn(
+                    "px-4 py-2 border-t text-[10px] font-bold uppercase tracking-wider flex flex-col gap-1",
+                    isCurrentUser ? "bg-red-500/20 border-white/10 text-red-200" : "bg-red-50 border-red-100 text-red-500"
+                  )}>
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-3 w-3" />
+                      <span>{t("chat.translationFailed") || "Translation failed"}</span>
                     </div>
                   </div>
                 )}
@@ -441,6 +453,29 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
                 </motion.div>
               )}
             </AnimatePresence>
+            
+            {!message.content_translated && message.translation_status !== "failed" && (
+              <div className={cn(
+                "px-4 py-2 border-t text-[10px] font-bold uppercase tracking-wider flex flex-col gap-1",
+                isCurrentUser ? "bg-black/10 border-white/10 text-white/50" : "bg-slate-50 border-slate-100 text-slate-400"
+              )}>
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <span>{t("chat.aiTranslation")}</span>
+                </div>
+              </div>
+            )}
+            {message.translation_status === "failed" && (
+              <div className={cn(
+                "px-4 py-2 border-t text-[10px] font-bold uppercase tracking-wider flex flex-col gap-1",
+                isCurrentUser ? "bg-red-500/20 border-white/10 text-red-200" : "bg-red-50 border-red-100 text-red-500"
+              )}>
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-3 w-3" />
+                  <span>{t("chat.translationFailed") || "Translation failed"}</span>
+                </div>
+              </div>
+            )}
           </div>
         )
       case "file":
@@ -471,7 +506,8 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
                 <FileText className={cn("h-6 w-6 md:h-7 md:w-7", isCurrentUser ? "text-blue-300" : "text-blue-600")} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className={cn("text-sm md:text-[15px] font-bold truncate mb-2", isCurrentUser ? "text-white" : "text-slate-900")}>
+                {message.content_original && renderLanguageIndicator(!!message.content_translated)}
+                <p className={cn("text-sm md:text-[15px] font-bold truncate mb-2 whitespace-pre-wrap break-words overflow-wrap-anywhere", isCurrentUser ? "text-white" : "text-slate-900")}>
                   {message.content_original || t("chat.file")}
                 </p>
                 <div className="flex items-center gap-2">
@@ -490,6 +526,58 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
                 </div>
               </div>
             </div>
+
+            {message.content_original && (
+              <>
+                <AnimatePresence>
+                  {message.content_translated && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      className={cn("p-3 md:p-4 text-sm md:text-[15px] leading-relaxed border-t transition-all duration-300 overflow-hidden",
+                        isCurrentUser 
+                          ? "bg-black/10 border-white/10 text-blue-100" 
+                          : "bg-amber-50/50 border-amber-100 text-slate-900"
+                      )}
+                    >
+                      <div className={cn(
+                        "text-[9px] md:text-[10px] mb-1.5 flex items-center gap-1.5 uppercase tracking-widest font-bold",
+                        isCurrentUser ? "text-blue-300" : "text-amber-600"
+                      )}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                        {message.language_original === "ru" ? t("chat.translatedToCN") : t("chat.translatedToRU")}
+                      </div>
+                      <p className="font-medium leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere">
+                        {message.content_translated}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                
+                {!message.content_translated && message.translation_status !== "failed" && (
+                  <div className={cn(
+                    "px-4 py-2 border-t text-[10px] font-bold uppercase tracking-wider flex flex-col gap-1",
+                    isCurrentUser ? "bg-black/10 border-white/10 text-white/50" : "bg-slate-50 border-slate-100 text-slate-400"
+                  )}>
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <span>{t("chat.aiTranslation")}</span>
+                    </div>
+                  </div>
+                )}
+                {message.translation_status === "failed" && (
+                  <div className={cn(
+                    "px-4 py-2 border-t text-[10px] font-bold uppercase tracking-wider flex flex-col gap-1",
+                    isCurrentUser ? "bg-red-500/20 border-white/10 text-red-200" : "bg-red-50 border-red-100 text-red-500"
+                  )}>
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-3 w-3" />
+                      <span>{t("chat.translationFailed") || "Translation failed"}</span>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )
       default:

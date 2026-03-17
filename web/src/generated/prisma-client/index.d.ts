@@ -7844,6 +7844,8 @@ export namespace Prisma {
     created_at: Date | null
     is_edited: boolean | null
     reply_to_id: string | null
+    translation_status: string | null
+    translation_error: string | null
   }
 
   export type MessageMaxAggregateOutputType = {
@@ -7859,6 +7861,8 @@ export namespace Prisma {
     created_at: Date | null
     is_edited: boolean | null
     reply_to_id: string | null
+    translation_status: string | null
+    translation_error: string | null
   }
 
   export type MessageCountAggregateOutputType = {
@@ -7874,6 +7878,8 @@ export namespace Prisma {
     created_at: number
     is_edited: number
     reply_to_id: number
+    translation_status: number
+    translation_error: number
     _all: number
   }
 
@@ -7891,6 +7897,8 @@ export namespace Prisma {
     created_at?: true
     is_edited?: true
     reply_to_id?: true
+    translation_status?: true
+    translation_error?: true
   }
 
   export type MessageMaxAggregateInputType = {
@@ -7906,6 +7914,8 @@ export namespace Prisma {
     created_at?: true
     is_edited?: true
     reply_to_id?: true
+    translation_status?: true
+    translation_error?: true
   }
 
   export type MessageCountAggregateInputType = {
@@ -7921,6 +7931,8 @@ export namespace Prisma {
     created_at?: true
     is_edited?: true
     reply_to_id?: true
+    translation_status?: true
+    translation_error?: true
     _all?: true
   }
 
@@ -8009,6 +8021,8 @@ export namespace Prisma {
     created_at: Date
     is_edited: boolean
     reply_to_id: string | null
+    translation_status: string
+    translation_error: string | null
     _count: MessageCountAggregateOutputType | null
     _min: MessageMinAggregateOutputType | null
     _max: MessageMaxAggregateOutputType | null
@@ -8041,6 +8055,8 @@ export namespace Prisma {
     created_at?: boolean
     is_edited?: boolean
     reply_to_id?: boolean
+    translation_status?: boolean
+    translation_error?: boolean
     room?: boolean | RoomDefaultArgs<ExtArgs>
     sender?: boolean | UserDefaultArgs<ExtArgs>
     reply_to?: boolean | Message$reply_toArgs<ExtArgs>
@@ -8061,6 +8077,8 @@ export namespace Prisma {
     created_at?: boolean
     is_edited?: boolean
     reply_to_id?: boolean
+    translation_status?: boolean
+    translation_error?: boolean
     room?: boolean | RoomDefaultArgs<ExtArgs>
     sender?: boolean | UserDefaultArgs<ExtArgs>
     reply_to?: boolean | Message$reply_toArgs<ExtArgs>
@@ -8079,6 +8097,8 @@ export namespace Prisma {
     created_at?: boolean
     is_edited?: boolean
     reply_to_id?: boolean
+    translation_status?: boolean
+    translation_error?: boolean
   }
 
   export type MessageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -8115,6 +8135,8 @@ export namespace Prisma {
       created_at: Date
       is_edited: boolean
       reply_to_id: string | null
+      translation_status: string
+      translation_error: string | null
     }, ExtArgs["result"]["message"]>
     composites: {}
   }
@@ -8524,6 +8546,8 @@ export namespace Prisma {
     readonly created_at: FieldRef<"Message", 'DateTime'>
     readonly is_edited: FieldRef<"Message", 'Boolean'>
     readonly reply_to_id: FieldRef<"Message", 'String'>
+    readonly translation_status: FieldRef<"Message", 'String'>
+    readonly translation_error: FieldRef<"Message", 'String'>
   }
     
 
@@ -10985,7 +11009,9 @@ export namespace Prisma {
     voice_transcription: 'voice_transcription',
     created_at: 'created_at',
     is_edited: 'is_edited',
-    reply_to_id: 'reply_to_id'
+    reply_to_id: 'reply_to_id',
+    translation_status: 'translation_status',
+    translation_error: 'translation_error'
   };
 
   export type MessageScalarFieldEnum = (typeof MessageScalarFieldEnum)[keyof typeof MessageScalarFieldEnum]
@@ -11546,6 +11572,8 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"Message"> | Date | string
     is_edited?: BoolFilter<"Message"> | boolean
     reply_to_id?: StringNullableFilter<"Message"> | string | null
+    translation_status?: StringFilter<"Message"> | string
+    translation_error?: StringNullableFilter<"Message"> | string | null
     room?: XOR<RoomRelationFilter, RoomWhereInput>
     sender?: XOR<UserRelationFilter, UserWhereInput>
     reply_to?: XOR<MessageNullableRelationFilter, MessageWhereInput> | null
@@ -11565,6 +11593,8 @@ export namespace Prisma {
     created_at?: SortOrder
     is_edited?: SortOrder
     reply_to_id?: SortOrderInput | SortOrder
+    translation_status?: SortOrder
+    translation_error?: SortOrderInput | SortOrder
     room?: RoomOrderByWithRelationInput
     sender?: UserOrderByWithRelationInput
     reply_to?: MessageOrderByWithRelationInput
@@ -11587,6 +11617,8 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"Message"> | Date | string
     is_edited?: BoolFilter<"Message"> | boolean
     reply_to_id?: StringNullableFilter<"Message"> | string | null
+    translation_status?: StringFilter<"Message"> | string
+    translation_error?: StringNullableFilter<"Message"> | string | null
     room?: XOR<RoomRelationFilter, RoomWhereInput>
     sender?: XOR<UserRelationFilter, UserWhereInput>
     reply_to?: XOR<MessageNullableRelationFilter, MessageWhereInput> | null
@@ -11606,6 +11638,8 @@ export namespace Prisma {
     created_at?: SortOrder
     is_edited?: SortOrder
     reply_to_id?: SortOrderInput | SortOrder
+    translation_status?: SortOrder
+    translation_error?: SortOrderInput | SortOrder
     _count?: MessageCountOrderByAggregateInput
     _max?: MessageMaxOrderByAggregateInput
     _min?: MessageMinOrderByAggregateInput
@@ -11627,6 +11661,8 @@ export namespace Prisma {
     created_at?: DateTimeWithAggregatesFilter<"Message"> | Date | string
     is_edited?: BoolWithAggregatesFilter<"Message"> | boolean
     reply_to_id?: StringNullableWithAggregatesFilter<"Message"> | string | null
+    translation_status?: StringWithAggregatesFilter<"Message"> | string
+    translation_error?: StringNullableWithAggregatesFilter<"Message"> | string | null
   }
 
   export type RoomInviteWhereInput = {
@@ -12282,6 +12318,8 @@ export namespace Prisma {
     voice_transcription?: string | null
     created_at?: Date | string
     is_edited?: boolean
+    translation_status?: string
+    translation_error?: string | null
     room: RoomCreateNestedOneWithoutMessagesInput
     sender: UserCreateNestedOneWithoutMessages_sentInput
     reply_to?: MessageCreateNestedOneWithoutRepliesInput
@@ -12301,6 +12339,8 @@ export namespace Prisma {
     created_at?: Date | string
     is_edited?: boolean
     reply_to_id?: string | null
+    translation_status?: string
+    translation_error?: string | null
     replies?: MessageUncheckedCreateNestedManyWithoutReply_toInput
   }
 
@@ -12314,6 +12354,8 @@ export namespace Prisma {
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
     room?: RoomUpdateOneRequiredWithoutMessagesNestedInput
     sender?: UserUpdateOneRequiredWithoutMessages_sentNestedInput
     reply_to?: MessageUpdateOneWithoutRepliesNestedInput
@@ -12333,6 +12375,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
     replies?: MessageUncheckedUpdateManyWithoutReply_toNestedInput
   }
 
@@ -12349,6 +12393,8 @@ export namespace Prisma {
     created_at?: Date | string
     is_edited?: boolean
     reply_to_id?: string | null
+    translation_status?: string
+    translation_error?: string | null
   }
 
   export type MessageUpdateManyMutationInput = {
@@ -12361,6 +12407,8 @@ export namespace Prisma {
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MessageUncheckedUpdateManyInput = {
@@ -12376,6 +12424,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RoomInviteCreateInput = {
@@ -13014,6 +13064,8 @@ export namespace Prisma {
     created_at?: SortOrder
     is_edited?: SortOrder
     reply_to_id?: SortOrder
+    translation_status?: SortOrder
+    translation_error?: SortOrder
   }
 
   export type MessageMaxOrderByAggregateInput = {
@@ -13029,6 +13081,8 @@ export namespace Prisma {
     created_at?: SortOrder
     is_edited?: SortOrder
     reply_to_id?: SortOrder
+    translation_status?: SortOrder
+    translation_error?: SortOrder
   }
 
   export type MessageMinOrderByAggregateInput = {
@@ -13044,6 +13098,8 @@ export namespace Prisma {
     created_at?: SortOrder
     is_edited?: SortOrder
     reply_to_id?: SortOrder
+    translation_status?: SortOrder
+    translation_error?: SortOrder
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -14077,6 +14133,8 @@ export namespace Prisma {
     voice_transcription?: string | null
     created_at?: Date | string
     is_edited?: boolean
+    translation_status?: string
+    translation_error?: string | null
     room: RoomCreateNestedOneWithoutMessagesInput
     reply_to?: MessageCreateNestedOneWithoutRepliesInput
     replies?: MessageCreateNestedManyWithoutReply_toInput
@@ -14094,6 +14152,8 @@ export namespace Prisma {
     created_at?: Date | string
     is_edited?: boolean
     reply_to_id?: string | null
+    translation_status?: string
+    translation_error?: string | null
     replies?: MessageUncheckedCreateNestedManyWithoutReply_toInput
   }
 
@@ -14337,6 +14397,8 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"Message"> | Date | string
     is_edited?: BoolFilter<"Message"> | boolean
     reply_to_id?: StringNullableFilter<"Message"> | string | null
+    translation_status?: StringFilter<"Message"> | string
+    translation_error?: StringNullableFilter<"Message"> | string | null
   }
 
   export type RoomParticipantUpsertWithWhereUniqueWithoutUserInput = {
@@ -14958,6 +15020,8 @@ export namespace Prisma {
     voice_transcription?: string | null
     created_at?: Date | string
     is_edited?: boolean
+    translation_status?: string
+    translation_error?: string | null
     sender: UserCreateNestedOneWithoutMessages_sentInput
     reply_to?: MessageCreateNestedOneWithoutRepliesInput
     replies?: MessageCreateNestedManyWithoutReply_toInput
@@ -14975,6 +15039,8 @@ export namespace Prisma {
     created_at?: Date | string
     is_edited?: boolean
     reply_to_id?: string | null
+    translation_status?: string
+    translation_error?: string | null
     replies?: MessageUncheckedCreateNestedManyWithoutReply_toInput
   }
 
@@ -15397,6 +15463,8 @@ export namespace Prisma {
     voice_transcription?: string | null
     created_at?: Date | string
     is_edited?: boolean
+    translation_status?: string
+    translation_error?: string | null
     room: RoomCreateNestedOneWithoutMessagesInput
     sender: UserCreateNestedOneWithoutMessages_sentInput
     reply_to?: MessageCreateNestedOneWithoutRepliesInput
@@ -15415,6 +15483,8 @@ export namespace Prisma {
     created_at?: Date | string
     is_edited?: boolean
     reply_to_id?: string | null
+    translation_status?: string
+    translation_error?: string | null
   }
 
   export type MessageCreateOrConnectWithoutRepliesInput = {
@@ -15432,6 +15502,8 @@ export namespace Prisma {
     voice_transcription?: string | null
     created_at?: Date | string
     is_edited?: boolean
+    translation_status?: string
+    translation_error?: string | null
     room: RoomCreateNestedOneWithoutMessagesInput
     sender: UserCreateNestedOneWithoutMessages_sentInput
     replies?: MessageCreateNestedManyWithoutReply_toInput
@@ -15449,6 +15521,8 @@ export namespace Prisma {
     voice_transcription?: string | null
     created_at?: Date | string
     is_edited?: boolean
+    translation_status?: string
+    translation_error?: string | null
     replies?: MessageUncheckedCreateNestedManyWithoutReply_toInput
   }
 
@@ -15578,6 +15652,8 @@ export namespace Prisma {
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
     room?: RoomUpdateOneRequiredWithoutMessagesNestedInput
     sender?: UserUpdateOneRequiredWithoutMessages_sentNestedInput
     reply_to?: MessageUpdateOneWithoutRepliesNestedInput
@@ -15596,6 +15672,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MessageUpsertWithWhereUniqueWithoutReply_toInput = {
@@ -15914,6 +15992,8 @@ export namespace Prisma {
     created_at?: Date | string
     is_edited?: boolean
     reply_to_id?: string | null
+    translation_status?: string
+    translation_error?: string | null
   }
 
   export type RoomParticipantCreateManyUserInput = {
@@ -15991,6 +16071,8 @@ export namespace Prisma {
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
     room?: RoomUpdateOneRequiredWithoutMessagesNestedInput
     reply_to?: MessageUpdateOneWithoutRepliesNestedInput
     replies?: MessageUpdateManyWithoutReply_toNestedInput
@@ -16008,6 +16090,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
     replies?: MessageUncheckedUpdateManyWithoutReply_toNestedInput
   }
 
@@ -16023,6 +16107,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RoomParticipantUpdateWithoutUserInput = {
@@ -16248,6 +16334,8 @@ export namespace Prisma {
     created_at?: Date | string
     is_edited?: boolean
     reply_to_id?: string | null
+    translation_status?: string
+    translation_error?: string | null
   }
 
   export type RoomInviteCreateManyRoomInput = {
@@ -16301,6 +16389,8 @@ export namespace Prisma {
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
     sender?: UserUpdateOneRequiredWithoutMessages_sentNestedInput
     reply_to?: MessageUpdateOneWithoutRepliesNestedInput
     replies?: MessageUpdateManyWithoutReply_toNestedInput
@@ -16318,6 +16408,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
     replies?: MessageUncheckedUpdateManyWithoutReply_toNestedInput
   }
 
@@ -16333,6 +16425,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RoomInviteUpdateWithoutRoomInput = {
@@ -16380,6 +16474,8 @@ export namespace Prisma {
     voice_transcription?: string | null
     created_at?: Date | string
     is_edited?: boolean
+    translation_status?: string
+    translation_error?: string | null
   }
 
   export type MessageUpdateWithoutReply_toInput = {
@@ -16392,6 +16488,8 @@ export namespace Prisma {
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
     room?: RoomUpdateOneRequiredWithoutMessagesNestedInput
     sender?: UserUpdateOneRequiredWithoutMessages_sentNestedInput
     replies?: MessageUpdateManyWithoutReply_toNestedInput
@@ -16409,6 +16507,8 @@ export namespace Prisma {
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
     replies?: MessageUncheckedUpdateManyWithoutReply_toNestedInput
   }
 
@@ -16424,6 +16524,8 @@ export namespace Prisma {
     voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     is_edited?: BoolFieldUpdateOperationsInput | boolean
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
 

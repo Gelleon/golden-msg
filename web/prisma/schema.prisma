@@ -123,6 +123,8 @@ model Message {
   created_at         DateTime @default(now())
   is_edited          Boolean  @default(false)
   reply_to_id        String?
+  translation_status String   @default("completed") // pending, completed, failed, cancelled
+  translation_error  String?
 
   // Relations
   room   Room @relation(fields: [room_id], references: [id], onDelete: Cascade)

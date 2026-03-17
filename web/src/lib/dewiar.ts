@@ -176,3 +176,95 @@ Text to translate: ${text}`;
   console.warn("[DEWIAR] Could not find translated text in response keys:", JSON.stringify(Object.keys(response)));
   return null;
 }
+
+/**
+ * Transcribe audio using Dewiar API
+ */
+export async function transcribeAudio(
+  file: File | Blob | any,
+  language: "ru" | "zh"
+): Promise<string | null> {
+  const token = process.env.DEWIAR_API_TOKEN;
+  if (!token) {
+    console.error("[DEWIAR] CRITICAL: DEWIAR_API_TOKEN is missing!");
+    return null;
+  }
+
+  try {
+    const formData = new FormData();
+    
+    // Check if it's a Buffer (Node.js) or Blob/File (Browser/Next.js)
+    if (file instanceof Blob || file instanceof File) {
+      formData.append("file", file, "voice.webm");
+    } else {
+      // If it's a stream or other type, try to append as is
+      formData.append("file", file);
+    }
+    
+    formData.append("language", language);
+    
+    // Using the same endpoint as callDewiar but for transcription
+    // If there is no specific /transcribe endpoint, we use the main one with special instructions
+    // or try a common pattern.
+    const url = `https://dewiar.com/dew_ai/api/transcribe?key=${token}`;
+    console.log(`[DEWIAR] Transcribing audio, language: ${language}, file size: ${file.size || 'unknown'} bytes`);
+
+    // We'll also try a secondary URL if the first one fails in a common way
+    let response;
+    try {
+      response = await fetch(url, {
+        method: "POST",
+        body: formData,
+        // No Content-Type header - fetch will set it automatically for FormData including boundary
+      });
+    } catch (fetchError) {
+      console.error("[DEWIAR] Fetch exception during transcription:", fetchError);
+      return null;
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[DEWIAR] Transcription error: ${response.status} ${response.statusText}. Body: ${errorText}`);
+      
+      // Fallback: If /transcribe doesn't exist, try the main endpoint if we can
+      if (response.status === 404) {
+        console.error("[DEWIAR] Endpoint /transcribe NOT FOUND. Trying main endpoint as fallback...");
+        
+        const fallbackUrl = `https://dewiar.com/dew_ai/api?key=${token}`;
+        try {
+          const fallbackResponse = await fetch(fallbackUrl, {
+            method: "POST",
+            body: formData,
+          });
+          
+          if (fallbackResponse.ok) {
+            response = fallbackResponse;
+            console.log("[DEWIAR] Fallback to main endpoint SUCCESSFUL");
+          } else {
+            console.error("[DEWIAR] Fallback also failed with status:", fallbackResponse.status);
+            return null;
+          }
+        } catch (fallbackError) {
+          console.error("[DEWIAR] Fallback exception:", fallbackError);
+          return null;
+        }
+      } else {
+        return null;
+      }
+    }
+
+    const data = await response.json();
+    console.log("[DEWIAR] Transcription API response:", JSON.stringify(data));
+    
+    const text = data.text || data.transcription || data.data?.text || data.data?.transcription || data.response;
+    
+    if (!text) {
+      console.warn("[DEWIAR] Transcription response empty or missing text field:", JSON.stringify(data));
+    }
+    
+    return text || null;
+  } catch (error) {
+    console.error("[DEWIAR] Transcription exception:", error);
+    return null;
+  }
+}

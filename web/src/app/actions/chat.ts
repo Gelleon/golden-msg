@@ -7,9 +7,11 @@ import { revalidatePath } from "next/cache"
 import { sendPushNotification } from "@/lib/push-service"
 import fs from "fs/promises"
 import path from "path"
-import { translateText } from "@/lib/dewiar"
+import { translateText, transcribeAudio } from "@/lib/dewiar"
 import { z } from "zod"
 import { ensureSchemaFixed } from "@/lib/schema-fix"
+import { sendSSEUpdate } from "@/lib/sse"
+import { after } from "next/server"
 
 const sendMessageSchema = z.object({
   roomId: z.string().uuid(),
@@ -132,29 +134,34 @@ export async function updateMessage(messageId: string, content: string) {
       console.log("[UPDATE MESSAGE] Detected: Neutral/Fallback (Default: Russian)");
     }
 
-    if (content !== message.content) {
-      const dewiarTranslation = await translateWithDewiar(
-        content,
-        languageOriginal,
-        targetLanguage
-      );
-
-      if (dewiarTranslation) {
-        contentTranslated = dewiarTranslation;
-      }
-    }
-
     const finalLangOriginal = languageOriginal === "Russian" ? "ru" : "cn";
 
+    // Update message immediately (Optimistic UI)
     const updatedMessage = await prisma.message.update({
       where: { id: messageId },
       data: {
         content: content,
-        content_translated: contentTranslated,
+        content_translated: null, // Clear old translation to show loading state
+        translation_status: "pending",
         language_original: finalLangOriginal,
         is_edited: true,
       },
     })
+
+    // Trigger Async Translation (Fire and Forget via Queue)
+    after(async () => {
+      await translationQueue.add(async () => {
+        await processAsyncMessage(
+          messageId,
+          message.room_id,
+          content,
+          "text",
+          undefined,
+          languageOriginal,
+          targetLanguage
+        );
+      });
+    });
 
     revalidatePath(`/dashboard/rooms/${message.room_id}`)
     return { success: true, message: updatedMessage }
@@ -222,6 +229,7 @@ export async function getMessages(roomId: string) {
       voice_transcription: true,
       created_at: true,
       is_edited: true,
+      translation_status: true,
       reply_to_id: true,
       sender: {
         select: {
@@ -280,6 +288,7 @@ export async function getMessages(roomId: string) {
     voice_transcription: msg.voice_transcription,
     created_at: msg.created_at.toISOString(),
     is_edited: msg.is_edited,
+    translation_status: msg.translation_status,
     reply_to_id: msg.reply_to_id,
     reply_to: msg.reply_to ? {
       id: msg.reply_to.id,
@@ -324,6 +333,211 @@ export async function markAsRead(roomId: string) {
   } catch (error) {
     console.error("Mark as read error:", error)
     return { error: "Failed to mark as read" }
+  }
+}
+
+async function findCachedTranslation(content: string, fromLang: string) {
+  try {
+    const cached = await prisma.message.findFirst({
+      where: {
+        content: content,
+        language_original: fromLang,
+        translation_status: "completed",
+        content_translated: { not: null }
+      },
+      orderBy: { created_at: 'desc' },
+      select: { content_translated: true }
+    });
+    return cached?.content_translated;
+  } catch (error) {
+    console.warn("Cache lookup failed:", error);
+    return null;
+  }
+}
+
+import { translationQueue } from "@/lib/translation-queue"
+
+export async function processAsyncMessage(
+  messageId: string, 
+  roomId: string,
+  content: string, 
+  messageType: "text" | "voice" | "file", 
+  fileUrl: string | undefined | null,
+  initialLangOriginal: "Russian" | "Chinese", 
+  initialTargetLang: "Russian" | "Chinese"
+) {
+  console.log(`[ASYNC] Processing message ${messageId}`);
+  
+  try {
+    let voiceTranscription: string | null = null;
+    let contentTranslated: string | null = null;
+    let languageOriginal = initialLangOriginal;
+    let textToTranslate = content;
+
+    // 0. Cancellation Check (Optimization)
+    // Check if the message content has already changed before we even start
+    // This handles the "Cancellation" requirement efficiently
+    const preCheckMessage = await prisma.message.findUnique({
+      where: { id: messageId },
+      select: { content: true, voice_transcription: true, translation_status: true }
+    });
+
+    if (!preCheckMessage) {
+      console.log(`[ASYNC] Message ${messageId} deleted. Aborting.`);
+      return;
+    }
+
+    if (messageType === "text" && preCheckMessage.content !== content) {
+      console.log(`[ASYNC] Message content changed (Edited). Aborting translation task.`);
+      return;
+    }
+
+    // 1. Transcription (if voice)
+    if (messageType === "voice" && fileUrl) {
+      console.log(`[ASYNC] Transcribing voice message from: ${fileUrl}`);
+      
+      let file: any;
+      if (fileUrl.startsWith("/uploads/")) {
+        const path = await import("path");
+        const relativePath = fileUrl.startsWith("/") ? fileUrl.slice(1) : fileUrl;
+        const filePath = path.join(process.cwd(), "public", relativePath);
+        const fs = await import("fs/promises");
+        const buffer = await fs.readFile(filePath);
+        file = new Blob([buffer], { type: "audio/webm" });
+      } else {
+        const response = await fetch(fileUrl);
+        if (!response.ok) throw new Error("Failed to fetch audio file");
+        const blob = await response.blob();
+        file = blob;
+      }
+
+      const transcriptionText = await transcribeAudio(
+        file,
+        languageOriginal === "Russian" ? "ru" : "zh"
+      );
+
+      if (transcriptionText) {
+        voiceTranscription = transcriptionText;
+        textToTranslate = transcriptionText;
+        console.log(`[ASYNC] Transcription successful: "${voiceTranscription.substring(0, 30)}..."`);
+        
+        // Update DB with transcription immediately
+        // Check if message still exists and hasn't been deleted
+        const currentMsg = await prisma.message.findUnique({ where: { id: messageId }, select: { id: true } });
+        if (currentMsg) {
+          await prisma.message.update({
+            where: { id: messageId },
+            data: { voice_transcription: voiceTranscription }
+          });
+          
+          sendSSEUpdate(roomId, {
+            type: "message_update",
+            messageId,
+            payload: { voice_transcription: voiceTranscription }
+          });
+        }
+      } else {
+        console.warn("[ASYNC] Transcription failed or returned null");
+      }
+    }
+
+    // 2. Translation
+    if (textToTranslate) {
+      // Check Cache First
+      const finalLangOriginal = languageOriginal === "Russian" ? "ru" : "cn";
+      const cachedTranslation = await findCachedTranslation(textToTranslate, finalLangOriginal);
+      
+      if (cachedTranslation) {
+        console.log(`[ASYNC] Cache hit for: "${textToTranslate.substring(0, 30)}..."`);
+        contentTranslated = cachedTranslation;
+      } else {
+        console.log(`[ASYNC] Translating text: "${textToTranslate.substring(0, 30)}..."`);
+        
+        const dewiarTranslation = await translateWithDewiar(
+          textToTranslate,
+          languageOriginal,
+          initialTargetLang
+        );
+
+        if (dewiarTranslation) {
+          contentTranslated = dewiarTranslation;
+          console.log(`[ASYNC] Translation successful: "${contentTranslated.substring(0, 30)}..."`);
+        } else {
+          console.warn("[ASYNC] Translation failed or returned null");
+        }
+      }
+    }
+
+    // 3. Final Update (Atomic Check)
+    // We must check if the message content hasn't changed (wasn't edited) while we were processing
+    // If it was edited, we discard this result (Cancellation logic)
+    const currentMessage = await prisma.message.findUnique({
+      where: { id: messageId },
+      select: { content: true, voice_transcription: true }
+    });
+
+    if (!currentMessage) {
+      console.log(`[ASYNC] Message ${messageId} no longer exists. Aborting update.`);
+      return;
+    }
+
+    // For voice messages, we check transcription. For text, we check content.
+    const dbContent = messageType === "voice" ? currentMessage.voice_transcription : currentMessage.content;
+    const processedContent = messageType === "voice" ? voiceTranscription : content;
+
+    // Strict equality check to ensure we don't overwrite newer edits
+    // Note: for voice, processedContent might be null if transcription failed, but dbContent would be null too or updated.
+    // Ideally, for voice, we just check if it exists.
+    // For text, we must match.
+    
+    let shouldUpdate = true;
+    if (messageType === "text" && dbContent !== content) {
+      console.log(`[ASYNC] Message content changed (Edited). Aborting translation update.`);
+      shouldUpdate = false;
+    }
+
+    if (shouldUpdate) {
+      const finalStatus = contentTranslated ? "completed" : (textToTranslate ? "failed" : "completed"); 
+      
+      await prisma.message.update({
+        where: { id: messageId },
+        data: {
+          content_translated: contentTranslated,
+          translation_status: finalStatus,
+          translation_error: !contentTranslated && textToTranslate ? "Translation returned empty" : null
+        }
+      });
+
+      // 4. Notify SSE
+      sendSSEUpdate(roomId, {
+        type: "message_update",
+        messageId,
+        payload: {
+          content_translated: contentTranslated,
+          translation_status: finalStatus,
+          translation_error: !contentTranslated && textToTranslate ? "Translation returned empty" : null
+        }
+      });
+    }
+
+  } catch (error) {
+    console.error("[ASYNC] Processing failed:", error);
+    await prisma.message.update({
+      where: { id: messageId },
+      data: { 
+        translation_status: "failed", 
+        translation_error: error instanceof Error ? error.message : String(error) 
+      }
+    });
+    
+    sendSSEUpdate(roomId, {
+      type: "message_update",
+      messageId,
+      payload: { 
+        translation_status: "failed", 
+        translation_error: error instanceof Error ? error.message : String(error) 
+      }
+    });
   }
 }
 
@@ -387,110 +601,41 @@ export async function sendMessageAction(rawData: {
   let languageOriginal: "Russian" | "Chinese";
   let targetLanguage: "Russian" | "Chinese";
 
-  console.log(`[AI] Detecting language for text: "${content.substring(0, 30)}..."`);
-
-  if (hasChinese(content)) {
-    languageOriginal = "Chinese";
-    targetLanguage = "Russian";
-    console.log("[AI] Detected: Chinese (via Regex)");
-  } else if (hasCyrillic(content)) {
+  if (messageType === "voice") {
+    // For voice messages, content might be empty or a placeholder before transcription
+    // Default to Russian for voice messages if no content to analyze
     languageOriginal = "Russian";
     targetLanguage = "Chinese";
-    console.log("[AI] Detected: Russian (via Regex)");
+    console.log("[AI] Voice message detected: Defaulting to Russian language");
   } else {
-    // Fallback to Russian
-    languageOriginal = "Russian";
-    targetLanguage = "Chinese";
-    console.log(`[AI] Detected: Neutral/Fallback (Default: Russian)`);
+    console.log(`[AI] Detecting language for text: "${content.substring(0, 30)}..."`);
+
+    if (hasChinese(content)) {
+      languageOriginal = "Chinese";
+      targetLanguage = "Russian";
+      console.log("[AI] Detected: Chinese (via Regex)");
+    } else if (hasCyrillic(content)) {
+      languageOriginal = "Russian";
+      targetLanguage = "Chinese";
+      console.log("[AI] Detected: Russian (via Regex)");
+    } else {
+      // Fallback to Russian
+      languageOriginal = "Russian";
+      targetLanguage = "Chinese";
+      console.log(`[AI] Detected: Neutral/Fallback (Default: Russian)`);
+    }
   }
   
   const finalLangOriginal = languageOriginal === "Russian" ? "ru" : "cn";
   console.log(`[SEND MESSAGE] Original Lang: ${finalLangOriginal}, Target: ${targetLanguage}`);
 
-  let contentTranslated: string | null = null
-  let voiceTranscription: string | null = null
+  // Async Processing Setup
+  // We do NOT wait for translation here. We set status to pending and return immediately.
+  const contentTranslated = null;
+  const voiceTranscription = null;
+  const translationStatus = "pending";
 
-  // AI Processing
-  const dewarTokenExists = !!process.env.DEWIAR_API_TOKEN;
-  console.log(`[AI] Processing tokens check: Dewiar=${dewarTokenExists}`);
-
-  try {
-    if (messageType === "text" || (messageType === "voice" && voiceTranscription)) {
-      const textToTranslate = messageType === "text" ? content : voiceTranscription;
-      
-      const fromLangParam = languageOriginal;
-      console.log(`[AI] Attempting Dewiar translation for: "${textToTranslate?.substring(0, 30)}..." from ${fromLangParam} to ${targetLanguage}`);
-      
-      const dewiarTranslation = await translateWithDewiar(
-        textToTranslate!,
-        fromLangParam,
-        targetLanguage
-      );
-
-      if (dewiarTranslation) {
-        contentTranslated = dewiarTranslation;
-        console.log(`[AI] Dewiar translation SUCCESS: "${contentTranslated.substring(0, 30)}..."`);
-      } else {
-        console.warn(`[AI] Dewiar FAILED (returned null) for text: "${textToTranslate?.substring(0, 30)}..."`);
-      }
-    }
-
-    if (messageType === "voice" && fileUrl && !voiceTranscription) {
-      // Existing voice processing logic...
-      console.log("Processing voice message for transcription...");
-      // Fetch the audio file
-      let file: any; 
-      
-      if (fileUrl.startsWith("/uploads/")) {
-        const fs = await import("fs")
-        const path = await import("path")
-        const relativePath = fileUrl.startsWith("/") ? fileUrl.slice(1) : fileUrl
-        const filePath = path.join(process.cwd(), "public", relativePath)
-        file = (await import("fs")).createReadStream(filePath)
-      } else {
-        const response = await fetch(fileUrl)
-        if (!response.ok) throw new Error("Failed to fetch audio file")
-        const blob = await response.blob()
-        file = new File([blob], "voice.webm", { type: "audio/webm" })
-      }
-
-      if (!openai) {
-        console.error("OpenAI client is not initialized");
-        throw new Error("OpenAI client is missing");
-      }
-
-      const transcription = await openai.audio.transcriptions.create({
-        file: file,
-        model: "whisper-1",
-        language: languageOriginal === "Russian" ? "ru" : "zh",
-      })
-      
-      voiceTranscription = transcription.text
-      console.log("Voice transcription successful:", voiceTranscription.substring(0, 30));
-
-      // Translate the voice transcription
-      const dewiarTranslation = await translateWithDewiar(
-        voiceTranscription,
-        languageOriginal,
-        targetLanguage
-      );
-
-      if (dewiarTranslation) {
-        contentTranslated = dewiarTranslation;
-      }
-    }
-  } catch (error) {
-    console.error("AI Processing Error:", error)
-    contentTranslated = `DEBUG: AI Error (${error instanceof Error ? error.message : String(error)})`
-  }
-
-  // Final fallback if still null
-  if (!contentTranslated && messageType === "text") {
-    const reason = !dewarTokenExists ? "Dewiar Token Missing" : "Dewiar returned null";
-    contentTranslated = `DEBUG: No translation (${reason}) for: ${content.substring(0, 10)}...`
-  }
-
-  console.log(`[DB] Creating message with contentTranslated: "${contentTranslated?.substring(0, 50)}..."`);
+  console.log(`[DB] Creating message with translation_status: "pending"`);
 
   // Insert Message into Database
   try {
@@ -504,12 +649,14 @@ export async function sendMessageAction(rawData: {
       file_url: fileUrl,
       voice_transcription: voiceTranscription,
       reply_to_id: replyToId,
+      translation_status: translationStatus,
     };
 
     const message = await prisma.message.create({
       data: messageData,
       select: {
         id: true,
+        room_id: true,
         content: true,
         content_translated: true,
         language_original: true,
@@ -519,6 +666,7 @@ export async function sendMessageAction(rawData: {
         created_at: true,
         is_edited: true,
         reply_to_id: true,
+        translation_status: true,
         sender: {
           select: {
             id: true,
@@ -540,55 +688,50 @@ export async function sendMessageAction(rawData: {
           }
         }
       },
-    })
+    });
+
+    // Trigger Async Processing (via Queue)
+    after(async () => {
+      await translationQueue.add(async () => {
+        await processAsyncMessage(
+          message.id,
+          roomId,
+          content,
+          messageType,
+          fileUrl,
+          languageOriginal,
+          targetLanguage
+        );
+      });
+    });
+
+    // Send push notification asynchronously
+    const notificationContent = messageType === 'voice' 
+      ? 'Voice message' 
+      : (content.length > 50 ? content.substring(0, 50) + '...' : content);
+
+    // Fetch room participants to notify
+    const participants = await prisma.roomParticipant.findMany({
+      where: {
+        room_id: roomId,
+        user_id: { not: session.user.id }
+      },
+      select: { user_id: true }
+    });
+    
+    // Send notifications in background
+    Promise.all(participants.map(p => 
+      sendPushNotification(
+        p.user_id,
+        {
+          title: `New message from ${user.full_name}`,
+          body: notificationContent,
+          url: `/dashboard/rooms/${roomId}`
+        }
+      )
+    )).catch(err => console.error("Push notification error:", err));
 
     revalidatePath(`/dashboard/rooms/${roomId}`)
-    
-    // Push notifications for other room members
-    try {
-      const room = await prisma.room.findUnique({
-        where: { id: roomId },
-        include: {
-          participants: {
-            where: {
-              user_id: { not: user.id }
-            },
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  push_notifications_enabled: true,
-                  // @ts-ignore
-                  // preferred_language: true, 
-                }
-              }
-            }
-          }
-        }
-      });
-
-      if (room) {
-        for (const participant of room.participants) {
-          if (participant.user.push_notifications_enabled) {
-            // @ts-ignore
-            const lang = participant.user.preferred_language || 'ru';
-            const title = lang === 'cn' ? `新消息: ${room.name || '房间'}` : `Новое сообщение: ${room.name || 'Комната'}`;
-            const body = messageType === 'text' 
-              ? `${user.full_name}: ${content?.substring(0, 50)}${content && content.length > 50 ? '...' : ''}`
-              : `${user.full_name} отправил ${messageType === 'voice' ? 'голосовое сообщение' : 'файл'}`;
-            
-            await sendPushNotification(participant.user.id, {
-              title,
-              body,
-              url: `/dashboard/rooms/${roomId}`
-            });
-          }
-        }
-      }
-    } catch (pushError) {
-      console.error("Push notification error:", pushError);
-      // Continue execution - push failure shouldn't fail the message send
-    }
     
     // Update last_active_at for the sender
     await prisma.roomParticipant.update({
@@ -610,6 +753,8 @@ export async function sendMessageAction(rawData: {
         ...message,
         created_at: message.created_at.toISOString(),
         is_edited: message.is_edited,
+        // Ensure frontend gets the pending status
+        translation_status: "pending",
         reply_to: message.reply_to ? {
           id: message.reply_to.id,
           content: message.reply_to.content,
@@ -618,7 +763,7 @@ export async function sendMessageAction(rawData: {
       } 
     }
   } catch (error) {
-    console.error("Database Error:", error)
-    return { error: `Failed to send message: ${error instanceof Error ? error.message : String(error)}` }
+    console.error("Send message error:", error)
+    return { error: "Failed to send message" }
   }
 }

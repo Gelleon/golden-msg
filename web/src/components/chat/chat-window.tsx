@@ -122,11 +122,47 @@ export function ChatWindow({
     // Initial fetch to ensure sync
     fetchMessages()
 
+    // SSE Connection
+    const sse = new EventSource(`/api/sse?roomId=${roomId}`);
+
+    sse.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'message_update') {
+           const { messageId, payload } = data;
+           setMessages(prev => prev.map(msg => {
+             if (msg.id === messageId) {
+               return { ...msg, ...payload };
+             }
+             return msg;
+           }));
+        } else if (data.type === 'new_message') {
+           // Handle new message if SSE sends full message (optional, currently we poll/fetch)
+           // But user asked for real-time updates.
+           // If I rely on polling for new messages, it might be slow (3s).
+           // Ideally, sendMessageAction adds it to state immediately (optimistic), 
+           // and SSE updates the translation.
+           // For messages from others, polling is okay-ish, but SSE is better.
+           // For now, let's stick to polling for new messages + SSE for updates.
+           // Or I can trigger a fetchMessages() on 'new_message' event if I implement it.
+        }
+      } catch (e) {
+        console.error("SSE Parse Error", e);
+      }
+    };
+
+    sse.onerror = (e) => {
+      console.error("SSE Error", e);
+      sse.close();
+    };
+
     // Poll every 3 seconds
     const interval = setInterval(fetchMessages, 3000)
 
     return () => {
       clearInterval(interval)
+      sse.close();
     }
   }, [roomId, otherParticipantsCount, currentUser.id])
 
