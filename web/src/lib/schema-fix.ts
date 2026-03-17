@@ -7,10 +7,11 @@ import prisma from "./db";
  */
 export async function ensureSchemaFixed() {
   try {
-    const tables = ["Message", "User", "message", "user", "messages", "users", "profiles"];
+    const tables = ["Message", "User", "RoomParticipant", "message", "user", "roomparticipant", "messages", "users", "profiles"];
     for (const table of tables) {
       const isMessageTable = table.toLowerCase() === "message" || table.toLowerCase() === "messages";
       const isUserTable = table.toLowerCase() === "user" || table.toLowerCase() === "users" || table.toLowerCase() === "profiles";
+      const isRoomParticipantTable = table.toLowerCase() === "roomparticipant";
       
       if (isMessageTable) {
         // Try both quoted and unquoted for maximum compatibility
@@ -22,11 +23,31 @@ export async function ensureSchemaFixed() {
         
         await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "content" TEXT;`).catch(() => {});
         await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "content" TEXT;`).catch(() => {});
+
+        await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "voice_transcription" TEXT;`).catch(() => {});
+        await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "voice_transcription" TEXT;`).catch(() => {});
+
+        await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "translation_status" TEXT DEFAULT 'completed';`).catch(() => {});
+        await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "translation_status" TEXT DEFAULT 'completed';`).catch(() => {});
+
+        await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "translation_error" TEXT;`).catch(() => {});
+        await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "translation_error" TEXT;`).catch(() => {});
+
+        await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "reply_to_id" TEXT;`).catch(() => {});
+        await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "reply_to_id" TEXT;`).catch(() => {});
       }
       
       if (isUserTable) {
         await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "preferred_language" TEXT DEFAULT 'ru';`).catch(() => {});
         await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "preferred_language" TEXT DEFAULT 'ru';`).catch(() => {});
+      }
+
+      if (isRoomParticipantTable) {
+        await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "last_active_at" DATETIME DEFAULT CURRENT_TIMESTAMP;`).catch(() => {});
+        await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "last_active_at" DATETIME DEFAULT CURRENT_TIMESTAMP;`).catch(() => {});
+        
+        await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "typing_at" DATETIME;`).catch(() => {});
+        await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "typing_at" DATETIME;`).catch(() => {});
       }
     }
     // console.log("[DB FIX] Schema check/fix completed");

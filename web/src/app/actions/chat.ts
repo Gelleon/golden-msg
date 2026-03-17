@@ -196,117 +196,122 @@ export async function updateTypingStatus(roomId: string) {
 }
 
 export async function getMessages(roomId: string) {
-  await ensureSchemaFixed()
-  const session = await getSession()
-  if (!session?.user) return { error: "Unauthorized" }
+  try {
+    await ensureSchemaFixed()
+    const session = await getSession()
+    if (!session?.user) return { error: "Unauthorized" }
 
-  // Verify user is a participant of the room
-  const participation = await prisma.roomParticipant.findUnique({
-    where: {
-      room_id_user_id: {
-        room_id: roomId,
-        user_id: session.user.id,
-      },
-    },
-  })
-
-  if (!participation) {
-    return { error: "You are not a member of this room" }
-  }
-
-  // Fetch messages
-  const messages = await prisma.message.findMany({
-    where: {
-      room_id: roomId,
-    },
-    select: {
-      id: true,
-      content: true,
-      content_translated: true,
-      language_original: true,
-      message_type: true,
-      file_url: true,
-      voice_transcription: true,
-      created_at: true,
-      is_edited: true,
-      translation_status: true,
-      reply_to_id: true,
-      sender: {
-        select: {
-          id: true,
-          full_name: true,
-          avatar_url: true,
-          role: true,
+    // Verify user is a participant of the room
+    const participation = await prisma.roomParticipant.findUnique({
+      where: {
+        room_id_user_id: {
+          room_id: roomId,
+          user_id: session.user.id,
         },
       },
-      reply_to: {
-        select: {
-          id: true,
-          content: true,
-          sender: {
-            select: {
-              id: true,
-              full_name: true,
+    })
+
+    if (!participation) {
+      return { error: "You are not a member of this room" }
+    }
+
+    // Fetch messages
+    const messages = await prisma.message.findMany({
+      where: {
+        room_id: roomId,
+      },
+      select: {
+        id: true,
+        content: true,
+        content_translated: true,
+        language_original: true,
+        message_type: true,
+        file_url: true,
+        voice_transcription: true,
+        created_at: true,
+        is_edited: true,
+        translation_status: true,
+        reply_to_id: true,
+        sender: {
+          select: {
+            id: true,
+            full_name: true,
+            avatar_url: true,
+            role: true,
+          },
+        },
+        reply_to: {
+          select: {
+            id: true,
+            content: true,
+            sender: {
+              select: {
+                id: true,
+                full_name: true,
+              }
             }
           }
         }
-      }
-    },
-    orderBy: {
-      created_at: "asc",
-    },
-  })
+      },
+      orderBy: {
+        created_at: "asc",
+      },
+    })
 
-  // Fetch typing status of other participants
-  const typingThreshold = new Date(Date.now() - 10000) // 10 seconds ago
-  const typingParticipants = await prisma.roomParticipant.findMany({
-    where: {
-      room_id: roomId,
-      user_id: { not: session.user.id },
-      typing_at: { gte: typingThreshold },
-    },
-    include: {
-      user: {
-        select: {
-          full_name: true,
+    // Fetch typing status of other participants
+    const typingThreshold = new Date(Date.now() - 10000) // 10 seconds ago
+    const typingParticipants = await prisma.roomParticipant.findMany({
+      where: {
+        room_id: roomId,
+        user_id: { not: session.user.id },
+        typing_at: { gte: typingThreshold },
+      },
+      include: {
+        user: {
+          select: {
+            full_name: true,
+          },
         },
       },
-    },
-  })
+    })
 
-  const isTyping = typingParticipants.length > 0
-  const typingUserNames = typingParticipants.map(p => p.user.full_name || "User")
+    const isTyping = typingParticipants.length > 0
+    const typingUserNames = typingParticipants.map(p => p.user.full_name || "User")
 
-  // Map to frontend structure
-  const formattedMessages = messages.map((msg) => ({
-    id: msg.id,
-    content_original: msg.content,
-    content_translated: msg.content_translated,
-    language_original: msg.language_original || "ru",
-    message_type: msg.message_type,
-    file_url: msg.file_url,
-    voice_transcription: msg.voice_transcription,
-    created_at: msg.created_at.toISOString(),
-    is_edited: msg.is_edited,
-    translation_status: msg.translation_status,
-    reply_to_id: msg.reply_to_id,
-    reply_to: msg.reply_to ? {
-      id: msg.reply_to.id,
-      content: msg.reply_to.content,
-      sender_name: msg.reply_to.sender.full_name,
-    } : null,
-    sender: {
-      id: msg.sender.id,
-      full_name: msg.sender.full_name,
-      avatar_url: msg.sender.avatar_url,
-      role: msg.sender.role,
-    },
-  }))
+    // Map to frontend structure
+    const formattedMessages = messages.map((msg) => ({
+      id: msg.id,
+      content_original: msg.content,
+      content_translated: msg.content_translated,
+      language_original: msg.language_original || "ru",
+      message_type: msg.message_type,
+      file_url: msg.file_url,
+      voice_transcription: msg.voice_transcription,
+      created_at: msg.created_at.toISOString(),
+      is_edited: msg.is_edited,
+      translation_status: msg.translation_status,
+      reply_to_id: msg.reply_to_id,
+      reply_to: msg.reply_to ? {
+        id: msg.reply_to.id,
+        content: msg.reply_to.content,
+        sender_name: msg.reply_to.sender.full_name,
+      } : null,
+      sender: {
+        id: msg.sender.id,
+        full_name: msg.sender.full_name,
+        avatar_url: msg.sender.avatar_url,
+        role: msg.sender.role,
+      },
+    }))
 
-  return { 
-    messages: formattedMessages,
-    isTyping,
-    typingUserNames
+    return { 
+      messages: formattedMessages,
+      isTyping,
+      typingUserNames
+    }
+  } catch (error) {
+    console.error("[CHAT ACTION] Error in getMessages:", error);
+    return { error: "Failed to fetch messages" }
   }
 }
 
