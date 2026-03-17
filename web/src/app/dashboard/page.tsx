@@ -3,9 +3,11 @@
 import { motion } from "framer-motion"
 import { MessageSquare, ArrowLeft } from "lucide-react"
 import { useTranslation } from "@/lib/language-context"
+import { useMobileNav } from "@/lib/mobile-nav-context"
 
 export default function DashboardPage() {
   const { t } = useTranslation()
+  const { setOpen } = useMobileNav()
 
   return (
     <div className="flex h-full items-center justify-center bg-slate-50/50 p-6 relative overflow-hidden">
@@ -64,15 +66,18 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <motion.div
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setOpen(true)}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="flex items-center justify-center gap-3 text-blue-600 font-semibold md:hidden bg-blue-50 py-3 px-6 rounded-2xl"
+          className="flex items-center justify-center gap-3 text-blue-600 font-semibold md:hidden bg-blue-50 py-3 px-6 rounded-2xl w-full border border-blue-100 shadow-sm active:bg-blue-100 transition-colors"
         >
           <ArrowLeft className="h-5 w-5 animate-pulse" />
           <span>{t("dashboard.openMenu")}</span>
-        </motion.div>
+        </motion.button>
       </motion.div>
     </div>
   )

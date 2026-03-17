@@ -1,11 +1,11 @@
 "use client"
 
-import { useState } from "react"
 import { Menu } from "lucide-react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Sidebar } from "@/components/dashboard/sidebar"
+import { useMobileNav } from "@/lib/mobile-nav-context"
 
 interface MobileNavProps {
   user: any
@@ -13,7 +13,7 @@ interface MobileNavProps {
 }
 
 export function MobileNav({ user, profile }: MobileNavProps) {
-  const [open, setOpen] = useState(false)
+  const { open, setOpen } = useMobileNav()
 
   return (
     <div className="md:hidden flex items-center justify-between p-4 border-b bg-slate-900 border-slate-800 text-white">

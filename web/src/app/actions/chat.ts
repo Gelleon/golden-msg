@@ -109,21 +109,27 @@ export async function updateMessage(messageId: string, content: string) {
     })
     
     // Language Detection Helpers
-    const hasChinese = (text: string) => /[\u4e00-\u9fff\u3400-\u4dbf]/.test(text);
+    // Better Chinese detection including CJK Unified Ideographs, Extension A-H, and symbols
+    const hasChinese = (text: string) => /[\u4e00-\u9fff\u3400-\u4dbf\u20000-\u2a6df\u2a700-\u2b73f\u2b740-\u2b81f\u2b820-\u2ceaf\uf900-\ufaff\u3000-\u303f]/.test(text);
     const hasCyrillic = (text: string) => /[а-яА-ЯёЁ]/.test(text);
 
     let languageOriginal: "Russian" | "Chinese";
     let targetLanguage: "Russian" | "Chinese";
 
+    console.log(`[UPDATE MESSAGE] Detecting language for: "${content.substring(0, 30)}..."`);
+
     if (hasChinese(content)) {
       languageOriginal = "Chinese";
       targetLanguage = "Russian";
+      console.log("[UPDATE MESSAGE] Detected: Chinese (via Regex)");
     } else if (hasCyrillic(content)) {
       languageOriginal = "Russian";
       targetLanguage = "Chinese";
+      console.log("[UPDATE MESSAGE] Detected: Russian (via Regex)");
     } else {
       languageOriginal = "Russian"; // Default to Russian
-      targetLanguage = languageOriginal === "Russian" ? "Chinese" : "Russian";
+      targetLanguage = "Chinese";
+      console.log("[UPDATE MESSAGE] Detected: Neutral/Fallback (Default: Russian)");
     }
 
     if (content !== message.content) {
@@ -374,7 +380,8 @@ export async function sendMessageAction(rawData: {
   }
 
   // Language Detection Helpers
-  const hasChinese = (text: string) => /[\u4e00-\u9fff\u3400-\u4dbf]/.test(text);
+  // Better Chinese detection including CJK Unified Ideographs, Extension A-H, and symbols
+  const hasChinese = (text: string) => /[\u4e00-\u9fff\u3400-\u4dbf\u20000-\u2a6df\u2a700-\u2b73f\u2b740-\u2b81f\u2b820-\u2ceaf\uf900-\ufaff\u3000-\u303f]/.test(text);
   const hasCyrillic = (text: string) => /[а-яА-ЯёЁ]/.test(text);
 
   let languageOriginal: "Russian" | "Chinese";

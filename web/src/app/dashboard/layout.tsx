@@ -5,6 +5,8 @@ import { MobileNav } from "@/components/dashboard/mobile-nav"
 import { PageTransition } from "@/components/dashboard/page-transition"
 import { LanguageProvider } from "@/lib/language-context"
 
+import { MobileNavProvider } from "@/lib/mobile-nav-context"
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -23,17 +25,19 @@ export default async function DashboardLayout({
 
   return (
     <LanguageProvider initialLanguage={initialLanguage}>
-      <div className="flex h-screen bg-[#0F172A] flex-col md:flex-row overflow-hidden">
-        <div className="hidden md:flex h-full">
-          <Sidebar user={user} profile={profile} />
+      <MobileNavProvider>
+        <div className="flex h-screen bg-[#0F172A] flex-col md:flex-row overflow-hidden">
+          <div className="hidden md:flex h-full">
+            <Sidebar user={user} profile={profile} />
+          </div>
+          <MobileNav user={user} profile={profile} />
+          <main className="flex-1 overflow-hidden relative">
+            <PageTransition>
+              {children}
+            </PageTransition>
+          </main>
         </div>
-        <MobileNav user={user} profile={profile} />
-        <main className="flex-1 overflow-hidden relative">
-          <PageTransition>
-            {children}
-          </PageTransition>
-        </main>
-      </div>
+      </MobileNavProvider>
     </LanguageProvider>
   )
 }
