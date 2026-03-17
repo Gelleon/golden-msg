@@ -268,7 +268,7 @@ export function RoomSettingsDialog({
                     />
                   </div>
                   <Button 
-                    onClick={handleSearch} 
+                    onClick={() => handleSearch()} 
                     disabled={isLoading}
                     className="h-12 px-6 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold transition-all active:scale-95 disabled:opacity-50"
                   >
@@ -341,7 +341,7 @@ export function RoomSettingsDialog({
                       </motion.div>
                     )}
                     
-                    {!searchQuery && searchResults.length === 0 && (
+                    {!searchQuery && searchResults.length === 0 && !isLoading && (
                       <motion.div 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -350,7 +350,7 @@ export function RoomSettingsDialog({
                         <div className="p-4 bg-white/5 rounded-full mb-4">
                           <Users className="h-10 w-10 opacity-20" />
                         </div>
-                        <p className="text-sm font-bold text-slate-400">{t("sidebar.searchPrompt")}</p>
+                        <p className="text-sm font-bold text-slate-400">{t("sidebar.noUsersFound")}</p>
                       </motion.div>
                     )}
                   </div>
