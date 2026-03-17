@@ -6,7 +6,7 @@ import { uploadFile } from "@/app/actions/upload"
 
 import { useTranslation } from "@/lib/language-context"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { sendMessageAction, updateTypingStatus } from "@/app/actions/chat"
 
@@ -263,18 +263,32 @@ export function MessageInput({
           </Button>
           
           <div className="flex-1 relative">
-            <Input
+            <Textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder={isRecording ? t("chat.placeholderRecording") : t("chat.placeholderMessage")}
               className={cn(
-                "h-9 md:h-12 py-2 md:py-3 px-3 md:px-4 rounded-full border-slate-200 bg-slate-50 focus-visible:ring-amber-500 transition-all shadow-sm text-sm md:text-base",
+                "min-h-[36px] md:min-h-[48px] h-9 md:h-12 max-h-32 py-2 md:py-3 px-3 md:px-4 rounded-2xl md:rounded-3xl border-slate-200 bg-slate-50 focus-visible:ring-amber-500 transition-all shadow-sm text-sm md:text-base resize-none scrollbar-none",
                 isRecording && "border-red-500 bg-red-50 placeholder:text-red-400"
               )}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSend()
+                if (e.key === "Enter") {
+                  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                  
+                  if (isMobile) {
+                    // On mobile: Enter = New Line, so we do nothing and let default behavior happen
+                    return;
+                  } else {
+                    // On PC:
+                    if (e.ctrlKey || e.metaKey) {
+                      // Ctrl+Enter = New Line
+                      // We don't preventDefault to allow newline
+                    } else if (!e.shiftKey) {
+                      // Enter (without modifiers) = Send
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }
                 }
               }}
               disabled={isUploading || isRecording}
