@@ -65,6 +65,7 @@ export async function callDewiar(message: string): Promise<any | null> {
 
     const url = `${DEWIAR_ENDPOINT}?key=${token}`;
     console.log(`[DEWIAR] Calling API for: "${message.substring(0, 50)}..."`);
+    console.log(`[DEWIAR] Request body:`, JSON.stringify(body));
     
     const response = await fetch(url, {
       method: "POST",
@@ -78,10 +79,18 @@ export async function callDewiar(message: string): Promise<any | null> {
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`[DEWIAR] API error. Status: ${response.status} ${response.statusText}. Body: ${errorText}`);
-      return null;
+      throw new Error(`Dewiar API error: ${response.status} ${response.statusText}`);
     }
 
     const rawText = await response.text();
+    console.log(`[DEWIAR] Raw response from API:`, rawText);
+    
+    // Add custom handling for common error indicators in the text
+    if (rawText.includes("error") && rawText.length < 100) {
+      console.warn("[DEWIAR] API returned text containing 'error'");
+      throw new Error(`API returned error: ${rawText}`);
+    }
+
     let parsed: any = null;
     try {
       parsed = JSON.parse(rawText);
@@ -136,20 +145,33 @@ Text to translate: ${text}`;
     response.answer ||
     response.output ||
     response.text ||
+    response.translation ||
+    response.transcription ||
     response.data?.message ||
     response.data?.response ||
     response.data?.result ||
     response.data?.answer ||
     response.data?.output ||
     response.data?.text ||
-    response.choices?.[0]?.message?.content;
+    response.data?.translation ||
+    response.data?.transcription ||
+    response.choices?.[0]?.message?.content ||
+    (response.data && typeof response.data === 'string' ? response.data : null);
 
   console.log(`[DEWIAR] Extracted translatedText: "${translatedText}"`);
 
   if (translatedText) {
-    let trimmed = translatedText.trim();
-    
-    // Remove common LLM prefixes if they appear despite instructions
+      let trimmed = translatedText.trim();
+      
+      // Log for debugging
+      console.log(`[DEWIAR] Final extracted translatedText: "${trimmed}"`);
+
+      // Special case: if it returned a common error message as text
+      if (trimmed.toLowerCase().includes("limit") || trimmed.toLowerCase().includes("token") || trimmed.toLowerCase().includes("error")) {
+        console.warn(`[DEWIAR] Extracted text looks like an error message: ${trimmed}`);
+      }
+
+      // Remove common LLM prefixes if they appear despite instructions
     const prefixesToRemove = [
       "Перевод:", "Translation:", "Текст:", "Result:",
       "Russian:", "Russian language:", "На русском:",
@@ -165,9 +187,11 @@ Text to translate: ${text}`;
     trimmed = trimmed.replace(/^["'«]|["'»]$/g, '');
 
     // If it just repeated the source text (very common failure mode for some LLMs)
-    if (trimmed.toLowerCase() === text.trim().toLowerCase() && text.length > 3) {
-      console.warn("[DEWIAR] Translation returned identical text to source. Likely failed.");
-      return null;
+    // Relaxed check: Only fail if text is long enough to be unlikely to be identical (e.g. sentences)
+    // and if it doesn't look like a number or symbol string
+    if (trimmed.toLowerCase() === text.trim().toLowerCase() && text.length > 20 && !/^\d+$/.test(text)) {
+      console.warn("[DEWIAR] Translation returned identical text to source. Suspected failure, but returning anyway for safety.");
+      // return null; // We allow it now, just warn
     }
 
     return trimmed;
@@ -238,8 +262,16 @@ export async function transcribeAudio(
           });
           
           if (fallbackResponse.ok) {
-            response = fallbackResponse;
-            console.log("[DEWIAR] Fallback to main endpoint SUCCESSFUL");
+            const rawResponse = await fallbackResponse.text();
+            console.log("[DEWIAR] Fallback to main endpoint SUCCESSFUL. Raw response:", rawResponse);
+            let fallbackData;
+            try {
+              fallbackData = JSON.parse(rawResponse);
+            } catch {
+              fallbackData = { response: rawResponse };
+            }
+            const fallbackText = fallbackData.text || fallbackData.transcription || fallbackData.data?.text || fallbackData.data?.transcription || fallbackData.response || (typeof fallbackData === 'string' ? fallbackData : null);
+            return fallbackText || null;
           } else {
             console.error("[DEWIAR] Fallback also failed with status:", fallbackResponse.status);
             return null;
@@ -253,10 +285,16 @@ export async function transcribeAudio(
       }
     }
 
-    const data = await response.json();
-    console.log("[DEWIAR] Transcription API response:", JSON.stringify(data));
+    const rawText = await response.text();
+    console.log("[DEWIAR] Transcription API response raw:", rawText);
+    let data;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      data = { response: rawText };
+    }
     
-    const text = data.text || data.transcription || data.data?.text || data.data?.transcription || data.response;
+    const text = data.text || data.transcription || data.data?.text || data.data?.transcription || data.response || (typeof data === 'string' ? data : null);
     
     if (!text) {
       console.warn("[DEWIAR] Transcription response empty or missing text field:", JSON.stringify(data));

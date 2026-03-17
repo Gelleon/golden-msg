@@ -62,6 +62,11 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   const [isSearching, setIsSearching] = useState(false)
   const [editingRoom, setEditingRoom] = useState<any>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const roleLabels: Record<string, string> = {
     admin: t('roles.admin'),
@@ -158,6 +163,19 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   const canCreateRoom = ["admin", "manager"].includes(profile?.role)
   const canEditRoom = ["admin", "manager"].includes(profile?.role)
   const canUseDM = profile?.role !== "client"
+
+  if (!mounted) {
+    return (
+      <div className={cn("w-72 bg-[#0F172A] text-slate-100 flex flex-col h-full border-r border-white/5 shadow-2xl relative z-10", className)}>
+        <div className="p-6 pb-4 flex items-center gap-3">
+          <div className="p-2.5 bg-amber-500 rounded-xl">
+            <Building2 className="h-5 w-5 text-white" />
+          </div>
+          <h1 className="font-bold text-lg tracking-tight text-white leading-none">Golden Russia</h1>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <motion.div 

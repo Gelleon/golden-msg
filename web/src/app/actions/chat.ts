@@ -32,10 +32,10 @@ async function translateWithDewiar(text: string, fromLang: string, toLang: strin
     }
     
     console.warn(`[CHAT ACTION] translateText returned null for: "${text.substring(0, 20)}..."`);
-    return null;
+    throw new Error("Translation service returned empty response");
   } catch (error) {
     console.error(`[CHAT ACTION] Error in translateWithDewiar:`, error);
-    return null;
+    throw error; // Propagate error to processAsyncMessage so it can be saved in DB
   }
 }
 
@@ -460,11 +460,12 @@ export async function processAsyncMessage(
         );
 
         if (dewiarTranslation) {
-          contentTranslated = dewiarTranslation;
-          console.log(`[ASYNC] Translation successful: "${contentTranslated.substring(0, 30)}..."`);
-        } else {
-          console.warn("[ASYNC] Translation failed or returned null");
-        }
+      contentTranslated = dewiarTranslation;
+      console.log(`[ASYNC] Translation successful: "${contentTranslated.substring(0, 30)}..."`);
+    } else {
+      console.warn("[ASYNC] Translation failed: No content returned");
+      throw new Error("Translation API returned empty response");
+    }
       }
     }
 

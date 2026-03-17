@@ -226,7 +226,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\ethan\\Desktop\\project\\Golden Russia\\web\\src\\generated\\prisma-client",
+      "value": "C:\\Users\\ethan\\Desktop\\project\\GR\\web\\src\\generated\\prisma-client",
       "fromEnvVar": null
     },
     "config": {
@@ -240,7 +240,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\ethan\\Desktop\\project\\Golden Russia\\web\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\ethan\\Desktop\\project\\GR\\web\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -254,7 +254,6 @@ const config = {
     "db"
   ],
   "activeProvider": "sqlite",
-  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {

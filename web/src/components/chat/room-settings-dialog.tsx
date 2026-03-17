@@ -51,6 +51,11 @@ export function RoomSettingsDialog({
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const canManage = ["admin", "manager"].includes(currentUserRole)
 
@@ -115,6 +120,14 @@ export function RoomSettingsDialog({
   }
 
   if (!canManage) return null
+
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl">
+        <Settings className="h-5 w-5" />
+      </Button>
+    )
+  }
 
   return (
     <Dialog>

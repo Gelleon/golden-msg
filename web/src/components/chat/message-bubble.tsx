@@ -72,7 +72,13 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(message.content_original)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const { toast } = useToast()
 
   const handleCopyText = async () => {
@@ -583,6 +589,28 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
       default:
         return null
     }
+  }
+
+  if (!mounted) {
+    return (
+      <div className={cn("flex w-full mb-6 group", isCurrentUser ? "justify-end" : "justify-start")}>
+        <div className={cn("flex max-w-[85%] md:max-w-[75%] gap-3", isCurrentUser ? "flex-row-reverse" : "flex-row")}>
+          <div className="flex-shrink-0 mt-1">
+            <Avatar className="h-9 w-9 border-2 border-white/10 shadow-lg">
+              <AvatarImage src={message.sender.avatar_url || ""} />
+              <AvatarFallback className="bg-gradient-to-br from-slate-700 to-slate-800 text-white text-xs font-bold">
+                {message.sender.full_name?.substring(0, 2).toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+          <div className={cn("flex flex-col gap-1.5", isCurrentUser ? "items-end" : "items-start")}>
+            <div className={cn("px-4 py-3 rounded-2xl shadow-sm border", isCurrentUser ? "bg-blue-600 text-white border-blue-500" : "bg-white text-slate-800 border-slate-100")}>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content_original}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -152,9 +152,15 @@ export function ChatWindow({
       }
     };
 
-    sse.onerror = (e) => {
-      console.error("SSE Error", e);
-      sse.close();
+    sse.onerror = (e: any) => {
+      if (sse.readyState === EventSource.CONNECTING) {
+        console.log("[SSE] Reconnecting...");
+      } else if (sse.readyState === EventSource.CLOSED) {
+        console.log("[SSE] Connection closed.");
+      } else {
+        console.error("[SSE] Error:", e);
+      }
+      // EventSource will automatically attempt to reconnect
     };
 
     // Poll every 3 seconds

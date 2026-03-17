@@ -143,7 +143,8 @@
     "errorMic": "无法访问麦克风",
     "voiceMessageContent": "语音消息",
     "newMessages": "新消息",
-    "reply": "回复"
+    "reply": "回复",
+    "translationFailed": "翻译失败"
   },
   "settings_status": {
     "success": "成功",

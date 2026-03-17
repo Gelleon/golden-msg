@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/language-context";
@@ -19,6 +19,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin", "cyrillic"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#020617",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   const session = await getSession();
   const lang = (session?.user?.preferred_language as "ru" | "cn") || "ru";
@@ -28,8 +36,6 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "Golden Russia",
     description: translations.welcome.heroTitle + " - " + translations.welcome.heroSubtitle,
     manifest: "/manifest.json",
-    themeColor: "#020617",
-    viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0",
   };
 }
 
