@@ -89,10 +89,6 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
   const handleCopyText = async () => {
     try {
       await navigator.clipboard.writeText(message.content_original)
-      toast({
-        title: t('common.copied'),
-        description: t('common.textCopiedToClipboard'),
-      })
     } catch (err) {
       console.error("Failed to copy:", err)
     }
@@ -177,10 +173,6 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
     if (!isMountedRef.current) return
 
     if (result.success) {
-      toast({
-        title: t("chat.messageDeleted"),
-        description: t("chat.messageDeletedDesc"),
-      })
       setShowDeleteConfirm(false)
     } else {
       toast({
