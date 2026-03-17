@@ -73,10 +73,15 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
   const [editContent, setEditContent] = useState(message.content_original)
   const [isUpdating, setIsUpdating] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const isMountedRef = useRef(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     setMounted(true)
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
   }, [])
 
   const { toast } = useToast()
@@ -101,6 +106,8 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
 
     setIsUpdating(true)
     const result = await updateMessage(message.id, editContent)
+    
+    if (!isMountedRef.current) return
 
     if (result.success) {
       setIsEditing(false)
@@ -167,6 +174,8 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
     setIsDeleting(true)
     const result = await deleteMessage(message.id)
     
+    if (!isMountedRef.current) return
+
     if (result.success) {
       toast({
         title: t("chat.messageDeleted"),

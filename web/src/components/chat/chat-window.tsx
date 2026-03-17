@@ -40,9 +40,21 @@ export function ChatWindow({
 
   const otherParticipantsCount = participants.filter(p => p.id !== currentUser.id).length
   const messagesRef = useRef(messages)
-  messagesRef.current = messages
+  const isMountedRef = useRef(false)
+
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
   const updateMessages = (newMessages: any[]) => {
+    if (!isMountedRef.current) return
     if (JSON.stringify(newMessages) !== JSON.stringify(messagesRef.current)) {
       setMessages(newMessages);
     }
@@ -97,6 +109,7 @@ export function ChatWindow({
     const fetchMessages = async () => {
       try {
         const result = await getMessages(roomId)
+        if (!isMountedRef.current) return
         if (result.messages) {
           const hasNewMessages = result.messages.length > messagesRef.current.length;
           const newMessages = result.messages.slice(messagesRef.current.length);
