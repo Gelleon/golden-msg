@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Bell, Mail, Loader2, Save, ShieldCheck } from "lucide-react"
+import { Bell, Loader2, Save } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { useTranslation } from "@/lib/language-context"
 import { motion } from "framer-motion"
@@ -22,13 +22,11 @@ export function NotificationSettingsForm({ user }: { user: any }) {
   const { toast } = useToast()
   const { t } = useTranslation()
   const [isSaving, setIsSaving] = useState(false)
-  const [emailNotifications, setEmailNotifications] = useState(user.email_notifications_enabled ?? true)
   const [pushNotifications, setPushNotifications] = useState(user.push_notifications_enabled ?? true)
 
   const handleSave = async () => {
     setIsSaving(true)
     const formData = new FormData()
-    formData.append("emailNotifications", String(emailNotifications))
     formData.append("pushNotifications", String(pushNotifications))
 
     try {
@@ -57,8 +55,7 @@ export function NotificationSettingsForm({ user }: { user: any }) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6">
-      <Card className="border border-slate-200/60 shadow-xl bg-white rounded-2xl overflow-hidden ring-1 ring-black/[0.03]">
+    <Card className="border border-slate-200/60 shadow-xl bg-white rounded-2xl overflow-hidden ring-1 ring-black/[0.03]">
         <CardHeader className="p-6 md:p-8 bg-slate-50 border-b border-slate-100">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-600/20 ring-4 ring-blue-600/5">
@@ -80,25 +77,6 @@ export function NotificationSettingsForm({ user }: { user: any }) {
             <div className="flex-1 space-y-1">
               <Label className="text-slate-900 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
                 <div className="p-1.5 bg-blue-50 rounded-lg border border-blue-100">
-                  <Mail className="h-3.5 w-3.5 text-blue-600" />
-                </div>
-                {t('settings.profile.emailNotifications')}
-              </Label>
-              <p className="text-[11px] text-slate-500 font-bold leading-relaxed pl-1 max-w-md">
-                {t('settings.profile.emailNotificationsDesc')}
-              </p>
-            </div>
-            <Switch
-              checked={emailNotifications}
-              onCheckedChange={(checked) => setEmailNotifications(checked)}
-              className="data-[checked=true]:bg-blue-600"
-            />
-          </div>
-
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 bg-slate-50/50 rounded-2xl border border-slate-200/40 transition-all hover:bg-white hover:shadow-md group">
-            <div className="flex-1 space-y-1">
-              <Label className="text-slate-900 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
-                <div className="p-1.5 bg-blue-50 rounded-lg border border-blue-100">
                   <Bell className="h-3.5 w-3.5 text-blue-600" />
                 </div>
                 Push-уведомления
@@ -112,18 +90,6 @@ export function NotificationSettingsForm({ user }: { user: any }) {
               onCheckedChange={(checked) => setPushNotifications(checked)}
               className="data-[checked=true]:bg-blue-600"
             />
-          </div>
-
-          <div className="flex gap-4 p-6 bg-amber-500/5 rounded-2xl border border-amber-500/10">
-            <div className="p-2 bg-amber-500/10 rounded-lg shrink-0 h-fit">
-              <ShieldCheck className="h-5 w-5 text-amber-600" />
-            </div>
-            <div className="space-y-1">
-              <h4 className="text-sm font-black text-amber-900 tracking-tight">Важное примечание</h4>
-              <p className="text-[11px] text-amber-700/80 font-bold leading-relaxed">
-                Уведомления отправляются только тогда, когда вы не находитесь в системе более 60 минут. Мы уважаем ваше время и не беспокоим вас зря.
-              </p>
-            </div>
           </div>
         </CardContent>
 
@@ -142,6 +108,5 @@ export function NotificationSettingsForm({ user }: { user: any }) {
           </Button>
         </CardFooter>
       </Card>
-    </div>
   )
 }

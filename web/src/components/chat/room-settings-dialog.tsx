@@ -76,6 +76,12 @@ export function RoomSettingsDialog({
     }
   }, [roomId, canManage])
 
+  useEffect(() => {
+    if (canManage && searchQuery === "") {
+      handleSearch("")
+    }
+  }, [searchQuery, canManage])
+
   const handleSearch = async (queryOverride?: string) => {
     const query = typeof queryOverride === 'string' ? queryOverride : searchQuery
     setIsLoading(true)

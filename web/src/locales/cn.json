@@ -12,6 +12,7 @@
     "loading": "加载中...",
     "saving": "保存中...",
     "updating": "更新中...",
+    "saveChanges": "保存更改",
     "changesSaved": "更改已保存",
     "error": "错误",
     "criticalError": "关键错误",

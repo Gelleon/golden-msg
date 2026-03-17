@@ -672,32 +672,6 @@ function ProfileForm({ user, toast, roleLabels, roleColors }: { user: any, toast
             </div>
           </div>
 
-          <div className="space-y-4 pt-6 border-t border-slate-100">
-            <div className="flex items-center justify-between gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100 group transition-all hover:bg-white hover:shadow-md">
-              <div className="flex items-start gap-4">
-                <div className="p-2.5 bg-blue-50 rounded-xl border border-blue-100 group-hover:scale-110 transition-transform">
-                  <ShieldCheck className="h-5 w-5 text-blue-600" />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-sm font-black text-slate-900 tracking-tight">{t('settings.profile.emailNotifications')}</h4>
-                  <p className="text-[11px] text-slate-500 font-bold leading-relaxed max-w-md">
-                    {t('settings.profile.emailNotificationsDesc')}
-                  </p>
-                </div>
-              </div>
-              <div className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  name="emailNotifications"
-                  value="true"
-                  defaultChecked={user?.email_notifications_enabled}
-                  className="sr-only peer"
-                />
-                <div className="w-12 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 shadow-inner" />
-              </div>
-            </div>
-          </div>
-
           <div className="pt-6 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-start gap-4 text-slate-700 bg-slate-50 p-5 rounded-2xl border border-slate-100 max-w-xl">
               <div className="p-2 bg-amber-100 rounded-xl shrink-0 shadow-sm">
