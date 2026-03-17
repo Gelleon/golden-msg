@@ -109,7 +109,7 @@ export async function updateMessage(messageId: string, content: string) {
     })
     
     // Language Detection Helpers
-    const hasChinese = (text: string) => /[\u4e00-\u9fa5]/.test(text);
+    const hasChinese = (text: string) => /[\u4e00-\u9fff\u3400-\u4dbf]/.test(text);
     const hasCyrillic = (text: string) => /[а-яА-ЯёЁ]/.test(text);
 
     let languageOriginal: "Russian" | "Chinese";
@@ -138,13 +138,14 @@ export async function updateMessage(messageId: string, content: string) {
       }
     }
 
+    const finalLangOriginal = languageOriginal === "Russian" ? "ru" : "cn";
+
     const updatedMessage = await prisma.message.update({
       where: { id: messageId },
       data: {
         content: content,
         content_translated: contentTranslated,
-        // @ts-ignore
-        // language_original: languageOriginal === "Russian" ? "ru" : "cn",
+        language_original: finalLangOriginal,
         is_edited: true,
       },
     })
@@ -209,6 +210,7 @@ export async function getMessages(roomId: string) {
       id: true,
       content: true,
       content_translated: true,
+      language_original: true,
       message_type: true,
       file_url: true,
       voice_transcription: true,
@@ -221,8 +223,6 @@ export async function getMessages(roomId: string) {
           full_name: true,
           avatar_url: true,
           role: true,
-          // @ts-ignore
-          // preferred_language: true,
         },
       },
       reply_to: {
@@ -268,7 +268,6 @@ export async function getMessages(roomId: string) {
     id: msg.id,
     content_original: msg.content,
     content_translated: msg.content_translated,
-    // @ts-ignore
     language_original: msg.language_original || "ru",
     message_type: msg.message_type,
     file_url: msg.file_url,
@@ -375,11 +374,13 @@ export async function sendMessageAction(rawData: {
   }
 
   // Language Detection Helpers
-  const hasChinese = (text: string) => /[\u4e00-\u9fa5]/.test(text);
+  const hasChinese = (text: string) => /[\u4e00-\u9fff\u3400-\u4dbf]/.test(text);
   const hasCyrillic = (text: string) => /[а-яА-ЯёЁ]/.test(text);
 
   let languageOriginal: "Russian" | "Chinese";
   let targetLanguage: "Russian" | "Chinese";
+
+  console.log(`[AI] Detecting language for text: "${content.substring(0, 30)}..."`);
 
   if (hasChinese(content)) {
     languageOriginal = "Chinese";
@@ -390,15 +391,14 @@ export async function sendMessageAction(rawData: {
     targetLanguage = "Chinese";
     console.log("[AI] Detected: Russian (via Regex)");
   } else {
-    // Fallback to user preference for neutral text (English, numbers, etc.)
-    const userPref = "Russian"; // Default to "Russian" temporarily
-    languageOriginal = userPref;
-    targetLanguage = userPref === "Russian" ? "Chinese" : "Russian";
-    console.log(`[AI] Detected: Neutral (via User Pref: default "ru")`);
+    // Fallback to Russian
+    languageOriginal = "Russian";
+    targetLanguage = "Chinese";
+    console.log(`[AI] Detected: Neutral/Fallback (Default: Russian)`);
   }
   
-  // @ts-ignore
-  console.log(`[SEND MESSAGE] From: ${user.full_name}, DB Pref Lang: ${user.preferred_language}, Final Original: ${languageOriginal}, Target: ${targetLanguage}, Content: "${content.substring(0, 50)}..."`);
+  const finalLangOriginal = languageOriginal === "Russian" ? "ru" : "cn";
+  console.log(`[SEND MESSAGE] Original Lang: ${finalLangOriginal}, Target: ${targetLanguage}`);
 
   let contentTranslated: string | null = null
   let voiceTranscription: string | null = null
@@ -492,6 +492,7 @@ export async function sendMessageAction(rawData: {
       sender_id: user.id,
       content: content,
       content_translated: contentTranslated,
+      language_original: finalLangOriginal,
       message_type: messageType,
       file_url: fileUrl,
       voice_transcription: voiceTranscription,
@@ -504,6 +505,7 @@ export async function sendMessageAction(rawData: {
         id: true,
         content: true,
         content_translated: true,
+        language_original: true,
         message_type: true,
         file_url: true,
         voice_transcription: true,
@@ -516,8 +518,6 @@ export async function sendMessageAction(rawData: {
             full_name: true,
             avatar_url: true,
             role: true,
-            // @ts-ignore
-            // preferred_language: true, 
           },
         },
         reply_to: {

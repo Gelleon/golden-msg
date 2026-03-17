@@ -88,6 +88,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
       id: true,
       content: true,
       content_translated: true,
+      language_original: true,
       message_type: true,
       file_url: true,
       voice_transcription: true,
@@ -99,7 +100,6 @@ export default async function RoomPage({ params }: RoomPageProps) {
           full_name: true,
           avatar_url: true,
           role: true,
-          // preferred_language: true, // Temporarily disabled to prevent schema mismatch
         },
       },
       reply_to: {
@@ -122,7 +122,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
     id: msg.id,
     content_original: msg.content,
     content_translated: msg.content_translated,
-    language_original: "ru", // Default to "ru" temporarily
+    language_original: msg.language_original || "ru",
     message_type: msg.message_type,
     file_url: msg.file_url,
     voice_transcription: msg.voice_transcription,
