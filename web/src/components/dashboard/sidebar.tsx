@@ -283,7 +283,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                     transition={{ duration: 0.2, delay: index * 0.05 }}
                   >
                     <ContextMenu>
-                      <ContextMenuTrigger asChild>
+                      <ContextMenuTrigger asChild className="sidebar-item-trigger">
                         <Link
                           href={`/dashboard/rooms/${room.id}`}
                           className="block"

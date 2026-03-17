@@ -61,15 +61,25 @@ export function RoomSettingsDialog({
 
   useEffect(() => {
     if (canManage) {
-      fetchParticipants()
+      const init = async () => {
+        const data = await getRoomParticipants(roomId)
+        setParticipants(data)
+        
+        // Fetch users after participants are loaded to filter correctly
+        const users = await searchUsersForRoom("")
+        if (users) {
+          const existingIds = new Set(data.map((p: any) => p.id))
+          setSearchResults(users.filter((u: any) => !existingIds.has(u.id)))
+        }
+      }
+      init()
     }
   }, [roomId, canManage])
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return
-
+  const handleSearch = async (queryOverride?: string) => {
+    const query = typeof queryOverride === 'string' ? queryOverride : searchQuery
     setIsLoading(true)
-    const data = await searchUsersForRoom(searchQuery)
+    const data = await searchUsersForRoom(query)
     
     if (data) {
       // Filter out existing participants

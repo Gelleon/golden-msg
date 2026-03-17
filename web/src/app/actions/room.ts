@@ -575,8 +575,6 @@ export async function searchUsersForRoom(query: string) {
   const session = await getSession()
   if (!session?.user) return []
 
-  if (!query.trim()) return []
-
   const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { role: true },
@@ -587,25 +585,31 @@ export async function searchUsersForRoom(query: string) {
     roleFilter.role = { in: ["client", "partner"] }
   }
 
+  const where: any = {
+    id: {
+      not: session.user.id,
+    },
+    ...roleFilter,
+  }
+
+  if (query.trim()) {
+    where.full_name = {
+      contains: query,
+    }
+  }
+
   try {
     const users = await prisma.user.findMany({
-      where: {
-        full_name: {
-          contains: query,
-        },
-        id: {
-          not: session.user.id,
-        },
-        ...roleFilter,
-      },
-      take: 10,
+      where,
+      take: query.trim() ? 10 : 50,
       select: {
         id: true,
         full_name: true,
         avatar_url: true,
         role: true,
-        // @ts-ignore
-        // preferred_language: true,
+      },
+      orderBy: {
+        full_name: "asc",
       },
     })
     return users

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Download, Play, Pause, Loader2, FileText, CheckCircle2, Languages, Image as ImageIcon, Trash2, AlertTriangle, Pencil, X, Check, Reply, CornerUpLeft } from "lucide-react"
+import { Download, Play, Pause, Loader2, FileText, CheckCircle2, Languages, Image as ImageIcon, Trash2, AlertTriangle, Pencil, X, Check, Reply, CornerUpLeft, Copy } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { useTranslation } from "@/lib/language-context"
@@ -73,6 +73,18 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
   const [isUpdating, setIsUpdating] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const { toast } = useToast()
+
+  const handleCopyText = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content_original)
+      toast({
+        title: t('common.copied'),
+        description: t('common.textCopiedToClipboard'),
+      })
+    } catch (err) {
+      console.error("Failed to copy:", err)
+    }
+  }
 
   const handleUpdate = async () => {
     if (!editContent.trim() || editContent === message.content_original) {
@@ -514,7 +526,7 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
       </motion.div>
 
       <ContextMenu>
-        <ContextMenuTrigger asChild>
+        <ContextMenuTrigger asChild className="message-bubble-trigger">
           <div className={cn(
             "flex-1 relative group/bubble max-w-fit min-w-[60px]",
             isCurrentUser ? "flex flex-col items-end" : "flex flex-col items-start"
@@ -589,6 +601,16 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
             <Reply className="h-4 w-4 text-slate-400 group-focus:text-blue-500" />
             <span className="font-semibold text-sm">{t("chat.reply")}</span>
           </ContextMenuItem>
+
+          {message.message_type === "text" && (
+            <ContextMenuItem 
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 focus:bg-blue-50 focus:text-blue-600 transition-colors cursor-pointer group"
+              onClick={handleCopyText}
+            >
+              <Copy className="h-4 w-4 text-slate-400 group-focus:text-blue-500" />
+              <span className="font-semibold text-sm">{t("common.copy")}</span>
+            </ContextMenuItem>
+          )}
 
           {isCurrentUser && (
             <>

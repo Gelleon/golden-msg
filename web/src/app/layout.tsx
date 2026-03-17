@@ -6,6 +6,8 @@ import { getSession } from "@/app/actions/auth";
 import ru from "@/locales/ru.json";
 import cn from "@/locales/cn.json";
 import { PWAService } from "@/components/pwa-service";
+import { SelectionCopyMenu } from "@/components/selection-copy-menu";
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,7 +48,9 @@ export default async function RootLayout({
       >
         <LanguageProvider initialLanguage={initialLanguage}>
           <PWAService />
+          <SelectionCopyMenu />
           {children}
+          <Toaster />
         </LanguageProvider>
       </body>
     </html>
