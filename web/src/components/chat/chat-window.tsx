@@ -362,6 +362,19 @@ export function ChatWindow({
             {messages.map((message, index) => {
               const isUnread = new Date(message.created_at) > new Date(currentLastReadAt) && message.sender.id !== currentUser.id
               const isFirstUnread = index === firstUnreadIndex
+              
+              // Telegram style: show name if it's the first message from this sender in a row
+              const prevMessage = index > 0 ? messages[index - 1] : null
+              const isSameSenderAsPrev = prevMessage?.sender.id === message.sender.id
+              const timeDiff = prevMessage 
+                ? (new Date(message.created_at).getTime() - new Date(prevMessage.created_at).getTime()) / (1000 * 60)
+                : 0
+              const showSenderName = (participants.length > 2) && (!isSameSenderAsPrev || timeDiff > 5)
+
+              // Telegram style: show avatar if it's the last message from this sender in a row
+              const nextMessage = index < messages.length - 1 ? messages[index + 1] : null
+              const isSameSenderAsNext = nextMessage?.sender.id === message.sender.id
+              const showAvatar = !isSameSenderAsNext || (nextMessage && (new Date(nextMessage.created_at).getTime() - new Date(message.created_at).getTime()) / (1000 * 60) > 5)
 
               return (
                 <motion.div 
@@ -400,6 +413,8 @@ export function ChatWindow({
                       message={message}
                       isCurrentUser={message.sender.id === currentUser.id}
                       onReply={(msg) => setReplyTo(msg)}
+                      showSenderName={showSenderName}
+                      showAvatar={showAvatar}
                     />
                   </div>
                 </motion.div>

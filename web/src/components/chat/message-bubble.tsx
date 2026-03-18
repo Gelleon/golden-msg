@@ -54,6 +54,27 @@ interface MessageBubbleProps {
   message: Message
   isCurrentUser: boolean
   onReply?: (message: Message) => void
+  showSenderName?: boolean
+  showAvatar?: boolean
+}
+
+const GENTLE_COLORS = [
+  "text-blue-500",
+  "text-rose-500",
+  "text-emerald-500",
+  "text-amber-500",
+  "text-violet-500",
+  "text-cyan-500",
+  "text-pink-500",
+  "text-indigo-500",
+]
+
+const getUserColor = (userId: string) => {
+  let hash = 0
+  for (let i = 0; i < userId.length; i++) {
+    hash = userId.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  return GENTLE_COLORS[Math.abs(hash) % GENTLE_COLORS.length]
 }
 
 const isImage = (url: string | null) => {
@@ -62,7 +83,7 @@ const isImage = (url: string | null) => {
   return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '')
 }
 
-export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubbleProps) {
+export function MessageBubble({ message, isCurrentUser, onReply, showSenderName, showAvatar = true }: MessageBubbleProps) {
   const { t } = useTranslation()
   const [isPlaying, setIsPlaying] = useState(false)
   const [duration, setDuration] = useState<number | null>(null)
@@ -633,6 +654,7 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
       <motion.div
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
+        className={cn(!showAvatar && "invisible")}
       >
         <Avatar className="h-7 w-7 md:h-8 md:w-8 mt-1 shrink-0 ring-2 ring-white shadow-sm">
           <AvatarImage src={message.sender.avatar_url || undefined} />
@@ -651,10 +673,22 @@ export function MessageBubble({ message, isCurrentUser, onReply }: MessageBubble
             <div className={cn(
               "rounded-[20px] shadow-sm transition-all duration-300 overflow-hidden relative",
               isCurrentUser 
-                ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-tr-[5px]" 
-                : "bg-white text-slate-900 border border-slate-100 rounded-tl-[5px]",
+                ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white" 
+                : "bg-white text-slate-900 border border-slate-100",
+              isCurrentUser && showSenderName && "rounded-tr-[5px]",
+              isCurrentUser && !showSenderName && "rounded-tr-[20px]",
+              !isCurrentUser && showSenderName && "rounded-tl-[5px]",
+              !isCurrentUser && !showSenderName && "rounded-tl-[20px]",
               "hover:shadow-md max-w-[320px] sm:max-w-[400px]"
             )}>
+              {showSenderName && !isCurrentUser && (
+                <div className={cn(
+                  "px-4 pt-2.5 pb-0 text-[13px] font-bold leading-none select-none truncate max-w-full",
+                  getUserColor(message.sender.id)
+                )}>
+                  {message.sender.full_name}
+                </div>
+              )}
               {renderContent()}
               
               {/* Message Info (Time & Status) */}
