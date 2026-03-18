@@ -127,14 +127,67 @@ export function MessageInput({
   }
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const mediaStreamRef = useRef<MediaStream | null>(null)
   const chunksRef = useRef<Blob[]>([])
 
+  const stopMediaTracks = () => {
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop())
+    mediaStreamRef.current = null
+  }
+
+  const getSupportedAudioMimeType = () => {
+    if (typeof MediaRecorder === "undefined" || typeof MediaRecorder.isTypeSupported !== "function") {
+      return ""
+    }
+
+    const preferredMimeTypes = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/mp4",
+      "audio/aac",
+      "audio/ogg;codecs=opus",
+      "audio/ogg",
+    ]
+
+    return preferredMimeTypes.find((mimeType) => MediaRecorder.isTypeSupported(mimeType)) || ""
+  }
+
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.onstop = null
+        if (mediaRecorderRef.current.state !== "inactive") {
+          mediaRecorderRef.current.stop()
+        }
+      }
+      stopMediaTracks()
+      chunksRef.current = []
+    }
+  }, [])
+
   const startRecording = async () => {
+    if (isUploading || isRecording) return
+
     try {
+      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+        alert(t("chat.errorMic"))
+        return
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream)
+      mediaStreamRef.current = stream
+      const mimeType = getSupportedAudioMimeType()
+      const mediaRecorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream)
       mediaRecorderRef.current = mediaRecorder
       chunksRef.current = []
+
+      mediaRecorder.onerror = () => {
+        setIsRecording(false)
+        stopMediaTracks()
+        alert(t("chat.errorSendVoice"))
+      }
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
@@ -143,10 +196,24 @@ export function MessageInput({
       }
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" })
-        const audioFile = new File([audioBlob], "voice-message.webm", { type: "audio/webm" })
+        setIsRecording(false)
+
+        const hasAudioData = chunksRef.current.some((chunk) => chunk.size > 0)
+        if (!hasAudioData) {
+          stopMediaTracks()
+          alert(t("chat.errorSendVoice"))
+          return
+        }
+
+        const detectedType = chunksRef.current[0]?.type || mediaRecorder.mimeType || "audio/webm"
+        const fileExtension = detectedType.includes("mp4")
+          ? "m4a"
+          : detectedType.includes("ogg")
+            ? "ogg"
+            : "webm"
+        const audioBlob = new Blob(chunksRef.current, { type: detectedType })
+        const audioFile = new File([audioBlob], `voice-message.${fileExtension}`, { type: detectedType })
         
-        // Handle voice upload and send
         setIsUploading(true)
         try {
           const formData = new FormData()
@@ -172,22 +239,24 @@ export function MessageInput({
           alert(t("chat.errorSendVoice"))
         } finally {
           setIsUploading(false)
-          stream.getTracks().forEach(track => track.stop())
+          chunksRef.current = []
+          stopMediaTracks()
         }
       }
 
-      mediaRecorder.start()
+      mediaRecorder.start(250)
       setIsRecording(true)
     } catch (err) {
       console.error("Error accessing microphone:", err)
+      setIsRecording(false)
+      stopMediaTracks()
       alert(t("chat.errorMic"))
     }
   }
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop()
-      setIsRecording(false)
     }
   }
 
