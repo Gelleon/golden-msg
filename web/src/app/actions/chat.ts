@@ -11,6 +11,7 @@ import { z } from "zod"
 import { ensureSchemaFixed } from "@/lib/schema-fix"
 import { sendSSEUpdate } from "@/lib/sse"
 import { after } from "next/server"
+import { parseMentions, stripMentionsForTranslation } from "@/lib/chat-mentions"
 
 const sendMessageSchema = z.object({
   roomId: z.string().uuid(),
@@ -18,6 +19,7 @@ const sendMessageSchema = z.object({
   messageType: z.enum(["text", "voice", "file"]),
   fileUrl: z.string().optional(),
   replyToId: z.string().uuid().optional(),
+  userRole: z.string().optional(),
 })
 
 async function translateWithDewiar(text: string, fromLang: string, toLang: string) {
@@ -404,7 +406,7 @@ export async function processAsyncMessage(
     let voiceTranscription: string | null = null;
     let contentTranslated: string | null = null;
     let languageOriginal = initialLangOriginal;
-    let textToTranslate = content;
+    let textToTranslate = messageType === "text" ? stripMentionsForTranslation(content) : content;
 
     // 0. Cancellation Check (Optimization)
     // Check if the message content has already changed before we even start
@@ -580,6 +582,7 @@ export async function sendMessageAction(rawData: {
   messageType: "text" | "voice" | "file"
   fileUrl?: string
   replyToId?: string
+  userRole?: string
 }) {
   await ensureSchemaFixed()
   console.log(`[ACTION] sendMessageAction start: ${JSON.stringify(rawData).substring(0, 100)}...`);
@@ -623,6 +626,62 @@ export async function sendMessageAction(rawData: {
 
   if (!user) {
     return { error: "User not found" }
+  }
+
+  const roomWithParticipants = await prisma.room.findUnique({
+    where: { id: roomId },
+    select: {
+      type: true,
+      participants: {
+        select: {
+          user_id: true,
+          user: {
+            select: {
+              id: true,
+              full_name: true,
+              push_notifications_enabled: true,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!roomWithParticipants) {
+    return { error: "Room not found" }
+  }
+
+  const mentionRoleLimits: Record<string, number> = {
+    admin: 20,
+    manager: 15,
+    partner: 8,
+    client: 5,
+  }
+
+  const roleMentionLimit = mentionRoleLimits[user.role] || 3
+  const maxMentionsAllowed = roomWithParticipants.type === "private"
+    ? Math.min(roleMentionLimit, 2)
+    : roleMentionLimit
+
+  const mentionValidation = messageType === "text"
+    ? parseMentions(
+        content,
+        roomWithParticipants.participants.map((participant) => ({
+          id: participant.user.id,
+          full_name: participant.user.full_name,
+        }))
+      )
+    : { mentionedUsers: [], invalidHandles: [], allMentionCount: 0 }
+
+  if (mentionValidation.invalidHandles.length > 0) {
+    return { error: `Mentioned user not found: @${mentionValidation.invalidHandles[0]}` }
+  }
+
+  if (
+    mentionValidation.mentionedUsers.length > maxMentionsAllowed ||
+    mentionValidation.allMentionCount > maxMentionsAllowed
+  ) {
+    return { error: `Mentions limit exceeded. Max allowed: ${maxMentionsAllowed}` }
   }
 
   // Language Detection Helpers
@@ -855,14 +914,9 @@ export async function sendMessageAction(rawData: {
       ? 'Voice message' 
       : (content.length > 50 ? content.substring(0, 50) + '...' : content);
 
-    // Fetch room participants to notify
-    const participants = await prisma.roomParticipant.findMany({
-      where: {
-        room_id: roomId,
-        user_id: { not: session.user.id }
-      },
-      select: { user_id: true }
-    });
+    const participants = roomWithParticipants.participants.filter(
+      (participant) => participant.user_id !== session.user.id && participant.user.push_notifications_enabled
+    )
     
     // Send notifications in background
     Promise.all(participants.map(p => 
@@ -875,6 +929,22 @@ export async function sendMessageAction(rawData: {
         }
       )
     )).catch(err => console.error("Push notification error:", err));
+
+    const mentionedUserIds = mentionValidation.mentionedUsers
+      .map((mentionedUser) => mentionedUser.id)
+      .filter((mentionedUserId) => mentionedUserId !== session.user.id)
+
+    if (mentionedUserIds.length > 0) {
+      Promise.all(
+        mentionedUserIds.map((mentionedUserId) =>
+          sendPushNotification(mentionedUserId, {
+            title: `${user.full_name} mentioned you`,
+            body: content.length > 80 ? `${content.substring(0, 80)}...` : content,
+            url: `/dashboard/rooms/${roomId}`,
+          })
+        )
+      ).catch((err) => console.error("Mention notification error:", err))
+    }
 
     revalidatePath(`/dashboard/rooms/${roomId}`)
     

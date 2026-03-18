@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Download, Play, Pause, Loader2, FileText, CheckCircle2, Languages, Image as ImageIcon, Trash2, AlertTriangle, Pencil, X, Check, Reply, CornerUpLeft, Copy } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import Link from "next/link"
 
 import { useTranslation } from "@/lib/language-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { Textarea } from "@/components/ui/textarea"
+import { splitTextWithMentions } from "@/lib/chat-mentions"
 import {
   ContextMenu,
   ContextMenuContent,
@@ -56,6 +58,10 @@ interface MessageBubbleProps {
   onReply?: (message: Message) => void
   showSenderName?: boolean
   showAvatar?: boolean
+  participants?: Array<{
+    id: string
+    full_name: string | null
+  }>
 }
 
 const GENTLE_COLORS = [
@@ -83,7 +89,7 @@ const isImage = (url: string | null) => {
   return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '')
 }
 
-export function MessageBubble({ message, isCurrentUser, onReply, showSenderName, showAvatar = true }: MessageBubbleProps) {
+export function MessageBubble({ message, isCurrentUser, onReply, showSenderName, showAvatar = true, participants = [] }: MessageBubbleProps) {
   const { t } = useTranslation()
   const [isPlaying, setIsPlaying] = useState(false)
   const [duration, setDuration] = useState<number | null>(null)
@@ -106,6 +112,7 @@ export function MessageBubble({ message, isCurrentUser, onReply, showSenderName,
   }, [])
 
   const { toast } = useToast()
+  const mentionSegments = splitTextWithMentions(message.content_original || "", participants)
 
   const handleCopyText = async () => {
     try {
@@ -332,7 +339,22 @@ export function MessageBubble({ message, isCurrentUser, onReply, showSenderName,
                 )}>
                   {renderLanguageIndicator(!!message.content_translated)}
                   <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere font-medium">
-                    {message.content_original}
+                    {mentionSegments.map((segment, index) =>
+                      segment.type === "mention" && segment.userId ? (
+                        <Link
+                          key={`${segment.value}-${index}`}
+                          href={`/dashboard/profile/${segment.userId}`}
+                          className={cn(
+                            "font-semibold underline underline-offset-4 decoration-transparent hover:decoration-current transition-colors",
+                            isCurrentUser ? "text-cyan-200 hover:text-cyan-100" : "text-blue-600 hover:text-blue-700"
+                          )}
+                        >
+                          {segment.value}
+                        </Link>
+                      ) : (
+                        <span key={`${segment.value}-${index}`}>{segment.value}</span>
+                      )
+                    )}
                   </p>
                 </div>
                 

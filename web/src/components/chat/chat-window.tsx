@@ -50,7 +50,6 @@ export function ChatWindow({
   const isAutoScrollingRef = useRef(false)
   const autoScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const otherParticipantsCount = participants.filter(p => p.id !== currentUser.id).length
   const messagesRef = useRef(messages)
   const isMountedRef = useRef(false)
 
@@ -321,7 +320,7 @@ export function ChatWindow({
       clearInterval(interval)
       sse.close();
     }
-  }, [roomId, otherParticipantsCount, currentUser.id])
+  }, [roomId, participants.length, currentUser.id])
 
   return (
     <div className="flex flex-col h-full bg-[#F8FAFC]">
@@ -415,6 +414,7 @@ export function ChatWindow({
                       onReply={(msg) => setReplyTo(msg)}
                       showSenderName={showSenderName}
                       showAvatar={showAvatar}
+                      participants={participants}
                     />
                   </div>
                 </motion.div>
@@ -464,6 +464,7 @@ export function ChatWindow({
         roomId={roomId}
         userId={currentUser.id}
         userRole={userProfile?.role}
+        participants={participants}
         replyTo={replyTo}
         onCancelReply={() => setReplyTo(null)}
         onMessageSent={async () => {

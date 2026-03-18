@@ -2,7 +2,7 @@
 
 export interface DewiarMessage {
   role: "user" | "assistant" | "system";
-  content: string | any[];
+  content: string | unknown[];
 }
 
 export interface DewiarRequestOptions {
@@ -40,11 +40,18 @@ export interface DewiarResponse {
 }
 
 const DEWIAR_ENDPOINT = "https://dewiar.com/dew_ai/api";
+const DEWIAR_ERROR_SIGNATURES = [
+  "openai token missing",
+  "no translation",
+  "api key missing",
+  "invalid_api_key",
+  "unauthorized",
+]
 
 /**
  * Universal function to call Dewiar API (New format: dew_ai/api)
  */
-export async function callDewiar(message: string): Promise<any | null> {
+export async function callDewiar(message: string): Promise<unknown | null> {
   const token = process.env.DEWIAR_API_TOKEN;
   
   if (!token) {
@@ -86,12 +93,16 @@ export async function callDewiar(message: string): Promise<any | null> {
     console.log(`[DEWIAR] Raw response from API:`, rawText);
     
     // Add custom handling for common error indicators in the text
-    if (rawText.includes("error") && rawText.length < 100) {
+    const rawLower = rawText.toLowerCase()
+    if (
+      (rawLower.includes("error") && rawText.length < 200) ||
+      DEWIAR_ERROR_SIGNATURES.some((signature) => rawLower.includes(signature))
+    ) {
       console.warn("[DEWIAR] API returned text containing 'error'");
       throw new Error(`API returned error: ${rawText}`);
     }
 
-    let parsed: any = null;
+    let parsed: unknown = null;
     try {
       parsed = JSON.parse(rawText);
     } catch {
@@ -136,27 +147,44 @@ Text to translate: ${text}`;
     console.log("[DEWIAR DEBUG] Chinese to Russian FULL response:", JSON.stringify(response));
   }
 
-  // Handle various response formats from Dewiar API
+  const responseObject =
+    typeof response === "object" && response !== null
+      ? (response as Record<string, unknown>)
+      : null
+  const responseData =
+    responseObject && typeof responseObject.data === "object" && responseObject.data !== null
+      ? (responseObject.data as Record<string, unknown>)
+      : null
+  const responseChoices = Array.isArray(responseObject?.choices)
+    ? (responseObject?.choices as Array<Record<string, unknown>>)
+    : []
+  const firstChoice = responseChoices[0]
+  const choiceMessage =
+    firstChoice && typeof firstChoice.message === "object" && firstChoice.message !== null
+      ? (firstChoice.message as Record<string, unknown>)
+      : null
+
+  const pickString = (value: unknown) => (typeof value === "string" ? value : null)
   const translatedText =
-    (typeof response === "string" ? response : null) ||
-    response.response ||
-    response.message ||
-    response.result ||
-    response.answer ||
-    response.output ||
-    response.text ||
-    response.translation ||
-    response.transcription ||
-    response.data?.message ||
-    response.data?.response ||
-    response.data?.result ||
-    response.data?.answer ||
-    response.data?.output ||
-    response.data?.text ||
-    response.data?.translation ||
-    response.data?.transcription ||
-    response.choices?.[0]?.message?.content ||
-    (response.data && typeof response.data === 'string' ? response.data : null);
+    pickString(response) ||
+    pickString(responseObject?.response) ||
+    pickString(responseObject?.message) ||
+    pickString(responseObject?.result) ||
+    pickString(responseObject?.answer) ||
+    pickString(responseObject?.output) ||
+    pickString(responseObject?.text) ||
+    pickString(responseObject?.translation) ||
+    pickString(responseObject?.transcription) ||
+    pickString(responseData?.message) ||
+    pickString(responseData?.response) ||
+    pickString(responseData?.result) ||
+    pickString(responseData?.answer) ||
+    pickString(responseData?.output) ||
+    pickString(responseData?.text) ||
+    pickString(responseData?.translation) ||
+    pickString(responseData?.transcription) ||
+    pickString(choiceMessage?.content) ||
+    pickString(responseObject?.data)
 
   console.log(`[DEWIAR] Extracted translatedText: "${translatedText}"`);
 
@@ -167,8 +195,15 @@ Text to translate: ${text}`;
       console.log(`[DEWIAR] Final extracted translatedText: "${trimmed}"`);
 
       // Special case: if it returned a common error message as text
-      if (trimmed.toLowerCase().includes("limit") || trimmed.toLowerCase().includes("token") || trimmed.toLowerCase().includes("error")) {
+      const normalized = trimmed.toLowerCase()
+      if (
+        normalized.includes("limit") ||
+        normalized.includes("token") ||
+        normalized.includes("error") ||
+        DEWIAR_ERROR_SIGNATURES.some((signature) => normalized.includes(signature))
+      ) {
         console.warn(`[DEWIAR] Extracted text looks like an error message: ${trimmed}`);
+        return null;
       }
 
       // Remove common LLM prefixes if they appear despite instructions
@@ -197,7 +232,10 @@ Text to translate: ${text}`;
     return trimmed;
   }
 
-  console.warn("[DEWIAR] Could not find translated text in response keys:", JSON.stringify(Object.keys(response)));
+  console.warn(
+    "[DEWIAR] Could not find translated text in response keys:",
+    JSON.stringify(responseObject ? Object.keys(responseObject) : [])
+  );
   return null;
 }
 
@@ -205,7 +243,7 @@ Text to translate: ${text}`;
  * Transcribe audio using Dewiar API
  */
 export async function transcribeAudio(
-  file: File | Blob | any,
+  file: Blob | string,
   language: "ru" | "zh"
 ): Promise<string | null> {
   const token = process.env.DEWIAR_API_TOKEN;
@@ -218,11 +256,13 @@ export async function transcribeAudio(
     const formData = new FormData();
     
     // Check if it's a Buffer (Node.js) or Blob/File (Browser/Next.js)
-    if (file instanceof Blob || file instanceof File) {
+    if (file instanceof Blob) {
       formData.append("file", file, "voice.webm");
-    } else {
-      // If it's a stream or other type, try to append as is
+    } else if (typeof file === "string") {
       formData.append("file", file);
+    } else {
+      console.error("[DEWIAR] Unsupported audio payload type");
+      return null;
     }
     
     formData.append("language", language);
@@ -231,7 +271,8 @@ export async function transcribeAudio(
     // If there is no specific /transcribe endpoint, we use the main one with special instructions
     // or try a common pattern.
     const url = `https://dewiar.com/dew_ai/api/transcribe?key=${token}`;
-    console.log(`[DEWIAR] Transcribing audio, language: ${language}, file size: ${file.size || 'unknown'} bytes`);
+    const fileSize = file instanceof Blob ? file.size : "unknown"
+    console.log(`[DEWIAR] Transcribing audio, language: ${language}, file size: ${fileSize} bytes`);
 
     // We'll also try a secondary URL if the first one fails in a common way
     let response;

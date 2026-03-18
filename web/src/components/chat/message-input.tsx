@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo, useCallback } from "react"
 import { Mic, Paperclip, Send, X, StopCircle } from "lucide-react"
 import { uploadFile } from "@/app/actions/upload"
 
@@ -9,12 +9,23 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { sendMessageAction, updateTypingStatus } from "@/app/actions/chat"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getMentionCandidates, splitTextWithMentions } from "@/lib/chat-mentions"
 
 interface MessageInputProps {
   roomId: string
   userId: string
   userRole?: string
-  replyTo?: any
+  participants?: Array<{
+    id: string
+    full_name: string | null
+    avatar_url?: string | null
+  }>
+  replyTo?: {
+    id: string
+    content?: string | null
+    sender_name?: string | null
+  } | null
   onCancelReply?: () => void
   onMessageSent?: () => void
 }
@@ -23,18 +34,116 @@ export function MessageInput({
   roomId, 
   userId, 
   userRole, 
+  participants = [],
   replyTo, 
   onCancelReply,
   onMessageSent
 }: MessageInputProps) {
+  const MENTION_CURSOR_SPACES = " "
   const { t } = useTranslation()
   const [message, setMessage] = useState("")
   const [isRecording, setIsRecording] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [mentionQuery, setMentionQuery] = useState("")
+  const [mentionStart, setMentionStart] = useState<number | null>(null)
+  const [isMentionOpen, setIsMentionOpen] = useState(false)
+  const [activeMentionIndex, setActiveMentionIndex] = useState(0)
+  const [isInputFocused, setIsInputFocused] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const pendingCursorPositionRef = useRef<number | null>(null)
   const lastTypingUpdateRef = useRef<number>(0)
+
+  const mentionUsers = useMemo(() => {
+    const avatarsById = new Map(
+      participants.map((participant) => [participant.id, participant.avatar_url || null])
+    )
+
+    const candidates = getMentionCandidates(
+      participants.map((participant) => ({
+        id: participant.id,
+        full_name: participant.full_name,
+      }))
+    )
+
+    return candidates.map((candidate) => ({
+      ...candidate,
+      avatar_url: avatarsById.get(candidate.id) || null,
+    }))
+  }, [participants])
+
+  const mentionSearch = mentionQuery.trim().toLowerCase()
+  const mentionCandidates = useMemo(
+    () =>
+      mentionUsers
+        .filter((participant) => participant.id !== userId)
+        .filter(
+          (participant) =>
+            mentionSearch.length === 0 ||
+            participant.handle.includes(mentionSearch) ||
+            (participant.full_name || "").toLowerCase().includes(mentionSearch)
+        )
+        .slice(0, 8),
+    [mentionUsers, mentionSearch, userId]
+  )
+
+  const highlightedDraft = useMemo(
+    () =>
+      splitTextWithMentions(
+        message,
+        mentionUsers.map((participant) => ({ id: participant.id, full_name: participant.full_name }))
+      ),
+    [message, mentionUsers]
+  )
+
+  const focusInputWithCursor = useCallback((position: number, maxLength?: number) => {
+    if (!textareaRef.current) return
+    const inputLength = typeof maxLength === "number" ? maxLength : message.length
+    const nextPosition = Math.min(Math.max(position, 0), inputLength)
+
+    textareaRef.current.focus({ preventScroll: true })
+    textareaRef.current.setSelectionRange(nextPosition, nextPosition)
+    textareaRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" })
+  }, [message.length])
+
+  const updateMentionContext = (value: string, cursorPosition: number) => {
+    const beforeCursor = value.slice(0, cursorPosition)
+    const mentionMatch = beforeCursor.match(/(^|[\s([{])@([\p{L}\p{N}_]*)$/u)
+
+    if (!mentionMatch) {
+      setIsMentionOpen(false)
+      setMentionQuery("")
+      setMentionStart(null)
+      setActiveMentionIndex(0)
+      return
+    }
+
+    const query = mentionMatch[2] || ""
+    const matchText = mentionMatch[0]
+    const atIndex = cursorPosition - matchText.length + matchText.indexOf("@")
+
+    setMentionStart(atIndex)
+    setMentionQuery(query)
+    setIsMentionOpen(true)
+    setActiveMentionIndex(0)
+  }
+
+  const applyMention = (user: { handle: string }) => {
+    if (!textareaRef.current || mentionStart === null) return
+
+    const cursor = textareaRef.current.selectionStart ?? message.length
+    const nextValue = `${message.slice(0, mentionStart)}@${user.handle}${MENTION_CURSOR_SPACES}${message.slice(cursor)}`
+    const nextCursorPosition = mentionStart + user.handle.length + 1 + MENTION_CURSOR_SPACES.length
+
+    pendingCursorPositionRef.current = nextCursorPosition
+    setMessage(nextValue)
+    setIsMentionOpen(false)
+    setMentionQuery("")
+    setMentionStart(null)
+    setActiveMentionIndex(0)
+  }
 
   // Notify server when typing
   useEffect(() => {
@@ -43,6 +152,40 @@ export function MessageInput({
       updateTypingStatus(roomId)
     }
   }, [message, roomId])
+
+  useEffect(() => {
+    if (pendingCursorPositionRef.current === null) return
+    const cursorPosition = pendingCursorPositionRef.current
+    pendingCursorPositionRef.current = null
+    focusInputWithCursor(cursorPosition, message.length)
+  }, [focusInputWithCursor, message.length])
+
+  useEffect(() => {
+    setIsMentionOpen(false)
+    setMentionQuery("")
+    setMentionStart(null)
+    setActiveMentionIndex(0)
+  }, [participants, userId])
+
+  useEffect(() => {
+    if (!isInputFocused || !textareaRef.current) return
+
+    const viewport = window.visualViewport
+    if (!viewport) return
+
+    const ensureVisibleOnKeyboard = () => {
+      if (!textareaRef.current) return
+      textareaRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" })
+    }
+
+    viewport.addEventListener("resize", ensureVisibleOnKeyboard)
+    viewport.addEventListener("scroll", ensureVisibleOnKeyboard)
+
+    return () => {
+      viewport.removeEventListener("resize", ensureVisibleOnKeyboard)
+      viewport.removeEventListener("scroll", ensureVisibleOnKeyboard)
+    }
+  }, [isInputFocused])
 
   // Cleanup preview URL on unmount or file change
   useEffect(() => {
@@ -107,6 +250,7 @@ export function MessageInput({
         messageType,
         fileUrl,
         replyToId: replyTo?.id,
+        userRole,
       })
       console.log("sendMessageAction result:", result);
 
@@ -227,6 +371,7 @@ export function MessageInput({
             content: t("chat.voiceMessageContent"),
             messageType: "voice",
             fileUrl: result.url,
+        userRole,
           })
 
           if (sendResult.error) {
@@ -332,15 +477,65 @@ export function MessageInput({
           </Button>
           
           <div className="flex-1 relative">
+            {message.length > 0 && !isInputFocused && (
+              <div className="absolute inset-0 py-2 md:py-3 px-3 md:px-4 rounded-2xl md:rounded-3xl pointer-events-none whitespace-pre-wrap break-words overflow-hidden text-sm md:text-base leading-relaxed">
+                {highlightedDraft.map((segment, index) => (
+                  <span
+                    key={`${segment.value}-${index}`}
+                    className={segment.type === "mention" ? "bg-blue-100 text-blue-700 font-semibold rounded px-0.5" : "text-slate-800"}
+                  >
+                    {segment.value}
+                  </span>
+                ))}
+              </div>
+            )}
             <Textarea
+              ref={textareaRef}
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(e) => {
+                setMessage(e.target.value)
+                updateMentionContext(e.target.value, e.target.selectionStart || 0)
+              }}
               placeholder={isRecording ? t("chat.placeholderRecording") : t("chat.placeholderMessage")}
               className={cn(
                 "min-h-[36px] md:min-h-[48px] h-9 md:h-12 max-h-32 py-2 md:py-3 px-3 md:px-4 rounded-2xl md:rounded-3xl border-slate-200 bg-slate-50 focus-visible:ring-amber-500 transition-all shadow-sm text-sm md:text-base resize-none scrollbar-none",
+                isInputFocused && "border-blue-400 ring-2 ring-blue-200 shadow-[0_0_0_3px_rgba(59,130,246,0.12)]",
                 isRecording && "border-red-500 bg-red-50 placeholder:text-red-400"
               )}
+              onFocus={() => {
+                setIsInputFocused(true)
+                if (textareaRef.current) {
+                  textareaRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" })
+                }
+              }}
+              onBlur={() => setIsInputFocused(false)}
               onKeyDown={(e) => {
+                if (isMentionOpen && mentionCandidates.length > 0) {
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault()
+                    setActiveMentionIndex((prev) => (prev + 1) % mentionCandidates.length)
+                    return
+                  }
+
+                  if (e.key === "ArrowUp") {
+                    e.preventDefault()
+                    setActiveMentionIndex((prev) => (prev - 1 + mentionCandidates.length) % mentionCandidates.length)
+                    return
+                  }
+
+                  if (e.key === "Enter" || e.key === "Tab") {
+                    e.preventDefault()
+                    applyMention(mentionCandidates[activeMentionIndex])
+                    return
+                  }
+
+                  if (e.key === "Escape") {
+                    e.preventDefault()
+                    setIsMentionOpen(false)
+                    return
+                  }
+                }
+
                 if (e.key === "Enter") {
                   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                   
@@ -360,8 +555,41 @@ export function MessageInput({
                   }
                 }
               }}
+              onSelect={(e) => {
+                const target = e.target as HTMLTextAreaElement
+                updateMentionContext(target.value, target.selectionStart || 0)
+              }}
               disabled={isUploading || isRecording}
             />
+            {isMentionOpen && mentionCandidates.length > 0 && (
+              <div className="absolute left-0 right-0 bottom-[calc(100%+8px)] bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-20">
+                <div className="max-h-64 overflow-y-auto">
+                  {mentionCandidates.map((candidate, index) => (
+                    <button
+                      key={candidate.id}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => applyMention(candidate)}
+                      className={cn(
+                        "w-full px-3 py-2.5 text-left flex items-center gap-2.5 hover:bg-slate-50 transition-colors",
+                        index === activeMentionIndex && "bg-blue-50"
+                      )}
+                    >
+                      <Avatar className="h-7 w-7 ring-1 ring-slate-200">
+                        <AvatarImage src={candidate.avatar_url || undefined} />
+                        <AvatarFallback className="bg-slate-100 text-slate-700 text-[11px] font-semibold">
+                          {candidate.full_name?.charAt(0) || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-slate-800 truncate">{candidate.full_name || "Unknown user"}</div>
+                        <div className="text-[11px] text-slate-500 truncate">@{candidate.handle}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-1.5 md:gap-3 shrink-0">
