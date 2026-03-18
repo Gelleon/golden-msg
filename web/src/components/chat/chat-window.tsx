@@ -16,6 +16,8 @@ interface ChatWindowProps {
   userProfile: any
   lastReadAt: string
   participants?: any[]
+  initialUnreadCount?: number
+  anchorId?: string | null
 }
 
 export function ChatWindow({
@@ -25,6 +27,8 @@ export function ChatWindow({
   userProfile,
   lastReadAt,
   participants = [],
+  initialUnreadCount = 0,
+  anchorId = null,
 }: ChatWindowProps) {
   const { t } = useTranslation()
   const [messages, setMessages] = useState<any[]>(initialMessages)
@@ -34,9 +38,17 @@ export function ChatWindow({
   const [showUnreadSeparator, setShowUnreadSeparator] = useState(true)
   const [currentLastReadAt, setCurrentLastReadAt] = useState(lastReadAt)
   const [replyTo, setReplyTo] = useState<any>(null)
+  const [unreadCount, setUnreadCount] = useState(initialUnreadCount)
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false)
+  const [hasMoreOlder, setHasMoreOlder] = useState(true)
+  
   const scrollRef = useRef<HTMLDivElement>(null)
   const unreadRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const topRef = useRef<HTMLDivElement>(null)
+  const isAtBottomRef = useRef(true)
+  const isAutoScrollingRef = useRef(false)
+  const autoScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const otherParticipantsCount = participants.filter(p => p.id !== currentUser.id).length
   const messagesRef = useRef(messages)
@@ -53,35 +65,127 @@ export function ChatWindow({
     }
   }, [])
 
-  const updateMessages = (newMessages: any[]) => {
-    if (!isMountedRef.current) return
-    if (JSON.stringify(newMessages) !== JSON.stringify(messagesRef.current)) {
-      setMessages(newMessages);
-    }
-  }
-
   // Find the first unread message index (only once on load)
-  const [firstUnreadIndex] = useState(() => 
-    messages.findIndex(m => 
+  const [firstUnreadIndex] = useState(() => {
+    if (anchorId) {
+      return messages.findIndex(m => m.id === anchorId)
+    }
+    return messages.findIndex(m => 
       new Date(m.created_at) > new Date(lastReadAt) && m.sender.id !== currentUser.id
     )
-  )
+  })
 
-  useEffect(() => {
-    // Mark as read when entering room
-    const doMarkAsRead = async () => {
+  // Handle scrolling and mark as read
+  const handleScroll = async () => {
+    if (!containerRef.current) return
+    
+    const { scrollTop, scrollHeight, clientHeight } = containerRef.current
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 150
+    
+    if (!isAutoScrollingRef.current) {
+      isAtBottomRef.current = isAtBottom
+    }
+
+    const isAtTop = scrollTop < 50
+
+    if (isAtBottom && unreadCount > 0) {
+      setUnreadCount(0)
       await markAsRead(roomId)
       setCurrentLastReadAt(new Date().toISOString())
     }
-    doMarkAsRead()
 
+    if (isAtTop && !isLoadingOlder && hasMoreOlder && messages.length > 0) {
+      loadOlderMessages()
+    }
+  }
+
+  const loadOlderMessages = async () => {
+    setIsLoadingOlder(true)
+    const firstMsgId = messages[0]?.id
+    try {
+      if (firstMsgId) {
+        const result = await getMessages(roomId, { cursorId: firstMsgId, direction: 'older', limit: 20 })
+        if (result.messages && Array.isArray(result.messages) && result.messages.length > 0) {
+          // Keep scroll position
+          const container = containerRef.current
+          const previousScrollHeight = container ? container.scrollHeight : 0
+          
+          setMessages(prev => [...result.messages, ...prev])
+          
+          // Restore scroll position
+          requestAnimationFrame(() => {
+            if (container) {
+              container.scrollTop = container.scrollHeight - previousScrollHeight
+            }
+          })
+        } else {
+          setHasMoreOlder(false)
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load older messages", error)
+    } finally {
+      setIsLoadingOlder(false)
+    }
+  }
+
+  const scrollToBottom = (behavior: "smooth" | "auto" = "smooth") => {
+    if (containerRef.current) {
+      isAutoScrollingRef.current = true;
+      
+      if (autoScrollTimeoutRef.current) {
+        clearTimeout(autoScrollTimeoutRef.current);
+      }
+
+      // Allow DOM to update and framer-motion to measure before scrolling
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollIntoView({ behavior, block: "end" });
+        } else if (containerRef.current) {
+          containerRef.current.scrollTo({
+            top: containerRef.current.scrollHeight,
+            behavior
+          });
+        }
+        
+        setUnreadCount(0);
+        markAsRead(roomId);
+        setCurrentLastReadAt(new Date().toISOString());
+
+        // Reset auto-scrolling flag after animation completes
+        autoScrollTimeoutRef.current = setTimeout(() => {
+          isAutoScrollingRef.current = false;
+          // After a forced scroll to bottom, we are at the bottom
+          isAtBottomRef.current = true;
+        }, behavior === "smooth" ? 800 : 100);
+      }, 50);
+    }
+  }
+
+  useEffect(() => {
     // Scroll to first unread or bottom
     if (!hasScrolledToUnread) {
-      if (firstUnreadIndex !== -1 && unreadRef.current) {
-        unreadRef.current.scrollIntoView({ behavior: "auto", block: "center" })
-      } else if (scrollRef.current) {
-        scrollRef.current.scrollIntoView({ behavior: "auto" })
+      const performInitialScroll = () => {
+        if (firstUnreadIndex !== -1 && unreadRef.current) {
+          unreadRef.current.scrollIntoView({ behavior: "auto", block: "center" })
+        } else if (containerRef.current) {
+          containerRef.current.scrollTop = containerRef.current.scrollHeight
+          isAtBottomRef.current = true
+          if (unreadCount > 0) {
+            setUnreadCount(0)
+            markAsRead(roomId)
+            setCurrentLastReadAt(new Date().toISOString())
+          }
+        }
       }
+
+      // Execute immediately and also after a short delay to account for any layout shifts
+      // caused by images or framer-motion animations rendering
+      performInitialScroll()
+      setTimeout(performInitialScroll, 300)
+      setTimeout(performInitialScroll, 800)
+      setTimeout(performInitialScroll, 1500)
+
       setHasScrolledToUnread(true)
     }
 
@@ -91,41 +195,75 @@ export function ChatWindow({
     }, 10000)
 
     return () => clearTimeout(timer)
-  }, [roomId, firstUnreadIndex])
+  }, [roomId, firstUnreadIndex, unreadCount])
+
+  const prevMessagesLength = useRef(messages.length)
 
   useEffect(() => {
     // Scroll to bottom on new messages if already at bottom or if it's our message
-    if (hasScrolledToUnread && scrollRef.current) {
+    if (hasScrolledToUnread && containerRef.current) {
       const lastMessage = messages[messages.length - 1]
-      if (lastMessage?.sender.id === currentUser.id) {
-        scrollRef.current.scrollIntoView({ behavior: "smooth" })
-        // Also hide separator if we send a message
-        setShowUnreadSeparator(false)
+      const isNewMessage = messages.length > prevMessagesLength.current
+      const isMyMessage = lastMessage?.sender.id === currentUser.id
+
+      if (isNewMessage) {
+        if (isMyMessage || isAtBottomRef.current) {
+          scrollToBottom("smooth")
+          if (isMyMessage) {
+            setShowUnreadSeparator(false)
+          }
+        }
+      } else if (isAtBottomRef.current && messages.length > 0) {
+        // If message content changed (e.g. translation arrived) or typing state changed
+        // and we are at the bottom, stick to the bottom so the layout shift doesn't push the user up.
+        scrollToBottom("auto")
       }
+      
+      prevMessagesLength.current = messages.length
     }
-  }, [messages.length, hasScrolledToUnread, currentUser.id])
+  }, [messages.length, messages[messages.length - 1]?.id, isTyping, hasScrolledToUnread, currentUser.id])
 
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const result = await getMessages(roomId)
+        const lastMsgId = messagesRef.current.length > 0 ? messagesRef.current[messagesRef.current.length - 1].id : undefined;
+        
+        // Fetch only new messages if we have messages, otherwise fetch recent
+        const options = lastMsgId ? { cursorId: lastMsgId, direction: 'newer' as const } : { limit: 30 };
+        
+        const result = await getMessages(roomId, options)
         if (!isMountedRef.current) return
-        if (result.messages) {
-          const hasNewMessages = result.messages.length > messagesRef.current.length;
-          const newMessages = result.messages.slice(messagesRef.current.length);
+        
+        if (result.messages && Array.isArray(result.messages) && result.messages.length > 0) {
+          const newMessages = result.messages;
           const hasExternalNewMessages = newMessages.some(m => m.sender.id !== currentUser.id);
 
-          if (JSON.stringify(result.messages) !== JSON.stringify(messagesRef.current)) {
-            setMessages(result.messages);
-          }
+          setMessages(prev => {
+            // Ensure we don't duplicate messages
+            const existingIds = new Set(prev.map(m => m.id));
+            const uniqueNew = newMessages.filter(m => !existingIds.has(m.id));
+            return [...prev, ...uniqueNew];
+          });
 
           setIsTyping(result.isTyping || false)
           setTypingUserNames(result.typingUserNames || [])
 
-          if (hasNewMessages && hasExternalNewMessages) {
-            await markAsRead(roomId);
-            setCurrentLastReadAt(new Date().toISOString());
+          if (hasExternalNewMessages) {
+            // Only auto-read if we are at the bottom
+            const container = containerRef.current;
+            if (container) {
+              const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
+              if (isAtBottom) {
+                await markAsRead(roomId);
+                setCurrentLastReadAt(new Date().toISOString());
+              } else {
+                setUnreadCount(prev => prev + newMessages.filter(m => m.sender.id !== currentUser.id).length);
+              }
+            }
           }
+        } else if (result.isTyping !== undefined) {
+          setIsTyping(result.isTyping || false)
+          setTypingUserNames(result.typingUserNames || [])
         }
       } catch (error) {
         console.error("Error fetching messages:", error)
@@ -187,18 +325,52 @@ export function ChatWindow({
 
   return (
     <div className="flex flex-col h-full bg-[#F8FAFC]">
+      {/* Unread Banner */}
+      <AnimatePresence>
+        {unreadCount > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-10"
+          >
+            <button
+              onClick={() => scrollToBottom()}
+              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg transition-colors text-sm font-medium"
+            >
+              <span>{unreadCount} {t("chat.newMessages") || "новых сообщений"}</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div 
         ref={containerRef}
-        className="flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-8 space-y-4"
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-8 space-y-4 relative"
       >
         <div className="flex flex-col justify-end min-h-full">
+          {isLoadingOlder && (
+            <div className="flex justify-center py-2">
+              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          )}
           <AnimatePresence initial={false}>
             {messages.map((message, index) => {
               const isUnread = new Date(message.created_at) > new Date(currentLastReadAt) && message.sender.id !== currentUser.id
               const isFirstUnread = index === firstUnreadIndex
 
               return (
-                <div key={message.id}>
+                <motion.div 
+                  key={message.id}
+                  layout="position"
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.2 }}
+                >
                   <AnimatePresence mode="wait">
                     {isFirstUnread && showUnreadSeparator && (
                       <motion.div
@@ -217,11 +389,8 @@ export function ChatWindow({
                       </motion.div>
                     )}
                   </AnimatePresence>
-                  <motion.div
+                  <div
                     id={`message-${message.id}`}
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.2 }}
                     className={cn(
                       "relative transition-colors duration-500 rounded-xl",
                       isUnread && "before:absolute before:-left-2 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-2/3 before:bg-amber-500 before:rounded-full before:shadow-[0_0_8px_rgba(245,158,11,0.5)]"
@@ -232,8 +401,8 @@ export function ChatWindow({
                       isCurrentUser={message.sender.id === currentUser.id}
                       onReply={(msg) => setReplyTo(msg)}
                     />
-                  </motion.div>
-                </div>
+                  </div>
+                </motion.div>
               )
             })}
           </AnimatePresence>
@@ -283,9 +452,17 @@ export function ChatWindow({
         replyTo={replyTo}
         onCancelReply={() => setReplyTo(null)}
         onMessageSent={async () => {
-          const result = await getMessages(roomId);
-          if (result.messages) {
-            updateMessages(result.messages);
+          const lastMsgId = messagesRef.current.length > 0 ? messagesRef.current[messagesRef.current.length - 1].id : undefined;
+          const options = lastMsgId ? { cursorId: lastMsgId, direction: 'newer' as const } : { limit: 30 };
+          const result = await getMessages(roomId, options);
+          
+          if (result.messages && result.messages.length > 0) {
+            setMessages(prev => {
+              const existingIds = new Set(prev.map(m => m.id));
+              const uniqueNew = result.messages.filter(m => !existingIds.has(m.id));
+              return [...prev, ...uniqueNew];
+            });
+            scrollToBottom("smooth");
           }
         }}
       />

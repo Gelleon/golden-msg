@@ -188,25 +188,43 @@ export async function getRooms() {
       orderBy: { created_at: "desc" },
     })
 
-    const roomsWithCounts = await Promise.all(rooms.map(async (room) => {
-      const lastReadAt = room.participants[0]?.last_read_at || new Date(0)
-      const unreadCount = await prisma.message.count({
+    const roomIds = rooms.map(r => r.id)
+    let unreadCounts: Record<string, number> = {}
+
+    if (roomIds.length > 0) {
+      const minLastReadAt = new Date(Math.min(...rooms.map(r => (r.participants[0]?.last_read_at || new Date(0)).getTime())))
+      
+      const unreadMessages = await prisma.message.findMany({
         where: {
-          room_id: room.id,
-          created_at: { gt: lastReadAt },
-          sender_id: { not: session.user.id }
+          room_id: { in: roomIds },
+          sender_id: { not: session.user.id },
+          created_at: { gt: minLastReadAt }
+        },
+        select: {
+          room_id: true,
+          created_at: true
         }
       })
+
+      unreadCounts = rooms.reduce((acc, room) => {
+        const lastReadAt = room.participants[0]?.last_read_at || new Date(0)
+        acc[room.id] = unreadMessages.filter(m => m.room_id === room.id && m.created_at > lastReadAt).length
+        return acc
+      }, {} as Record<string, number>)
+    }
+
+    const roomsWithCounts = rooms.map(room => {
+      const lastReadAt = room.participants[0]?.last_read_at || new Date(0)
 
       return {
         id: room.id,
         name: room.name,
         type: room.type,
         created_at: room.created_at.toISOString(),
-        unreadCount,
+        unreadCount: unreadCounts[room.id] || 0,
         lastReadAt: lastReadAt.toISOString()
       }
-    }))
+    })
 
     return roomsWithCounts
   } catch (error) {
@@ -294,7 +312,34 @@ export async function getDMs() {
     })
 
     // Process DMs to find the other user and count unread
-    const processedDMs = await Promise.all(dms.map(async (dm) => {
+    const dmIds = dms.map(d => d.id)
+    let unreadCounts: Record<string, number> = {}
+
+    if (dmIds.length > 0) {
+      const currentParticipants = dms.map(dm => dm.participants.find(p => p.user_id === session.user.id))
+      const minLastReadAt = new Date(Math.min(...currentParticipants.map(p => (p?.last_read_at || new Date(0)).getTime())))
+
+      const unreadMessages = await prisma.message.findMany({
+        where: {
+          room_id: { in: dmIds },
+          sender_id: { not: session.user.id },
+          created_at: { gt: minLastReadAt }
+        },
+        select: {
+          room_id: true,
+          created_at: true
+        }
+      })
+
+      unreadCounts = dms.reduce((acc, dm) => {
+        const currentParticipant = dm.participants.find(p => p.user_id === session.user.id)
+        const lastReadAt = currentParticipant?.last_read_at || new Date(0)
+        acc[dm.id] = unreadMessages.filter(m => m.room_id === dm.id && m.created_at > lastReadAt).length
+        return acc
+      }, {} as Record<string, number>)
+    }
+
+    const processedDMs = dms.map(dm => {
       const otherParticipant = dm.participants.find(
         (p) => p.user_id !== session.user.id
       )
@@ -303,13 +348,7 @@ export async function getDMs() {
       )
       
       const lastReadAt = currentParticipant?.last_read_at || new Date(0)
-      const unreadCount = await prisma.message.count({
-        where: {
-          room_id: dm.id,
-          created_at: { gt: lastReadAt },
-          sender_id: { not: session.user.id }
-        }
-      })
+      const unreadCount = unreadCounts[dm.id] || 0
 
       return {
         id: dm.id,
@@ -330,7 +369,7 @@ export async function getDMs() {
           created_at: otherParticipant.user.created_at.toISOString()
         } : undefined,
       }
-    }))
+    })
 
     return processedDMs
   } catch (error) {

@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import * as motion from "framer-motion/client"
 import ru from "@/locales/ru.json"
 import cnTrans from "@/locales/cn.json"
+import { getInitialRoomMessages } from "@/lib/chat-utils"
 
 interface RoomPageProps {
   params: Promise<{
@@ -22,44 +23,41 @@ export default async function RoomPage({ params }: RoomPageProps) {
 
   if (!session?.user) redirect("/")
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      id: true,
-      email: true,
-      full_name: true,
-      avatar_url: true,
-      role: true,
-      // preferred_language: true // Temporarily disabled to prevent schema mismatch
-    }
-  })
-
-  if (!user) redirect("/")
-
-  const lang = "ru" // Default to "ru" temporarily
-  const translations = lang === "ru" ? ru : cnTrans
-
-  // Check room access and get details
-  const room = await prisma.room.findUnique({
-    where: { id: roomId },
-    include: {
-      participants: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              full_name: true,
-              avatar_url: true
+  const [user, room] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        email: true,
+        full_name: true,
+        avatar_url: true,
+        role: true,
+        // preferred_language: true // Temporarily disabled to prevent schema mismatch
+      }
+    }),
+    prisma.room.findUnique({
+      where: { id: roomId },
+      include: {
+        participants: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                full_name: true,
+                avatar_url: true
+              }
             }
           }
         }
       }
-    }
-  })
+    })
+  ])
 
-  if (!room) {
-    notFound()
-  }
+  if (!user) redirect("/")
+  if (!room) notFound()
+
+  const lang = "ru" // Default to "ru" temporarily
+  const translations = lang === "ru" ? ru : cnTrans
 
   // Fetch participation
   const participation = room.participants.find(p => p.user_id === user.id)
@@ -81,65 +79,11 @@ export default async function RoomPage({ params }: RoomPageProps) {
     }
   }
 
-  // Fetch initial messages
-  const rawMessages = await prisma.message.findMany({
-    where: { room_id: roomId },
-    select: {
-      id: true,
-      content: true,
-      content_translated: true,
-      language_original: true,
-      message_type: true,
-      file_url: true,
-      voice_transcription: true,
-      created_at: true,
-      is_edited: true,
-      sender: {
-        select: {
-          id: true,
-          full_name: true,
-          avatar_url: true,
-          role: true,
-        },
-      },
-      reply_to: {
-        select: {
-          id: true,
-          content: true,
-          sender: {
-            select: {
-              id: true,
-              full_name: true,
-            }
-          }
-        }
-      }
-    },
-    orderBy: { created_at: "asc" },
-  })
-
-  const messages = rawMessages.map((msg) => ({
-    id: msg.id,
-    content_original: msg.content,
-    content_translated: msg.content_translated,
-    language_original: msg.language_original || "ru",
-    message_type: msg.message_type,
-    file_url: msg.file_url,
-    voice_transcription: msg.voice_transcription,
-    created_at: msg.created_at.toISOString(),
-    is_edited: msg.is_edited,
-    reply_to: msg.reply_to ? {
-      id: msg.reply_to.id,
-      content: msg.reply_to.content,
-      sender_name: msg.reply_to.sender.full_name,
-    } : null,
-    sender: {
-      id: msg.sender.id,
-      full_name: msg.sender.full_name,
-      avatar_url: msg.sender.avatar_url,
-      role: msg.sender.role,
-    },
-  }))
+  const { messages, unreadCount, anchorId } = await getInitialRoomMessages(
+    roomId, 
+    user.id, 
+    lastReadAt
+  )
 
   return (
     <motion.div 
@@ -197,7 +141,9 @@ export default async function RoomPage({ params }: RoomPageProps) {
           initialMessages={messages} 
           currentUser={user}
           userProfile={user}
-          lastReadAt={lastReadAt.toISOString()}
+          initialUnreadCount={unreadCount}
+          anchorId={anchorId}
+          lastReadAt={lastReadAt?.toISOString() || new Date(0).toISOString()}
           participants={room.participants.map(p => ({
             id: p.user.id,
             full_name: p.user.full_name,

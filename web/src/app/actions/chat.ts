@@ -1,7 +1,6 @@
 "use server"
 
 import prisma from "@/lib/db"
-import { openai } from "@/lib/openai"
 import { getSession } from "./auth"
 import { revalidatePath } from "next/cache"
 import { sendPushNotification } from "@/lib/push-service"
@@ -195,7 +194,14 @@ export async function updateTypingStatus(roomId: string) {
   }
 }
 
-export async function getMessages(roomId: string) {
+export async function getMessages(
+  roomId: string,
+  options?: {
+    cursorId?: string,
+    direction?: 'older' | 'newer',
+    limit?: number
+  }
+) {
   try {
     await ensureSchemaFixed()
     const session = await getSession()
@@ -215,11 +221,27 @@ export async function getMessages(roomId: string) {
       return { error: "You are not a member of this room" }
     }
 
+    let whereClause: any = { room_id: roomId }
+
+    if (options?.cursorId) {
+      const cursorMessage = await prisma.message.findUnique({
+        where: { id: options.cursorId },
+        select: { created_at: true }
+      })
+      
+      if (cursorMessage) {
+        if (options.direction === 'older') {
+          whereClause.created_at = { lt: cursorMessage.created_at }
+        } else if (options.direction === 'newer') {
+          whereClause.created_at = { gt: cursorMessage.created_at }
+        }
+      }
+    }
+
     // Fetch messages
     const messages = await prisma.message.findMany({
-      where: {
-        room_id: roomId,
-      },
+      where: whereClause,
+      take: options?.limit,
       select: {
         id: true,
         content: true,
@@ -254,9 +276,14 @@ export async function getMessages(roomId: string) {
         }
       },
       orderBy: {
-        created_at: "asc",
+        created_at: options?.direction === 'older' ? "desc" : "asc",
       },
     })
+
+    // If we fetched older messages with desc, reverse them back to asc order for the frontend
+    if (options?.direction === 'older') {
+      messages.reverse()
+    }
 
     // Fetch typing status of other participants
     const typingThreshold = new Date(Date.now() - 10000) // 10 seconds ago

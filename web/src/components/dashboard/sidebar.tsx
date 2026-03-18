@@ -93,8 +93,8 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   useEffect(() => {
     fetchRoomsAndDMs()
     
-    // Polling every 5 seconds instead of realtime subscription
-    const interval = setInterval(fetchRoomsAndDMs, 5000)
+    // Polling every 30 seconds instead of 5 to reduce server load
+    const interval = setInterval(fetchRoomsAndDMs, 30000)
     return () => clearInterval(interval)
   }, [user.id])
 

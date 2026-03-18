@@ -16,7 +16,12 @@ jest.mock("@/lib/db", () => ({
     findUnique: jest.fn(),
     update: jest.fn(),
     findFirst: jest.fn(),
+    findMany: jest.fn(),
   },
+  roomParticipant: {
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+  }
 }));
 
 jest.mock("@/lib/dewiar", () => ({
@@ -166,12 +171,12 @@ describe("processAsyncMessage", () => {
     );
 
     // Assert
-    // Because translateWithDewiar catches error and returns null, we expect "Translation returned empty"
+    // Because translateWithDewiar propagates error, we expect "API Error"
     expect(prisma.message.update).toHaveBeenCalledWith({
       where: { id: messageId },
       data: expect.objectContaining({
         translation_status: "failed",
-        translation_error: "Translation returned empty",
+        translation_error: "API Error",
       }),
     });
 
@@ -181,5 +186,136 @@ describe("processAsyncMessage", () => {
         translation_status: "failed",
       }),
     }));
+  });
+});
+
+import { getMessages } from "./chat";
+import { getSession } from "./auth";
+
+jest.mock("./auth", () => ({
+  getSession: jest.fn(),
+}));
+
+describe("getMessages", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const mockDate = new Date("2024-01-01T00:00:00Z");
+
+  const mockMessage = (id: string, dateStr: string) => ({
+    id,
+    content: `Message ${id}`,
+    content_translated: null,
+    language_original: "ru",
+    message_type: "text",
+    file_url: null,
+    voice_transcription: null,
+    created_at: new Date(dateStr),
+    is_edited: false,
+    translation_status: "completed",
+    reply_to_id: null,
+    sender: {
+      id: "user-1",
+      full_name: "Test User",
+      avatar_url: null,
+      role: "user",
+    },
+    reply_to: null,
+  });
+
+  it("should fetch older messages using cursor pagination", async () => {
+    (getSession as jest.Mock).mockResolvedValue({ user: { id: "user-1" } });
+
+    // Mock participation check
+    (prisma.roomParticipant.findUnique as jest.Mock).mockResolvedValue({
+      room_id: "room-1",
+      user_id: "user-1",
+    });
+
+    // Mock finding cursor message
+    const cursorDate = new Date("2024-01-05T00:00:00Z");
+    mockFindUnique({ created_at: cursorDate });
+
+    // Mock fetching messages
+    const olderMessages = [
+      mockMessage("msg-3", "2024-01-04T00:00:00Z"),
+      mockMessage("msg-2", "2024-01-03T00:00:00Z"),
+    ];
+    (prisma.message.findMany as jest.Mock).mockResolvedValue(olderMessages);
+    
+    // Mock typing status
+    (prisma.roomParticipant.findMany as jest.Mock).mockResolvedValue([]);
+
+    const result = await getMessages("room-1", {
+      cursorId: "msg-cursor",
+      direction: "older",
+      limit: 10,
+    });
+
+    expect(prisma.message.findUnique).toHaveBeenCalledWith({
+      where: { id: "msg-cursor" },
+      select: { created_at: true },
+    });
+
+    expect(prisma.message.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          room_id: "room-1",
+          created_at: { lt: cursorDate },
+        },
+        take: 10,
+        orderBy: { created_at: "desc" },
+      })
+    );
+
+    // Messages should be reversed back to asc
+    expect(result.messages?.[0].id).toBe("msg-2");
+    expect(result.messages?.[1].id).toBe("msg-3");
+  });
+
+  it("should fetch newer messages using cursor pagination", async () => {
+    (getSession as jest.Mock).mockResolvedValue({ user: { id: "user-1" } });
+
+    // Mock participation check
+    (prisma.roomParticipant.findUnique as jest.Mock).mockResolvedValue({
+      room_id: "room-1",
+      user_id: "user-1",
+    });
+
+    // Mock finding cursor message
+    const cursorDate = new Date("2024-01-05T00:00:00Z");
+    mockFindUnique({ created_at: cursorDate });
+
+    // Mock fetching messages
+    const newerMessages = [
+      mockMessage("msg-6", "2024-01-06T00:00:00Z"),
+      mockMessage("msg-7", "2024-01-07T00:00:00Z"),
+    ];
+    (prisma.message.findMany as jest.Mock).mockResolvedValue(newerMessages);
+    
+    // Mock typing status
+    (prisma.roomParticipant.findMany as jest.Mock).mockResolvedValue([]);
+
+    const result = await getMessages("room-1", {
+      cursorId: "msg-cursor",
+      direction: "newer",
+      limit: 20,
+    });
+
+    expect(prisma.message.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          room_id: "room-1",
+          created_at: { gt: cursorDate },
+        },
+        take: 20,
+        orderBy: { created_at: "asc" },
+      })
+    );
+
+    // Newer messages are already asc, shouldn't be reversed
+    expect(result.messages?.[0].id).toBe("msg-6");
+    expect(result.messages?.[1].id).toBe("msg-7");
   });
 });
