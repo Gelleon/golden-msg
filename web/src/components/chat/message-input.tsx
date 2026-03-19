@@ -40,7 +40,7 @@ export function MessageInput({
   onMessageSent
 }: MessageInputProps) {
   const MENTION_CURSOR_SPACES = " "
-  const MAX_ATTACHMENT_SIZE_BYTES = 20 * 1024 * 1024
+  const MAX_ATTACHMENT_SIZE_BYTES = 200 * 1024 * 1024
   const { t } = useTranslation()
   const [message, setMessage] = useState("")
   const [isRecording, setIsRecording] = useState(false)
@@ -201,7 +201,7 @@ export function MessageInput({
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0]
       if (selectedFile.size > MAX_ATTACHMENT_SIZE_BYTES) {
-        alert("Максимальный размер вложения — 20 МБ")
+        alert("Максимальный размер вложения — 200 МБ")
         e.target.value = ""
         return
       }
@@ -364,7 +364,7 @@ export function MessageInput({
         const audioBlob = new Blob(chunksRef.current, { type: detectedType })
         const audioFile = new File([audioBlob], `voice-message.${fileExtension}`, { type: detectedType })
         if (audioFile.size > MAX_ATTACHMENT_SIZE_BYTES) {
-          alert("Максимальный размер вложения — 20 МБ")
+          alert("Максимальный размер вложения — 200 МБ")
           chunksRef.current = []
           stopMediaTracks()
           return

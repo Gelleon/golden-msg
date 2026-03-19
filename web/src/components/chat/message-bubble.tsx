@@ -155,30 +155,47 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
 
   useEffect(() => {
     if (message.message_type === "voice" && message.file_url) {
-      const audio = new Audio(message.file_url)
+      const fileUrl = message.file_url
+      const audio = new Audio(fileUrl)
+      audio.preload = "metadata"
       
-      audio.onloadedmetadata = () => {
-        if (audio.duration === Infinity) {
-          audio.currentTime = 1e101;
-          audio.ontimeupdate = () => {
-            audio.ontimeupdate = null;
-            setDuration(audio.duration);
-            audio.currentTime = 0;
-            audio.ontimeupdate = () => {
-              setCurrentTime(audio.currentTime);
-            };
-          };
-        } else {
-          setDuration(audio.duration);
-          audio.ontimeupdate = () => {
-            setCurrentTime(audio.currentTime);
-          };
+      const updateDuration = () => {
+        if (audio.duration && audio.duration !== Infinity && !isNaN(audio.duration)) {
+          setDuration(audio.duration)
         }
       }
-      
+
+      audio.onloadedmetadata = () => {
+        if (audio.duration === Infinity) {
+          // Chromium WebM duration bug workaround: use a temporary audio object
+          // so we don't break the main playback state.
+          const tempAudio = new Audio(fileUrl)
+          tempAudio.addEventListener('loadedmetadata', () => {
+            tempAudio.currentTime = 1e101
+          })
+          tempAudio.addEventListener('timeupdate', () => {
+            if (tempAudio.duration !== Infinity && !isNaN(tempAudio.duration)) {
+              setDuration(tempAudio.duration)
+            }
+            tempAudio.pause()
+            tempAudio.removeAttribute('src')
+            tempAudio.load()
+          }, { once: true })
+        } else {
+          updateDuration()
+        }
+      }
+
+      audio.ondurationchange = updateDuration
+
       audio.onended = () => {
         setIsPlaying(false)
         setCurrentTime(0)
+        audio.currentTime = 0
+      }
+
+      audio.ontimeupdate = () => {
+        setCurrentTime(audio.currentTime)
       }
       
       audioRef.current = audio
@@ -187,6 +204,8 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
     return () => {
       if (audioRef.current) {
         audioRef.current.pause()
+        audioRef.current.removeAttribute('src')
+        audioRef.current.load()
         audioRef.current = null
       }
     }
@@ -199,8 +218,12 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
       audioRef.current.pause()
       setIsPlaying(false)
     } else {
-      audioRef.current.play().catch((err) => console.error("Error playing audio:", err))
-      setIsPlaying(true)
+      audioRef.current.play().then(() => {
+        setIsPlaying(true)
+      }).catch((err) => {
+        console.error("Error playing audio:", err)
+        setIsPlaying(false)
+      })
     }
   }
 
