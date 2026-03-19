@@ -87,7 +87,7 @@ export function SettingsForm({ user }: { user: any }) {
   }, [searchParams, user])
   
   return (
-    <div className="flex-1 min-h-screen bg-[#F8FAFC] relative overflow-hidden">
+    <div className="flex-1 h-full min-h-full bg-[#F8FAFC] relative overflow-y-auto overflow-x-hidden pb-20">
       {/* Decorative background elements */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-blue-600/5 rounded-full blur-[100px] -mr-48 -mt-48" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-amber-600/5 rounded-full blur-[100px] -ml-48 -mb-48" />
@@ -130,33 +130,33 @@ export function SettingsForm({ user }: { user: any }) {
           </div>
         </header>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <div className="sticky top-4 z-40 flex justify-center md:justify-start">
-            <TabsList className="bg-white/90 backdrop-blur-md border border-slate-200 p-1 rounded-xl shadow-md w-full md:w-auto flex">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 w-full max-w-full">
+          <div className="sticky top-4 z-40 w-full">
+            <TabsList className="bg-white/90 backdrop-blur-md border border-slate-200 p-1 rounded-xl shadow-md flex flex-wrap w-full justify-start md:justify-center h-auto gap-1">
               <TabsTrigger 
                 value="profile" 
-                className="flex items-center gap-2 rounded-lg data-[state=active]:bg-slate-900 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
+                className="flex flex-1 md:flex-none items-center justify-center gap-2 rounded-lg data-[state=active]:bg-slate-900 data-[state=active]:text-white px-3 py-2 text-xs font-bold transition-all whitespace-nowrap min-w-[120px]"
               >
                 <User className="h-3.5 w-3.5" />
                 {t('tabs.profile')}
               </TabsTrigger>
               <TabsTrigger 
                 value="security" 
-                className="flex items-center gap-2 rounded-lg data-[state=active]:bg-slate-900 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
+                className="flex flex-1 md:flex-none items-center justify-center gap-2 rounded-lg data-[state=active]:bg-slate-900 data-[state=active]:text-white px-3 py-2 text-xs font-bold transition-all whitespace-nowrap min-w-[120px]"
               >
                 <Lock className="h-3.5 w-3.5" />
                 {t('tabs.security')}
               </TabsTrigger>
               <TabsTrigger 
                 value="language" 
-                className="flex items-center gap-2 rounded-lg data-[state=active]:bg-emerald-600 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
+                className="flex flex-1 md:flex-none items-center justify-center gap-2 rounded-lg data-[state=active]:bg-emerald-600 data-[state=active]:text-white px-3 py-2 text-xs font-bold transition-all whitespace-nowrap min-w-[120px]"
               >
                 <Globe className="h-3.5 w-3.5" />
                 {t('tabs.language')}
               </TabsTrigger>
               <TabsTrigger 
                 value="notifications" 
-                className="flex items-center gap-2 rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
+                className="flex flex-1 md:flex-none items-center justify-center gap-2 rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white px-3 py-2 text-xs font-bold transition-all whitespace-nowrap min-w-[120px]"
               >
                 <Bell className="h-3.5 w-3.5" />
                 {t('tabs.notifications')}
@@ -165,14 +165,14 @@ export function SettingsForm({ user }: { user: any }) {
                 <>
                   <TabsTrigger 
                     value="users" 
-                    className="flex items-center gap-2 rounded-lg data-[state=active]:bg-amber-600 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
+                    className="flex flex-1 md:flex-none items-center justify-center gap-2 rounded-lg data-[state=active]:bg-amber-600 data-[state=active]:text-white px-3 py-2 text-xs font-bold transition-all whitespace-nowrap min-w-[120px]"
                   >
                     <UserCog className="h-3.5 w-3.5" />
                     {t('tabs.users')}
                   </TabsTrigger>
                   <TabsTrigger 
                     value="notifications_admin" 
-                    className="flex items-center gap-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white px-4 py-2 text-xs font-bold transition-all"
+                    className="flex flex-1 md:flex-none items-center justify-center gap-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white px-3 py-2 text-xs font-bold transition-all whitespace-nowrap min-w-[120px]"
                   >
                     <BarChart3 className="h-3.5 w-3.5" />
                     {t('tabs.notifications_admin')}

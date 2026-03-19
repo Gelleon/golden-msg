@@ -133,17 +133,17 @@ export function NotificationManagementForm() {
               <div className="p-3 bg-slate-900 rounded-xl shadow-lg shadow-slate-900/20 ring-2 ring-slate-900/5 shrink-0">
                 <Bell className="h-6 w-6 text-white" />
               </div>
-              <div className="space-y-1">
-                <CardTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">{t('notifications_admin.logs.title')}</CardTitle>
-                <CardDescription className="text-slate-600 text-sm font-bold">{t('notifications_admin.logs.description')}</CardDescription>
+              <div className="space-y-1 min-w-0">
+                <CardTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight break-words">{t('notifications_admin.logs.title')}</CardTitle>
+                <CardDescription className="text-slate-600 text-sm font-bold break-words">{t('notifications_admin.logs.description')}</CardDescription>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
               <Button
                 variant="outline"
                 onClick={fetchLogs}
                 disabled={isLoading}
-                className="h-11 px-6 border-2 border-slate-200 hover:border-slate-900 hover:bg-slate-900 hover:text-white rounded-xl font-black shadow-sm transition-all flex items-center gap-2 group"
+                className="w-full sm:w-auto h-11 px-6 border-2 border-slate-200 hover:border-slate-900 hover:bg-slate-900 hover:text-white rounded-xl font-black shadow-sm transition-all flex items-center justify-center gap-2 group"
               >
                 <RefreshCw className={cn("h-4 w-4 transition-transform group-hover:rotate-180 duration-500", isLoading && "animate-spin")} />
                 {t('notifications_admin.logs.refresh')}
@@ -151,7 +151,7 @@ export function NotificationManagementForm() {
               <Button
                 onClick={triggerScan}
                 disabled={isTriggering}
-                className="h-11 px-6 bg-slate-900 hover:bg-black text-white rounded-xl font-black shadow-lg shadow-slate-900/20 transition-all flex items-center gap-2 group"
+                className="w-full sm:w-auto h-11 px-6 bg-slate-900 hover:bg-black text-white rounded-xl font-black shadow-lg shadow-slate-900/20 transition-all flex items-center justify-center gap-2 group"
               >
                 {isTriggering ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Menu } from "lucide-react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { useMobileNav } from "@/lib/mobile-nav-context"
 
@@ -47,6 +47,7 @@ export function MobileNav({ user, profile }: MobileNavProps) {
           </motion.div>
         </SheetTrigger>
         <SheetContent side="left" className="p-0 w-80 bg-slate-900 border-r border-slate-800 text-white">
+          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
           <Sidebar 
             user={user} 
             profile={profile} 

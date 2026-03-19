@@ -61,27 +61,27 @@ export function NotificationSettingsForm({ user }: { user: any }) {
             <div className="p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-600/20 ring-4 ring-blue-600/5">
               <Bell className="h-6 w-6 text-white" />
             </div>
-            <div className="space-y-1">
-              <CardTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">
+            <div className="space-y-1 min-w-0">
+              <CardTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight break-words">
                 {t('tabs.notifications')}
               </CardTitle>
-              <CardDescription className="text-slate-600 text-sm font-bold">
+              <CardDescription className="text-slate-600 text-sm font-bold break-words">
                 Настройте способы получения уведомлений
               </CardDescription>
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className="p-6 md:p-8 space-y-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 bg-slate-50/50 rounded-2xl border border-slate-200/40 transition-all hover:bg-white hover:shadow-md group">
-            <div className="flex-1 space-y-1">
-              <Label className="text-slate-900 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
-                <div className="p-1.5 bg-blue-50 rounded-lg border border-blue-100">
+        <CardContent className="p-4 md:p-8 space-y-8">
+          <div className="flex flex-row items-center justify-between gap-4 p-4 md:p-6 bg-slate-50/50 rounded-2xl border border-slate-200/40 transition-all hover:bg-white hover:shadow-md group">
+            <div className="flex-1 space-y-1 min-w-0">
+              <Label className="text-slate-900 text-[10px] font-black uppercase tracking-wider flex items-center gap-2 flex-wrap">
+                <div className="p-1.5 bg-blue-50 rounded-lg border border-blue-100 shrink-0">
                   <Bell className="h-3.5 w-3.5 text-blue-600" />
                 </div>
-                Push-уведомления
+                <span className="break-words">Push-уведомления</span>
               </Label>
-              <p className="text-[11px] text-slate-500 font-bold leading-relaxed pl-1 max-w-md">
+              <p className="text-[11px] text-slate-500 font-bold leading-relaxed pl-1 max-w-md break-words">
                 Получайте мгновенные уведомления о новых сообщениях в браузере или на телефоне.
               </p>
             </div>
@@ -93,11 +93,11 @@ export function NotificationSettingsForm({ user }: { user: any }) {
           </div>
         </CardContent>
 
-        <CardFooter className="p-6 md:p-8 bg-slate-50 border-t border-slate-100 flex justify-end">
+        <CardFooter className="p-4 md:p-8 bg-slate-50 border-t border-slate-100 flex flex-col md:flex-row justify-end">
           <Button
             onClick={handleSave}
             disabled={isSaving}
-            className="h-12 px-8 bg-slate-900 hover:bg-blue-600 text-white font-black rounded-xl transition-all active:scale-95 shadow-lg shadow-slate-900/10 hover:shadow-blue-600/20 group"
+            className="w-full md:w-auto h-12 px-8 bg-slate-900 hover:bg-blue-600 text-white font-black rounded-xl transition-all active:scale-95 shadow-lg shadow-slate-900/10 hover:shadow-blue-600/20 group"
           >
             {isSaving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

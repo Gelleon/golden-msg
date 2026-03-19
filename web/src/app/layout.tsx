@@ -23,8 +23,7 @@ export const viewport: Viewport = {
   themeColor: "#020617",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // Removed maximumScale and userScalable for accessibility (WCAG 1.4.4)
 };
 
 export async function generateMetadata(): Promise<Metadata> {
