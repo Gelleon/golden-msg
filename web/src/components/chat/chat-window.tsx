@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useLayoutEffect } from "react"
 import { getMessages, markAsRead } from "@/app/actions/chat"
 import { useTranslation } from "@/lib/language-context"
 import { cn } from "@/lib/utils"
@@ -40,6 +40,7 @@ export function ChatWindow({
   const [replyTo, setReplyTo] = useState<any>(null)
   const [unreadCount, setUnreadCount] = useState(initialUnreadCount)
   const [isLoadingOlder, setIsLoadingOlder] = useState(false)
+  const isLoadingOlderRef = useRef(false)
   const [hasMoreOlder, setHasMoreOlder] = useState(true)
   
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -63,6 +64,19 @@ export function ChatWindow({
       isMountedRef.current = false
     }
   }, [])
+
+  const previousScrollHeightRef = useRef<number>(0);
+  const previousScrollTopRef = useRef<number>(0);
+  const isPrependingRef = useRef(false);
+
+  useLayoutEffect(() => {
+    if (isPrependingRef.current && containerRef.current) {
+      const newScrollHeight = containerRef.current.scrollHeight;
+      const heightDifference = newScrollHeight - previousScrollHeightRef.current;
+      containerRef.current.scrollTop = previousScrollTopRef.current + heightDifference;
+      isPrependingRef.current = false;
+    }
+  }, [messages]);
 
   // Find the first unread message index (only once on load)
   const [firstUnreadIndex] = useState(() => {
@@ -93,29 +107,30 @@ export function ChatWindow({
       setCurrentLastReadAt(new Date().toISOString())
     }
 
-    if (isAtTop && !isLoadingOlder && hasMoreOlder && messages.length > 0) {
+    if (isAtTop && !isLoadingOlderRef.current && hasMoreOlder && messages.length > 0) {
       loadOlderMessages()
     }
   }
 
   const loadOlderMessages = async () => {
+    if (isLoadingOlderRef.current || !hasMoreOlder) return;
     setIsLoadingOlder(true)
+    isLoadingOlderRef.current = true
     const firstMsgId = messages[0]?.id
     try {
       if (firstMsgId) {
         const result = await getMessages(roomId, { cursorId: firstMsgId, direction: 'older', limit: 20 })
         if (result.messages && Array.isArray(result.messages) && result.messages.length > 0) {
-          // Keep scroll position
-          const container = containerRef.current
-          const previousScrollHeight = container ? container.scrollHeight : 0
+          if (containerRef.current) {
+            previousScrollHeightRef.current = containerRef.current.scrollHeight;
+            previousScrollTopRef.current = containerRef.current.scrollTop;
+            isPrependingRef.current = true;
+          }
           
-          setMessages(prev => [...result.messages, ...prev])
-          
-          // Restore scroll position
-          requestAnimationFrame(() => {
-            if (container) {
-              container.scrollTop = container.scrollHeight - previousScrollHeight
-            }
+          setMessages(prev => {
+            const existingIds = new Set(prev.map(m => m.id));
+            const uniqueOlder = result.messages.filter(m => !existingIds.has(m.id));
+            return [...uniqueOlder, ...prev];
           })
         } else {
           setHasMoreOlder(false)
@@ -125,6 +140,7 @@ export function ChatWindow({
       console.error("Failed to load older messages", error)
     } finally {
       setIsLoadingOlder(false)
+      isLoadingOlderRef.current = false
     }
   }
 
@@ -197,28 +213,30 @@ export function ChatWindow({
   }, [roomId, firstUnreadIndex, unreadCount])
 
   const prevMessagesLength = useRef(messages.length)
+  const prevLastMessageId = useRef(messages[messages.length - 1]?.id)
 
   useEffect(() => {
     // Scroll to bottom on new messages if already at bottom or if it's our message
     if (hasScrolledToUnread && containerRef.current) {
       const lastMessage = messages[messages.length - 1]
-      const isNewMessage = messages.length > prevMessagesLength.current
+      const isNewMessageAddedAtBottom = lastMessage?.id !== prevLastMessageId.current && messages.length > prevMessagesLength.current
       const isMyMessage = lastMessage?.sender.id === currentUser.id
 
-      if (isNewMessage) {
+      if (isNewMessageAddedAtBottom) {
         if (isMyMessage || isAtBottomRef.current) {
           scrollToBottom("smooth")
           if (isMyMessage) {
             setShowUnreadSeparator(false)
           }
         }
-      } else if (isAtBottomRef.current && messages.length > 0) {
+      } else if (isAtBottomRef.current && messages.length > 0 && messages.length === prevMessagesLength.current) {
         // If message content changed (e.g. translation arrived) or typing state changed
         // and we are at the bottom, stick to the bottom so the layout shift doesn't push the user up.
         scrollToBottom("auto")
       }
       
       prevMessagesLength.current = messages.length
+      prevLastMessageId.current = lastMessage?.id
     }
   }, [messages.length, messages[messages.length - 1]?.id, isTyping, hasScrolledToUnread, currentUser.id])
 
@@ -412,6 +430,7 @@ export function ChatWindow({
                       message={message}
                       isCurrentUser={message.sender.id === currentUser.id}
                       onReply={(msg) => setReplyTo(msg)}
+                      onDelete={(id) => setMessages(prev => prev.filter(m => m.id !== id))}
                       showSenderName={showSenderName}
                       showAvatar={showAvatar}
                       participants={participants}

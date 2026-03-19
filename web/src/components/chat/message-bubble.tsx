@@ -56,6 +56,7 @@ interface MessageBubbleProps {
   message: Message
   isCurrentUser: boolean
   onReply?: (message: Message) => void
+  onDelete?: (messageId: string) => void
   showSenderName?: boolean
   showAvatar?: boolean
   participants?: Array<{
@@ -89,7 +90,7 @@ const isImage = (url: string | null) => {
   return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '')
 }
 
-export function MessageBubble({ message, isCurrentUser, onReply, showSenderName, showAvatar = true, participants = [] }: MessageBubbleProps) {
+export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showSenderName, showAvatar = true, participants = [] }: MessageBubbleProps) {
   const { t } = useTranslation()
   const [isPlaying, setIsPlaying] = useState(false)
   const [duration, setDuration] = useState<number | null>(null)
@@ -202,6 +203,7 @@ export function MessageBubble({ message, isCurrentUser, onReply, showSenderName,
 
     if (result.success) {
       setShowDeleteConfirm(false)
+      onDelete?.(message.id)
     } else {
       toast({
         title: t("chat.deleteError"),
@@ -692,6 +694,11 @@ export function MessageBubble({ message, isCurrentUser, onReply, showSenderName,
             "flex-1 relative group/bubble max-w-fit min-w-[60px]",
             isCurrentUser ? "flex flex-col items-end" : "flex flex-col items-start"
           )}>
+            {isDeleting && (
+              <div className="absolute inset-0 z-50 bg-white/50 dark:bg-black/50 backdrop-blur-[1px] rounded-2xl flex items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+              </div>
+            )}
             <div className={cn(
               "rounded-[20px] shadow-sm transition-all duration-300 overflow-hidden relative",
               isCurrentUser 
