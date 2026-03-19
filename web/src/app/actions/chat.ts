@@ -787,9 +787,9 @@ export async function sendMessageAction(rawData: {
   // We do NOT wait for translation here. We set status to pending and return immediately.
   const contentTranslated = null;
   const voiceTranscription = null;
-  const translationStatus = "pending";
+  const translationStatus = messageType === "text" ? "pending" : "completed";
 
-  console.log(`[DB] Creating message with translation_status: "pending"`);
+  console.log(`[DB] Creating message with translation_status: "${translationStatus}"`);
 
   // Insert Message into Database
   try {
@@ -844,20 +844,22 @@ export async function sendMessageAction(rawData: {
       },
     });
 
-    // Trigger Async Processing (via Queue)
-    after(async () => {
-      await translationQueue.add(async () => {
-        await processAsyncMessage(
-          message.id,
-          roomId,
-          content,
-          messageType,
-          fileUrl,
-          languageOriginal,
-          targetLanguage
-        );
+    // Trigger Async Processing (via Queue) for text messages
+    if (messageType === "text") {
+      after(async () => {
+        await translationQueue.add(async () => {
+          await processAsyncMessage(
+            message.id,
+            roomId,
+            content,
+            messageType,
+            fileUrl,
+            languageOriginal,
+            targetLanguage
+          );
+        });
       });
-    });
+    }
 
     // Send push notification asynchronously
     const notificationContent = messageType === 'voice' 
@@ -918,8 +920,8 @@ export async function sendMessageAction(rawData: {
         ...message,
         created_at: message.created_at.toISOString(),
         is_edited: message.is_edited,
-        // Ensure frontend gets the pending status
-        translation_status: "pending",
+        // Ensure frontend gets the correct status
+        translation_status: translationStatus,
         reply_to: message.reply_to ? {
           id: message.reply_to.id,
           content: message.reply_to.content,

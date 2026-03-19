@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useMemo, useCallback } from "react"
-import { Mic, Paperclip, Send, X, StopCircle } from "lucide-react"
+import { Mic, Paperclip, Send, X, StopCircle, FileText, Loader2, UploadCloud } from "lucide-react"
 import { uploadFile } from "@/app/actions/upload"
 
 import { useTranslation } from "@/lib/language-context"
@@ -45,8 +45,10 @@ export function MessageInput({
   const [message, setMessage] = useState("")
   const [isRecording, setIsRecording] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
-  const [file, setFile] = useState<File | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [files, setFiles] = useState<File[]>([])
+  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({})
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({})
+  const [isDragOver, setIsDragOver] = useState(false)
   const [mentionQuery, setMentionQuery] = useState("")
   const [mentionStart, setMentionStart] = useState<number | null>(null)
   const [isMentionOpen, setIsMentionOpen] = useState(false)
@@ -188,84 +190,120 @@ export function MessageInput({
     }
   }, [isInputFocused])
 
-  // Cleanup preview URL on unmount or file change
+  // Cleanup preview URLs on unmount
   useEffect(() => {
     return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl)
-      }
+      Object.values(previewUrls).forEach(url => URL.revokeObjectURL(url))
     }
-  }, [previewUrl])
+  }, [previewUrls])
+
+  const addFiles = useCallback((newFiles: File[]) => {
+    setFiles(prev => {
+      const validFiles = newFiles.filter(f => {
+        if (f.size > MAX_ATTACHMENT_SIZE_BYTES) {
+          alert(`Файл ${f.name} превышает максимальный размер (200 МБ)`)
+          return false
+        }
+        if (prev.some(existing => existing.name === f.name && existing.size === f.size)) {
+          return false
+        }
+        return true
+      })
+
+      if (validFiles.length === 0) return prev
+
+      validFiles.forEach(f => {
+        if (f.type.startsWith('image/')) {
+          const url = URL.createObjectURL(f)
+          setPreviewUrls(urls => ({ ...urls, [f.name]: url }))
+        }
+      })
+
+      return [...prev, ...validFiles]
+    })
+  }, [])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0]
-      if (selectedFile.size > MAX_ATTACHMENT_SIZE_BYTES) {
-        alert("Максимальный размер вложения — 200 МБ")
-        e.target.value = ""
-        return
-      }
-      setFile(selectedFile)
-      
-      // Create preview for images
-      if (selectedFile.type.startsWith('image/')) {
-        const url = URL.createObjectURL(selectedFile)
-        setPreviewUrl(url)
-      } else {
-        setPreviewUrl(null)
-      }
+    if (e.target.files && e.target.files.length > 0) {
+      addFiles(Array.from(e.target.files))
+      e.target.value = ""
     }
   }
 
-  const removeFile = () => {
-    setFile(null)
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl)
-      setPreviewUrl(null)
+  const removeFile = (fileName: string) => {
+    setFiles(prev => prev.filter(f => f.name !== fileName))
+    if (previewUrls[fileName]) {
+      URL.revokeObjectURL(previewUrls[fileName])
+      setPreviewUrls(prev => {
+        const newUrls = { ...prev }
+        delete newUrls[fileName]
+        return newUrls
+      })
     }
   }
 
   const handleSend = async () => {
-    if ((!message.trim() && !file) || isUploading) return
+    if ((!message.trim() && files.length === 0) || isUploading) return
 
     setIsUploading(true)
 
     try {
-      let fileUrl = undefined
-      let messageType: "text" | "voice" | "file" = "text"
-      let content = message
-
-      // Handle file upload
-      if (file) {
-        messageType = "file"
-        const formData = new FormData()
-        formData.append("file", file)
-        
-        const result = await uploadFile(formData)
-        if (result.error || !result.url) throw new Error(result.error || "Upload failed")
-        
-        fileUrl = result.url
-        content = file.name
+      let textSent = false
+      if (message.trim()) {
+        const result = await sendMessageAction({
+          roomId,
+          content: message.trim(),
+          messageType: "text",
+          replyToId: replyTo?.id,
+          userRole,
+        })
+        if (result.error) throw new Error(result.error)
+        textSent = true
       }
 
-      // Call Server Action
-      console.log("Calling sendMessageAction with:", { roomId, messageType, content, replyToId: replyTo?.id });
-      const result = await sendMessageAction({
-        roomId,
-        content: content || (file ? file.name : ""),
-        messageType,
-        fileUrl,
-        replyToId: replyTo?.id,
-        userRole,
-      })
-      console.log("sendMessageAction result:", result);
+      for (const f of files) {
+        setUploadProgress(prev => ({ ...prev, [f.name]: 10 }))
+        
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => {
+            const current = prev[f.name] || 10
+            return { ...prev, [f.name]: Math.min(current + 10, 90) }
+          })
+        }, 500)
 
-      if (result.error) {
-        throw new Error(result.error)
+        try {
+          const formData = new FormData()
+          formData.append("file", f)
+          
+          const result = await uploadFile(formData)
+          if (result.error || !result.url) throw new Error(result.error || "Upload failed")
+          
+          setUploadProgress(prev => ({ ...prev, [f.name]: 100 }))
+
+          const sendResult = await sendMessageAction({
+            roomId,
+            content: f.name,
+            messageType: "file",
+            fileUrl: result.url,
+            replyToId: (!textSent && f === files[0]) ? replyTo?.id : undefined,
+            userRole,
+          })
+
+          if (sendResult.error) {
+            throw new Error(sendResult.error)
+          }
+        } finally {
+          clearInterval(progressInterval)
+        }
       }
 
       setMessage("")
-      removeFile()
+      setFiles([])
+      setPreviewUrls(prev => {
+        Object.values(prev).forEach(url => URL.revokeObjectURL(url))
+        return {}
+      })
+      setUploadProgress({})
       if (onCancelReply) onCancelReply()
       if (onMessageSent) onMessageSent()
     } catch (error) {
@@ -275,6 +313,36 @@ export function MessageInput({
       setIsUploading(false)
     }
   }
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!isRecording && !isUploading) setIsDragOver(true)
+  }, [isRecording, isUploading])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+    if (isRecording || isUploading) return
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      addFiles(Array.from(e.dataTransfer.files))
+    }
+  }, [isRecording, isUploading, addFiles])
+
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    if (isRecording || isUploading) return
+    if (e.clipboardData.files && e.clipboardData.files.length > 0) {
+      addFiles(Array.from(e.clipboardData.files))
+    }
+  }, [isRecording, isUploading, addFiles])
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
@@ -418,7 +486,24 @@ export function MessageInput({
   }
 
   return (
-    <div className="p-2 md:p-4 border-t border-slate-200 bg-white/80 backdrop-blur-md sticky bottom-0 z-10 transition-all duration-300">
+    <div 
+      className={cn(
+        "p-2 md:p-4 border-t border-slate-200 bg-white/80 backdrop-blur-md sticky bottom-0 z-10 transition-all duration-300 relative",
+        isDragOver && "bg-blue-50/90 border-blue-300"
+      )}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      onPaste={handlePaste}
+    >
+      {isDragOver && (
+        <div className="absolute inset-0 z-50 border-2 border-dashed border-blue-400 bg-blue-50/50 flex items-center justify-center pointer-events-none">
+          <div className="flex flex-col items-center gap-2 text-blue-600 bg-white/90 px-6 py-4 rounded-2xl shadow-sm">
+            <UploadCloud className="h-8 w-8 animate-bounce" />
+            <span className="font-semibold text-sm">Перетащите файлы сюда</span>
+          </div>
+        </div>
+      )}
       <div className="max-w-4xl mx-auto space-y-2 md:space-y-3">
         {replyTo && (
           <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-blue-50/50 border border-blue-100 rounded-xl text-xs md:sm shadow-sm animate-slide-up relative">
@@ -442,38 +527,56 @@ export function MessageInput({
           </div>
         )}
 
-        {file && (
-          <div className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs md:sm shadow-sm animate-slide-up">
-            {previewUrl ? (
-              <div className="relative h-12 w-12 md:h-16 md:w-16 rounded-lg overflow-hidden border border-slate-200 bg-white shrink-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
+        {files.length > 0 && (
+          <div className="flex flex-wrap gap-2 md:gap-3 p-2 md:p-3 bg-slate-50 border border-slate-200 rounded-xl shadow-sm animate-slide-up max-h-48 overflow-y-auto">
+            {files.map((f, index) => (
+              <div key={`${f.name}-${index}`} className="flex items-center gap-2 p-1.5 md:p-2 bg-white border border-slate-200 rounded-lg min-w-[200px] max-w-[280px] relative overflow-hidden group">
+                {uploadProgress[f.name] !== undefined && (
+                  <div 
+                    className="absolute bottom-0 left-0 h-1 bg-blue-500 transition-all duration-300"
+                    style={{ width: `${uploadProgress[f.name]}%` }}
+                  />
+                )}
+                {previewUrls[f.name] ? (
+                  <div className="relative h-10 w-10 md:h-12 md:w-12 rounded-md overflow-hidden border border-slate-200 bg-white shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={previewUrls[f.name]} alt="Preview" className="h-full w-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="bg-slate-50 p-2 md:p-2.5 rounded-md border border-slate-100 shrink-0">
+                    <FileText className="h-5 w-5 md:h-6 md:w-6 text-slate-400" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0 pr-6">
+                  <div className="font-medium text-slate-700 truncate text-xs">{f.name}</div>
+                  <div className="text-[10px] text-slate-400 flex items-center gap-1">
+                    {(f.size / 1024 / 1024).toFixed(2)} MB
+                    {uploadProgress[f.name] !== undefined && (
+                      <span className="text-blue-500 font-medium">
+                        • {uploadProgress[f.name] < 100 ? "Загрузка..." : "Готово"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {!isUploading && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1 h-6 w-6 opacity-0 group-hover:opacity-100 hover:bg-slate-100 rounded-full text-slate-400 hover:text-red-500 transition-opacity"
+                    onClick={() => removeFile(f.name)}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                )}
               </div>
-            ) : (
-              <div className="bg-white p-1.5 md:p-2 rounded-lg border border-slate-100">
-                <Paperclip className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-500" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="font-medium text-slate-700 truncate">{file.name}</div>
-              <div className="text-[10px] md:text-xs text-slate-400">
-                {(file.size / 1024 / 1024).toFixed(2)} MB
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 md:h-8 md:w-8 hover:bg-slate-200 rounded-full text-slate-400 hover:text-red-500"
-              onClick={removeFile}
-            >
-              <X className="h-3.5 w-3.5 md:h-4 md:w-4" />
-            </Button>
+            ))}
           </div>
         )}
         
         <div className="flex items-center gap-1.5 md:gap-3">
           <input
             type="file"
+            multiple
             ref={fileInputRef}
             className="hidden"
             onChange={handleFileChange}
@@ -605,7 +708,7 @@ export function MessageInput({
           </div>
 
           <div className="flex items-center gap-1.5 md:gap-3 shrink-0">
-            {message.trim() || file ? (
+            {message.trim() || files.length > 0 ? (
               <Button 
                 onClick={handleSend} 
                 disabled={isUploading || isRecording}
