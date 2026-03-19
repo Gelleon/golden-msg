@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache"
 import { sendPushNotification } from "@/lib/push-service"
 import fs from "fs/promises"
 import path from "path"
-import { translateText, transcribeAudio } from "@/lib/dewiar"
+import { translateText } from "@/lib/dewiar"
 import { z } from "zod"
 import { ensureSchemaFixed } from "@/lib/schema-fix"
 import { sendSSEUpdate } from "@/lib/sse"
@@ -403,17 +403,23 @@ export async function processAsyncMessage(
   console.log(`[ASYNC] Processing message ${messageId}`);
   
   try {
-    let voiceTranscription: string | null = null;
     let contentTranslated: string | null = null;
     let languageOriginal = initialLangOriginal;
-    let textToTranslate = messageType === "text" ? stripMentionsForTranslation(content) : content;
+    
+    // Voice and file messages do not have translatable text
+    if (messageType === "voice" || messageType === "file") {
+      console.log(`[ASYNC] Skipping translation for ${messageType} message.`);
+      return;
+    }
+    
+    let textToTranslate = stripMentionsForTranslation(content);
 
     // 0. Cancellation Check (Optimization)
     // Check if the message content has already changed before we even start
     // This handles the "Cancellation" requirement efficiently
     const preCheckMessage = await prisma.message.findUnique({
       where: { id: messageId },
-      select: { content: true, voice_transcription: true, translation_status: true }
+      select: { content: true, translation_status: true }
     });
 
     if (!preCheckMessage) {
@@ -421,61 +427,12 @@ export async function processAsyncMessage(
       return;
     }
 
-    if (messageType === "text" && preCheckMessage.content !== content) {
+    if (preCheckMessage.content !== content) {
       console.log(`[ASYNC] Message content changed (Edited). Aborting translation task.`);
       return;
     }
 
-    // 1. Transcription (if voice)
-    if (messageType === "voice" && fileUrl) {
-      console.log(`[ASYNC] Transcribing voice message from: ${fileUrl}`);
-      
-      let file: any;
-      if (fileUrl.startsWith("/uploads/")) {
-        const path = await import("path");
-        const relativePath = fileUrl.startsWith("/") ? fileUrl.slice(1) : fileUrl;
-        const filePath = path.join(process.cwd(), "public", relativePath);
-        const fs = await import("fs/promises");
-        const buffer = await fs.readFile(filePath);
-        file = new Blob([buffer], { type: "audio/webm" });
-      } else {
-        const response = await fetch(fileUrl);
-        if (!response.ok) throw new Error("Failed to fetch audio file");
-        const blob = await response.blob();
-        file = blob;
-      }
-
-      const transcriptionText = await transcribeAudio(
-        file,
-        languageOriginal === "Russian" ? "ru" : "zh"
-      );
-
-      if (transcriptionText) {
-        voiceTranscription = transcriptionText;
-        textToTranslate = transcriptionText;
-        console.log(`[ASYNC] Transcription successful: "${voiceTranscription.substring(0, 30)}..."`);
-        
-        // Update DB with transcription immediately
-        // Check if message still exists and hasn't been deleted
-        const currentMsg = await prisma.message.findUnique({ where: { id: messageId }, select: { id: true } });
-        if (currentMsg) {
-          await prisma.message.update({
-            where: { id: messageId },
-            data: { voice_transcription: voiceTranscription }
-          });
-          
-          sendSSEUpdate(roomId, {
-            type: "message_update",
-            messageId,
-            payload: { voice_transcription: voiceTranscription }
-          });
-        }
-      } else {
-        console.warn("[ASYNC] Transcription failed or returned null");
-      }
-    }
-
-    // 2. Translation
+    // 1. Translation
     if (textToTranslate) {
       // Check Cache First
       const finalLangOriginal = languageOriginal === "Russian" ? "ru" : "cn";
@@ -494,21 +451,21 @@ export async function processAsyncMessage(
         );
 
         if (dewiarTranslation) {
-      contentTranslated = dewiarTranslation;
-      console.log(`[ASYNC] Translation successful: "${contentTranslated.substring(0, 30)}..."`);
-    } else {
-      console.warn("[ASYNC] Translation failed: No content returned");
-      throw new Error("Translation API returned empty response");
-    }
+          contentTranslated = dewiarTranslation;
+          console.log(`[ASYNC] Translation successful: "${contentTranslated.substring(0, 30)}..."`);
+        } else {
+          console.warn("[ASYNC] Translation failed: No content returned");
+          throw new Error("Translation API returned empty response");
+        }
       }
     }
 
-    // 3. Final Update (Atomic Check)
+    // 2. Final Update (Atomic Check)
     // We must check if the message content hasn't changed (wasn't edited) while we were processing
     // If it was edited, we discard this result (Cancellation logic)
     const currentMessage = await prisma.message.findUnique({
       where: { id: messageId },
-      select: { content: true, voice_transcription: true }
+      select: { content: true }
     });
 
     if (!currentMessage) {
@@ -516,17 +473,10 @@ export async function processAsyncMessage(
       return;
     }
 
-    // For voice messages, we check transcription. For text, we check content.
-    const dbContent = messageType === "voice" ? currentMessage.voice_transcription : currentMessage.content;
-    const processedContent = messageType === "voice" ? voiceTranscription : content;
-
-    // Strict equality check to ensure we don't overwrite newer edits
-    // Note: for voice, processedContent might be null if transcription failed, but dbContent would be null too or updated.
-    // Ideally, for voice, we just check if it exists.
-    // For text, we must match.
+    const dbContent = currentMessage.content;
     
     let shouldUpdate = true;
-    if (messageType === "text" && dbContent !== content) {
+    if (dbContent !== content) {
       console.log(`[ASYNC] Message content changed (Edited). Aborting translation update.`);
       shouldUpdate = false;
     }

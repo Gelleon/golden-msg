@@ -156,16 +156,31 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
   useEffect(() => {
     if (message.message_type === "voice" && message.file_url) {
       const audio = new Audio(message.file_url)
+      
       audio.onloadedmetadata = () => {
-        setDuration(audio.duration)
+        if (audio.duration === Infinity) {
+          audio.currentTime = 1e101;
+          audio.ontimeupdate = () => {
+            audio.ontimeupdate = null;
+            setDuration(audio.duration);
+            audio.currentTime = 0;
+            audio.ontimeupdate = () => {
+              setCurrentTime(audio.currentTime);
+            };
+          };
+        } else {
+          setDuration(audio.duration);
+          audio.ontimeupdate = () => {
+            setCurrentTime(audio.currentTime);
+          };
+        }
       }
+      
       audio.onended = () => {
         setIsPlaying(false)
         setCurrentTime(0)
       }
-      audio.ontimeupdate = () => {
-        setCurrentTime(audio.currentTime)
-      }
+      
       audioRef.current = audio
     }
 
@@ -190,6 +205,7 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
   }
 
   const formatTime = (time: number) => {
+    if (!time || isNaN(time) || !isFinite(time)) return "0:00"
     const minutes = Math.floor(time / 60)
     const seconds = Math.floor(time % 60)
     return `${minutes}:${seconds.toString().padStart(2, '0')}`
@@ -465,69 +481,8 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
                     {isPlaying ? formatTime(currentTime) : (duration ? formatTime(duration) : "0:00")}
                   </span>
                 </div>
-
-                {message.voice_transcription ? (
-                  <p className={cn(
-                    "text-[11px] md:text-xs font-medium italic truncate opacity-80",
-                    isCurrentUser ? "text-white" : "text-slate-700"
-                  )}>
-                    "{message.voice_transcription}"
-                  </p>
-                ) : (
-                  <div className={cn(
-                    "flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-tighter opacity-60",
-                    isCurrentUser ? "text-white" : "text-slate-400"
-                  )}>
-                    <span>{t("chat.transcription")}</span>
-                  </div>
-                )}
               </div>
             </div>
-            <AnimatePresence>
-              {message.content_translated && (
-                <motion.div 
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  className={cn("p-3 md:p-4 text-sm md:text-[15px] leading-relaxed border-t transition-all duration-300 overflow-hidden",
-                    isCurrentUser 
-                      ? "bg-black/10 border-white/10 text-blue-100" 
-                      : "bg-amber-50/50 border-amber-100 text-slate-900"
-                  )}
-                >
-                  <div className={cn(
-                    "text-[9px] md:text-[10px] mb-1.5 flex items-center gap-1.5 uppercase tracking-widest font-bold",
-                    isCurrentUser ? "text-blue-300" : "text-amber-600"
-                  )}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                    {message.language_original === "ru" ? t("chat.translatedToCN") : t("chat.translatedToRU")}
-                  </div>
-                  <p className="font-medium leading-relaxed">{message.content_translated}</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            
-            {!message.content_translated && message.translation_status !== "failed" && (
-              <div className={cn(
-                "px-4 py-2 border-t text-[10px] font-bold uppercase tracking-wider flex flex-col gap-1",
-                isCurrentUser ? "bg-black/10 border-white/10 text-white/50" : "bg-slate-50 border-slate-100 text-slate-400"
-              )}>
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                  <span>{t("chat.aiTranslation")}</span>
-                </div>
-              </div>
-            )}
-            {message.translation_status === "failed" && (
-              <div className={cn(
-                "px-4 py-2 border-t text-[10px] font-bold uppercase tracking-wider flex flex-col gap-1",
-                isCurrentUser ? "bg-red-500/20 border-white/10 text-red-200" : "bg-red-50 border-red-100 text-red-500"
-              )}>
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-3 w-3" />
-                  <span>{t("chat.translationFailed") || "Translation failed"}</span>
-                </div>
-              </div>
-            )}
           </div>
         )
       case "file":
