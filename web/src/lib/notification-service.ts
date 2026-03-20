@@ -341,7 +341,7 @@ async function sendNotificationEmail(user: User, rooms: { roomName: string; unre
     });
 
     // Log the notification
-    await prisma.notification_log.create({
+    await prisma.notificationLog.create({
       data: {
         user_id: user.id,
         email: user.email,
