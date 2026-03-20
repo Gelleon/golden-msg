@@ -32,10 +32,13 @@ export async function sendPushNotification(userId: string, payload: { title: str
           },
           JSON.stringify(payload)
         );
-      } catch (error: any) {
-        if (error.statusCode === 410 || error.statusCode === 404) {
-          // Subscription expired or no longer valid
-          await prisma.pushSubscription.delete({ where: { id: sub.id } });
+      } catch (error: unknown) {
+        if (error && typeof error === 'object' && 'statusCode' in error) {
+          const statusCode = (error as { statusCode: number }).statusCode;
+          if (statusCode === 410 || statusCode === 404) {
+            // Subscription expired or no longer valid
+            await prisma.pushSubscription.delete({ where: { id: sub.id } });
+          }
         }
         throw error;
       }

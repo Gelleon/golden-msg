@@ -10,7 +10,7 @@ if (!globalForSSE.sseEmitter) {
 
 export const sseEmitter = globalForSSE.sseEmitter;
 
-export function sendSSEUpdate(roomId: string, data: any) {
+export function sendSSEUpdate(roomId: string, data: Record<string, unknown>) {
   console.log(`[SSE] Emitting update for room ${roomId}:`, JSON.stringify(data).substring(0, 100));
   sseEmitter.emit(`message-${roomId}`, data);
 }

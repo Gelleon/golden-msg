@@ -11,7 +11,7 @@ export async function logAuditAction({
 }: {
   userId?: string;
   action: string;
-  details?: any;
+  details?: Record<string, unknown>;
   ipAddress?: string;
 }) {
   try {
@@ -75,7 +75,7 @@ export async function alertSecurity({
   severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   ipAddress?: string;
   userId?: string;
-  details?: any;
+  details?: Record<string, unknown>;
 }) {
   // 1. Log to AuditLog
   await logAuditAction({

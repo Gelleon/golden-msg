@@ -8,9 +8,23 @@ import cnTranslations from '@/locales/cn.json';
 const INACTIVITY_MINUTES = 60;
 const EMAIL_COOLDOWN_HOURS = 24;
 
-const translations: Record<string, any> = {
-  ru: ruTranslations,
-  cn: cnTranslations,
+interface TranslationSet {
+  welcome: {
+    email: {
+      unreadMessagesSubject: string;
+      hello: string;
+      inactiveMessage: string;
+      roomMessage: string;
+      goToMessages: string;
+      unsubscribeNote: string;
+      unsubscribeLink: string;
+    };
+  };
+}
+
+const translations: Record<string, TranslationSet> = {
+  ru: ruTranslations as unknown as TranslationSet,
+  cn: cnTranslations as unknown as TranslationSet,
 };
 
 /**
@@ -55,8 +69,6 @@ export async function notifyUsersOfUnreadMessages() {
 
       // Process batch in parallel for better performance
       await Promise.all(users.map(async (user) => {
-        const notificationsToSend: { roomName: string; unreadCount: number }[] = [];
-
         // Fetch unread counts for all user rooms
         const unreadCounts = await Promise.all(user.room_participations.map(async (participant) => {
           // Check if user has been inactive for more than 60 minutes in this room
@@ -105,10 +117,17 @@ export async function notifyUsersOfUnreadMessages() {
   }
 }
 
+interface User {
+  id: string;
+  email: string;
+  full_name?: string | null;
+  preferred_language?: string | null;
+}
+
 /**
  * Sends a personalized email to a user.
  */
-async function sendNotificationEmail(user: any, rooms: { roomName: string; unreadCount: number }[]) {
+async function sendNotificationEmail(user: User, rooms: { roomName: string; unreadCount: number }[]) {
   const lang = user.preferred_language || 'ru';
   const t = translations[lang]?.welcome?.email || translations.ru.welcome.email;
   

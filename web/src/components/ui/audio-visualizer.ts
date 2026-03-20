@@ -23,6 +23,8 @@ export class AudioVisualizer {
   volumeTrack!: HTMLElement;
   volumeFill!: HTMLElement;
 
+  private handlers: { [key: string]: (e: any) => void } = {};
+
   constructor(container: HTMLElement, audioUrl: string) {
     this.container = container;
     this.audioUrl = audioUrl;
@@ -36,6 +38,33 @@ export class AudioVisualizer {
     // Build DOM
     this.buildDOM();
     this.attachEvents();
+  }
+
+  public destroy() {
+    this.pause();
+    
+    if (this.animationId) {
+      cancelAnimationFrame(this.animationId);
+    }
+
+    // Remove window event listeners
+    window.removeEventListener("mousemove", this.handlers.mousemove);
+    window.removeEventListener("mouseup", this.handlers.mouseup);
+    window.removeEventListener("touchmove", this.handlers.touchmove);
+    window.removeEventListener("touchend", this.handlers.touchend);
+
+    // Clean up audio
+    this.audioElement.pause();
+    this.audioElement.src = "";
+    this.audioElement.load();
+    
+    if (this.audioContext) {
+      this.audioContext.close();
+    }
+
+    // Clear container
+    this.container.innerHTML = "";
+    this.container.classList.remove("audio-visualizer");
   }
 
   private buildDOM() {
@@ -210,23 +239,27 @@ export class AudioVisualizer {
       handleVolumeMove(e.touches[0].clientX);
     }, { passive: true });
 
-    window.addEventListener("mousemove", (e) => {
+    this.handlers.mousemove = (e: MouseEvent) => {
       if (isDraggingProgress) handleProgressMove(e.clientX);
       if (isDraggingVolume) handleVolumeMove(e.clientX);
-    });
-    window.addEventListener("mouseup", () => {
+    };
+    this.handlers.mouseup = () => {
       isDraggingProgress = false;
       isDraggingVolume = false;
-    });
-    
-    window.addEventListener("touchmove", (e) => {
+    };
+    this.handlers.touchmove = (e: TouchEvent) => {
       if (isDraggingProgress) handleProgressMove(e.touches[0].clientX);
       if (isDraggingVolume) handleVolumeMove(e.touches[0].clientX);
-    }, { passive: true });
-    window.addEventListener("touchend", () => {
+    };
+    this.handlers.touchend = () => {
       isDraggingProgress = false;
       isDraggingVolume = false;
-    });
+    };
+
+    window.addEventListener("mousemove", this.handlers.mousemove);
+    window.addEventListener("mouseup", this.handlers.mouseup);
+    window.addEventListener("touchmove", this.handlers.touchmove, { passive: true });
+    window.addEventListener("touchend", this.handlers.touchend);
   }
 
   private updateProgress() {

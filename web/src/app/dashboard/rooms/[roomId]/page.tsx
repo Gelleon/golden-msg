@@ -155,25 +155,11 @@ export default async function RoomPage({ params }: RoomPageProps) {
         <div className="flex items-center gap-1 md:gap-3 flex-shrink-0">
           <div className="h-6 md:h-8 w-[1px] bg-slate-200 mx-0.5 md:mx-1 hidden sm:block" />
           {room.type !== 'private' && (
-            <>
-              <div className="xl:hidden">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <button className="p-2 text-slate-500 hover:text-slate-900 transition-colors rounded-xl hover:bg-slate-100">
-                      <Users className="h-5 w-5" />
-                    </button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="p-0 bg-[#0F172A] border-l-white/10 w-80">
-                    <RoomInfo roomId={roomId} />
-                  </SheetContent>
-                </Sheet>
-              </div>
-              <RoomSettingsDialog 
-                roomId={roomId} 
-                currentUserRole={user.role} 
-                roomName={displayName || "Chat"} 
-              />
-            </>
+            <RoomSettingsDialog 
+              roomId={roomId} 
+              currentUserRole={user.role} 
+              roomName={displayName || "Chat"} 
+            />
           )}
         </div>
       </div>
@@ -194,11 +180,6 @@ export default async function RoomPage({ params }: RoomPageProps) {
             }))}
           />
         </div>
-        {room.type !== 'private' && (
-          <div className="hidden xl:block w-[320px] border-l border-slate-200/60 bg-[#0F172A] overflow-y-auto">
-            <RoomInfo roomId={roomId} />
-          </div>
-        )}
       </div>
     </motion.div>
   )

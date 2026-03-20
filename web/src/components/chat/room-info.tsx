@@ -220,26 +220,9 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
     }
   };
 
-  const getCurrentUserRoleText = () => {
-    return getGlobalRoleText(currentUser?.role);
-  };
-
-  const getCurrentUserRoleIcon = () => {
-    return getGlobalRoleIcon(currentUser?.role);
-  };
-
   return (
-    <div className="p-4 h-full flex flex-col">
-      {/* Current User Role Info */}
-      <div className="mb-6 p-3 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between">
-        <span className="text-sm text-slate-300">{t("roomInfo.yourRole") || "Ваша роль"}:</span>
-        <div className="flex items-center font-medium text-slate-100">
-          {getCurrentUserRoleIcon()}
-          {getCurrentUserRoleText()}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between mb-4">
+    <div className="p-4 h-full flex flex-col space-y-4">
+      <header className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-white">{t("roomInfo.participantsTitle") || "Участники комнаты"}</h3>
         {canManageRoom && roomType !== "private" && (
           <Button
@@ -252,86 +235,84 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
             <span className="text-xs">{t("roomInfo.addUserButton") || "Добавить"}</span>
           </Button>
         )}
-      </div>
+      </header>
 
       {error && <div className="text-red-400 text-xs mb-3">{error}</div>}
 
-      <div className="space-y-2">
-        {participants.map((participant) => {
-          const isParticipantCreator = participant.id === roomCreator;
-          const isParticipantAdmin = participant.room_role === "admin";
-          
-          return (
-            <div key={participant.id} className="flex items-center justify-between p-2 hover:bg-white/5 rounded-lg transition-colors group">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="relative">
-                  <Avatar className="h-8 w-8 border border-white/10">
-                    <AvatarImage src={participant.avatarUrl || participant.avatar_url || undefined} alt={participant.name || participant.full_name || "User"} />
-                    <AvatarFallback className="bg-slate-800 text-xs text-slate-400">
-                      {(participant.name || participant.full_name)?.charAt(0)?.toUpperCase() || <User className="h-4 w-4" />}
-                    </AvatarFallback>
-                  </Avatar>
-                  {onlineUsers.includes(participant.id) && (
-                    <div className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-[#0F172A]" />
+      {participants.map((participant) => {
+        const isParticipantCreator = participant.id === roomCreator;
+        const isParticipantAdmin = participant.room_role === "admin";
+        
+        return (
+          <div key={participant.id} className="flex items-center justify-between p-2 hover:bg-white/5 rounded-lg transition-colors group">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative">
+                <Avatar className="h-8 w-8 border border-white/10">
+                  <AvatarImage src={participant.avatarUrl || participant.avatar_url || undefined} alt={participant.name || participant.full_name || "User"} />
+                  <AvatarFallback className="bg-slate-800 text-xs text-slate-400">
+                    {(participant.name || participant.full_name)?.charAt(0)?.toUpperCase() || <User className="h-4 w-4" />}
+                  </AvatarFallback>
+                </Avatar>
+                {onlineUsers.includes(participant.id) && (
+                  <div className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-[#0F172A]" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <div className="text-sm font-medium text-slate-200 truncate">{participant.name || participant.full_name || "Unknown"}</div>
+                  
+                  <span className={`flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded ${getGlobalRoleBadgeClass(participant.role)}`}>
+                    {getGlobalRoleBadgeIcon(participant.role)}
+                    {getGlobalRoleText(participant.role)}
+                  </span>
+
+                  {isParticipantCreator && (
+                    <span className="flex items-center text-[10px] font-medium text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                      <Crown className="h-3 w-3 mr-1" />
+                      {t("roomInfo.roleCreator") || "Создатель"}
+                    </span>
+                  )}
+                  {!isParticipantCreator && isParticipantAdmin && (
+                    <span className="flex items-center text-[10px] font-medium text-blue-400 bg-blue-400/10 px-1.5 py-0.5 rounded">
+                      <ShieldAlert className="h-3 w-3 mr-1" />
+                      {t("roomInfo.roleAdmin") || "Админ"}
+                    </span>
+                  )}
+                  {participant.id === currentUser?.id && (
+                    <span className="text-[10px] font-medium text-slate-500 ml-1">
+                      {t("roomInfo.you") || "(Вы)"}
+                    </span>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <div className="text-sm font-medium text-slate-200 truncate">{participant.name || participant.full_name || "Unknown"}</div>
-                    
-                    <span className={`flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded ${getGlobalRoleBadgeClass(participant.role)}`}>
-                      {getGlobalRoleBadgeIcon(participant.role)}
-                      {getGlobalRoleText(participant.role)}
-                    </span>
-
-                    {isParticipantCreator && (
-                      <span className="flex items-center text-[10px] font-medium text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                        <Crown className="h-3 w-3 mr-1" />
-                        {t("roomInfo.roleCreator") || "Создатель"}
-                      </span>
-                    )}
-                    {!isParticipantCreator && isParticipantAdmin && (
-                      <span className="flex items-center text-[10px] font-medium text-blue-400 bg-blue-400/10 px-1.5 py-0.5 rounded">
-                        <ShieldAlert className="h-3 w-3 mr-1" />
-                        {t("roomInfo.roleAdmin") || "Админ"}
-                      </span>
-                    )}
-                    {participant.id === currentUser?.id && (
-                      <span className="text-[10px] font-medium text-slate-500 ml-1">
-                        {t("roomInfo.you") || "(Вы)"}
-                      </span>
-                    )}
-                  </div>
-                </div>
               </div>
-              
-              {canManageRoom && !isParticipantCreator && roomType !== "private" && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-[#0F172A] border-white/10 text-white min-w-[160px]">
-                    <DropdownMenuLabel className="text-xs text-slate-400">{t("roomInfo.manageTitle") || "Управление"}</DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-white/10" />
-                    <DropdownMenuItem 
-                      onClick={() => handleRemoveUser(participant.id)}
-                      className="text-sm cursor-pointer text-red-400 hover:bg-red-400/10 focus:bg-red-400/10 focus:text-red-400"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      {t("roomInfo.removeUser") || "Удалить"}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
             </div>
-          );
-        })}
-        {participants.length === 0 && !isLoading && (
-          <div className="text-xs text-slate-500 text-center py-2">{t("roomInfo.noParticipants") || "Нет участников"}</div>
-        )}
-      </div>
+            
+            {canManageRoom && !isParticipantCreator && roomType !== "private" && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-[#0F172A] border-white/10 text-white min-w-[160px]">
+                  <DropdownMenuLabel className="text-xs text-slate-400">{t("roomInfo.manageTitle") || "Управление"}</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuItem 
+                    className="text-xs text-red-400 focus:text-red-300 focus:bg-red-500/10 cursor-pointer"
+                    onClick={() => handleRemoveUser(participant.id)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    {t("roomInfo.removeParticipant") || "Удалить участника"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        );
+      })}
+      {participants.length === 0 && !isLoading && (
+        <div className="text-xs text-slate-500 text-center py-2">{t("roomInfo.noParticipants") || "Нет участников"}</div>
+      )}
 
       {/* Add User Dialog */}
       <Dialog open={isAddUserDialogOpen} onOpenChange={(open) => {
