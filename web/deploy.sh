@@ -3,6 +3,8 @@ set -e
 
 PROJECT_DIR="/var/www/golden-msg"
 WEB_DIR="$PROJECT_DIR/web"
+ROOT_DB="$WEB_DIR/.dev.db"
+PRISMA_DB="$WEB_DIR/prisma/.dev.db"
 
 echo "--- Начинаю обновление проекта на сервере ---"
 
@@ -19,10 +21,25 @@ set -a
 [ -f "$WEB_DIR/.env" ] && . "$WEB_DIR/.env"
 set +a
 
-if [ -n "$DATABASE_URL" ]; then
-    echo ">>> DATABASE_URL загружен из .env"
+if [ -f "$ROOT_DB" ] || [ -f "$PRISMA_DB" ]; then
+    if [ -f "$ROOT_DB" ] && [ -f "$PRISMA_DB" ]; then
+        ROOT_SIZE=$(wc -c < "$ROOT_DB")
+        PRISMA_SIZE=$(wc -c < "$PRISMA_DB")
+        if [ "$PRISMA_SIZE" -ge "$ROOT_SIZE" ]; then
+            DB_FILE="$PRISMA_DB"
+        else
+            DB_FILE="$ROOT_DB"
+        fi
+    elif [ -f "$PRISMA_DB" ]; then
+        DB_FILE="$PRISMA_DB"
+    else
+        DB_FILE="$ROOT_DB"
+    fi
+
+    export DATABASE_URL="file:$DB_FILE"
+    echo ">>> Используется SQLite база: $DB_FILE"
 else
-    echo ">>> DATABASE_URL не найден в .env"
+    echo ">>> Файлы .dev.db не найдены, использую DATABASE_URL из .env"
 fi
 
 echo ">>> Установка npm зависимостей..."
