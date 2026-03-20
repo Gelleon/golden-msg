@@ -19,6 +19,7 @@ set -a
 [ -f "$WEB_DIR/.env" ] && . "$WEB_DIR/.env"
 set +a
 
+ENV_FILE="$WEB_DIR/.env"
 KEY_FILE="$WEB_DIR/.next-server-actions.key"
 if [ -z "$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY" ]; then
     if [ -f "$KEY_FILE" ]; then
@@ -27,7 +28,15 @@ if [ -z "$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY" ]; then
         NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=$(node -e "console.log(require('crypto').randomBytes(32).toString('base64'))")
         echo "$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY" > "$KEY_FILE"
     fi
-    export NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
+fi
+export NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
+
+if [ -f "$ENV_FILE" ]; then
+    if grep -q '^NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=' "$ENV_FILE"; then
+        sed -i "s|^NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=.*|NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=\"$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY\"|" "$ENV_FILE"
+    else
+        printf '\nNEXT_SERVER_ACTIONS_ENCRYPTION_KEY="%s"\n' "$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY" >> "$ENV_FILE"
+    fi
 fi
 
 if [ -n "$FORCE_DB_FILE" ]; then
@@ -67,6 +76,9 @@ npm install
 echo ">>> Генерация Prisma клиента..."
 npx prisma generate
 npx prisma migrate deploy
+
+echo ">>> Очистка предыдущей сборки Next.js..."
+rm -rf .next
 
 echo ">>> Сборка Next.js приложения..."
 npm run build
