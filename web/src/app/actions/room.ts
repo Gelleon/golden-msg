@@ -158,6 +158,7 @@ export async function acceptRoomInvite(roomId: string, token: string) {
 }
 
 export async function getRooms() {
+  await ensureSchemaFixed()
   const session = await getSession()
   if (!session?.user) return []
 

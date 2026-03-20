@@ -24,7 +24,7 @@ set +a
 KEY_FILE="$WEB_DIR/.next-server-actions.key"
 if [ -z "$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY" ]; then
     if [ -f "$KEY_FILE" ]; then
-        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=$(cat "$KEY_FILE")
+        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=$(tr -d '\r\n' < "$KEY_FILE")
     else
         NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=$(node -e "console.log(require('crypto').randomBytes(32).toString('base64'))")
         echo "$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY" > "$KEY_FILE"
