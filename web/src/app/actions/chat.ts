@@ -13,6 +13,7 @@ import { sendSSEUpdate } from "@/lib/sse"
 import { after } from "next/server"
 import { parseMentions, stripMentionsForTranslation } from "@/lib/chat-mentions"
 import { queueNotificationIfOffline, clearUserFromNotificationQueue } from "@/lib/notification-service"
+import { logAuditAction } from "@/lib/security"
 
 export async function markAsRead(roomId: string) {
   const session = await getSession()
