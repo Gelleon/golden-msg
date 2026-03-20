@@ -97,7 +97,7 @@ export async function getAllRooms(options?: {
     const rooms = await prisma.room.findMany({
       where: whereClause,
       include: {
-        creator: {
+        owner: {
           select: {
             id: true,
             full_name: true,
