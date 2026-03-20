@@ -3,8 +3,6 @@ set -e
 
 PROJECT_DIR="/var/www/golden-msg"
 WEB_DIR="$PROJECT_DIR/web"
-ROOT_DB="$WEB_DIR/.dev.db"
-PRISMA_DB="$WEB_DIR/prisma/.dev.db"
 
 echo "--- Начинаю обновление проекта на сервере ---"
 
@@ -42,25 +40,25 @@ if [ -n "$FORCE_DB_FILE" ]; then
 elif [ -n "$FORCE_DATABASE_URL" ]; then
     export DATABASE_URL="$FORCE_DATABASE_URL"
     echo ">>> Принудительно выбрана DATABASE_URL из FORCE_DATABASE_URL"
-elif [ -f "$ROOT_DB" ] || [ -f "$PRISMA_DB" ]; then
-    if [ -f "$ROOT_DB" ] && [ -f "$PRISMA_DB" ]; then
-        ROOT_SIZE=$(wc -c < "$ROOT_DB")
-        PRISMA_SIZE=$(wc -c < "$PRISMA_DB")
-        if [ "$PRISMA_SIZE" -ge "$ROOT_SIZE" ]; then
-            DB_FILE="$PRISMA_DB"
-        else
-            DB_FILE="$ROOT_DB"
-        fi
-    elif [ -f "$PRISMA_DB" ]; then
-        DB_FILE="$PRISMA_DB"
-    else
-        DB_FILE="$ROOT_DB"
-    fi
-
-    export DATABASE_URL="file:$DB_FILE"
-    echo ">>> Используется SQLite база: $DB_FILE"
 else
-    echo ">>> Файлы .dev.db не найдены, использую DATABASE_URL из .env"
+    echo ">>> Используется DATABASE_URL из .env"
+fi
+
+if [ -z "$DATABASE_URL" ]; then
+    echo ">>> Ошибка: DATABASE_URL не задан. Укажи его в .env или через FORCE_DATABASE_URL"
+    exit 1
+fi
+
+if [[ "$DATABASE_URL" == file:* ]]; then
+    DB_PATH="${DATABASE_URL#file:}"
+    if [[ "$DB_PATH" != /* ]]; then
+        DB_PATH="$WEB_DIR/$DB_PATH"
+    fi
+    if [ ! -f "$DB_PATH" ]; then
+        echo ">>> Ошибка: SQLite база не найдена: $DB_PATH"
+        exit 1
+    fi
+    echo ">>> Активная SQLite база: $DB_PATH"
 fi
 
 echo ">>> Установка npm зависимостей..."
