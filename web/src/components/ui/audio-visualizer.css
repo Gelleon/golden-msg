@@ -1,0 +1,196 @@
+.audio-visualizer {
+  --av-bg-color: transparent;
+  --av-progress-bg: #e0e0e0;
+  --av-progress-fill: #0088cc;
+  --av-wave-color: #0088cc;
+  --av-wave-inactive: #b0c4de;
+  --av-text-color: #555;
+  --av-border-radius: 20px;
+  
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  background: var(--av-bg-color);
+  padding: 8px 12px;
+  border-radius: var(--av-border-radius);
+  font-family: system-ui, -apple-system, sans-serif;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.av-play-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--av-progress-fill);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94), background 0.2s ease;
+}
+
+.av-play-btn:active {
+  transform: scale(0.95);
+}
+
+.av-play-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.av-content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  gap: 4px;
+  position: relative;
+}
+
+.av-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.av-wave-container {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 24px;
+  flex-grow: 1;
+  margin-right: 12px;
+}
+
+.av-bar {
+  flex: 1;
+  width: 3px;
+  min-width: 2px;
+  max-width: 4px;
+  background-color: var(--av-wave-inactive);
+  border-radius: 2px;
+  transition: height 0.1s linear, background-color 0.2s ease;
+  transform-origin: center;
+}
+
+.av-bar.active {
+  background-color: var(--av-wave-color);
+}
+
+.av-time {
+  font-size: 12px;
+  color: var(--av-text-color);
+  font-variant-numeric: tabular-nums;
+  min-width: 35px;
+  text-align: right;
+}
+
+.av-progress-track {
+  width: 100%;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+  touch-action: none;
+}
+
+.av-progress-bg {
+  width: 100%;
+  height: 4px;
+  background: var(--av-progress-bg);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.av-progress-fill {
+  height: 100%;
+  background: var(--av-progress-fill);
+  width: 0%;
+  border-radius: 2px;
+  pointer-events: none;
+  /* We use transform for smoother performance instead of width */
+  transform-origin: left;
+  transform: scaleX(0);
+  will-change: transform;
+}
+
+.av-error {
+  color: #ff4444;
+  font-size: 12px;
+  text-align: center;
+  width: 100%;
+  padding: 8px;
+}
+
+.av-volume-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 16px;
+  margin-top: 4px;
+}
+
+.av-icon-volume {
+  width: 16px;
+  height: 16px;
+  fill: var(--av-text-color);
+  opacity: 0.7;
+}
+
+.av-volume-track {
+  flex-grow: 1;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+  touch-action: none;
+}
+
+.av-volume-bg {
+  width: 100%;
+  height: 4px;
+  background: var(--av-progress-bg);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.av-volume-fill {
+  height: 100%;
+  background: var(--av-wave-color);
+  width: 100%;
+  border-radius: 2px;
+  pointer-events: none;
+  transform-origin: left;
+  transform: scaleX(1);
+  will-change: transform;
+}
+
+.av-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  color: var(--av-text-color);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.av-loading.visible {
+  opacity: 1;
+}

@@ -1,7 +1,7 @@
 "use client"
 
-import { useSearchParams } from "next/navigation"
-import { useEffect, useState, useRef } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { getUsers, updateUserRole, updateProfile } from "@/app/actions/users"
 import { uploadFile } from "@/app/actions/upload"
 import { NotificationManagementForm } from "./notification-management-form"
@@ -51,8 +51,11 @@ import { useTranslation } from "@/lib/language-context"
 export function SettingsForm({ user }: { user: any }) {
   const { toast } = useToast()
   const { t } = useTranslation()
+  const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "profile")
+  const [activeTab, setActiveTab] = useState("profile")
+  const [isMounted, setIsMounted] = useState(false)
 
   const roleLabels: Record<string, string> = {
     admin: t('roles.admin'),
@@ -76,6 +79,7 @@ export function SettingsForm({ user }: { user: any }) {
   }
 
   useEffect(() => {
+    setIsMounted(true)
     const tab = searchParams.get("tab")
     if (tab && ["profile", "security", "language", "users", "notifications", "notifications_admin"].includes(tab)) {
       if (["users", "notifications_admin"].includes(tab) && user?.role !== "admin") {
@@ -85,7 +89,18 @@ export function SettingsForm({ user }: { user: any }) {
       }
     }
   }, [searchParams, user])
+
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("tab", tab)
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+  }, [pathname, router, searchParams])
   
+  if (!isMounted) {
+    return null
+  }
+
   return (
     <div className="flex-1 h-full min-h-full bg-[#F8FAFC] relative overflow-y-auto overflow-x-hidden pb-20">
       {/* Decorative background elements */}
@@ -130,7 +145,7 @@ export function SettingsForm({ user }: { user: any }) {
           </div>
         </header>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 w-full max-w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6 w-full max-w-full">
           <div className="sticky top-4 z-40 w-full">
             <TabsList className="bg-white/90 backdrop-blur-md border border-slate-200 p-1 rounded-xl shadow-md flex flex-wrap w-full justify-start md:justify-center h-auto gap-1">
               <TabsTrigger 
@@ -230,86 +245,67 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors }: { toa
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const [pendingChanges, setPendingChanges] = useState<Record<string, string>>({})
+  const [pendingChangesId, setPendingChangesId] = useState<string | null>(null)
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setIsLoading(true)
     const data = await getUsers()
     setUsers(data)
-    setPendingChanges({})
     setIsLoading(false)
-  }
+  }, [])
 
   useEffect(() => {
     fetchUsers()
-  }, [])
+  }, [fetchUsers])
 
-  const handleRoleSelect = (userId: string, newRole: string) => {
+  const handleRoleSelect = async (userId: string, newRole: string) => {
     const user = users.find(u => u.id === userId)
-    if (!user) return
-
-    if (user.role === newRole) {
-      const newPending = { ...pendingChanges }
-      delete newPending[userId]
-      setPendingChanges(newPending)
-    } else {
-      setPendingChanges(prev => ({
-        ...prev,
-        [userId]: newRole
-      }))
-    }
-  }
-
-  const handleSaveChanges = async () => {
-    const changesCount = Object.keys(pendingChanges).length
-    if (changesCount === 0) return
+    if (!user || user.role === newRole) return
 
     setIsSaving(true)
-    let successCount = 0
-    let lastError = ""
+    setPendingChangesId(userId)
+    
+    // Optimistic update
+    setUsers(prevUsers => prevUsers.map(u => 
+      u.id === userId ? { ...u, role: newRole } : u
+    ))
 
     try {
-      for (const [userId, newRole] of Object.entries(pendingChanges)) {
-        const result = await updateUserRole(userId, newRole)
-        if (result.success) {
-          successCount++
-        } else {
-          lastError = result.error || t('settings.users.updateRoleError')
-        }
-      }
-
-      if (successCount === changesCount) {
+      const result = await updateUserRole(userId, newRole)
+      if (result.success) {
         toast({
-          title: t('common.changesSaved'),
-          description: t('settings.users.updateRoleSuccess'),
+          title: t('common.success') || "Успешно",
+          description: t('settings.users.updateRoleSuccess') || "Роль успешно обновлена",
         })
-        await fetchUsers()
-      } else if (successCount > 0) {
-        toast({
-          title: t('common.partialSuccess'),
-          description: `${t('settings.users.partialUpdateError')} ${lastError}`,
-          variant: "destructive",
-        })
-        await fetchUsers()
       } else {
+        // Revert on failure
+        setUsers(prevUsers => prevUsers.map(u => 
+          u.id === userId ? { ...u, role: user.role } : u
+        ))
         toast({
-          title: t('common.error'),
-          description: lastError || t('common.saveChangesError'),
+          title: t('common.error') || "Ошибка",
+          description: result.error || t('settings.users.updateRoleError') || "Не удалось обновить роль",
           variant: "destructive",
         })
       }
     } catch (error) {
+      console.error(error)
+      // Revert on failure
+      setUsers(prevUsers => prevUsers.map(u => 
+        u.id === userId ? { ...u, role: user.role } : u
+      ))
       toast({
-        title: t('common.criticalError'),
-        description: t('common.saveChangesCriticalError'),
+        title: t('common.error') || "Ошибка",
+        description: t('common.saveChangesError') || "Произошла ошибка при сохранении",
         variant: "destructive",
       })
     } finally {
       setIsSaving(false)
+      setPendingChangesId(null)
     }
   }
 
-  const hasChanges = Object.keys(pendingChanges).length > 0
+
 
   const filteredUsers = users.filter(user => 
     user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -340,26 +336,6 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors }: { toa
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            {hasChanges && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="w-full md:w-auto"
-              >
-                <Button 
-                  onClick={handleSaveChanges}
-                  disabled={isSaving}
-                  className="w-full md:w-auto h-11 px-6 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-xl shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2 group"
-                >
-                  {isSaving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Save className="h-4 w-4 transition-transform group-hover:scale-110" />
-                  )}
-                  {t('common.save').toUpperCase()} ({Object.keys(pendingChanges).length})
-                </Button>
-              </motion.div>
-            )}
           </div>
         </div>
       </CardHeader>
@@ -394,8 +370,7 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors }: { toa
                   </TableRow>
                 ) : (
                   filteredUsers.map((user) => {
-                    const currentRole = pendingChanges[user.id] || user.role
-                    const isPending = !!pendingChanges[user.id]
+                    const currentRole = user.role
                     const RoleIcon = roleIcons[currentRole] || Users
                     return (
                       <TableRow key={user.id} className="group hover:bg-slate-50/50 border-slate-100 transition-colors">
@@ -423,69 +398,72 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors }: { toa
                           <div className="flex flex-col gap-1">
                             <div className={cn(
                               "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-wider shadow-sm transition-all duration-300",
-                              roleColors[currentRole] || roleColors.client,
-                              isPending && "ring-2 ring-amber-500/50 animate-pulse"
+                              roleColors[currentRole] || roleColors.client
                             )}>
                               <RoleIcon className="h-3 w-3" />
                               {roleLabels[currentRole] || t('roles.client')}
                             </div>
-                            {isPending && (
-                              <span className="text-[8px] font-black text-amber-500 uppercase tracking-tighter ml-1">
-                                {t('settings.users.notSaved')}
-                              </span>
-                            )}
                           </div>
                         </TableCell>
                         <TableCell className="pr-6 py-4 text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-9 w-9 p-0 rounded-lg hover:bg-slate-900 hover:text-white transition-all duration-300 border border-transparent hover:border-slate-900 group/btn shadow-sm hover:shadow-lg">
-                                <MoreHorizontal className="h-5 w-5 transition-transform group-hover/btn:scale-110" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-64 rounded-2xl border border-slate-200 shadow-xl p-3 bg-white/98 backdrop-blur-2xl">
-                              <DropdownMenuLabel className="text-[9px] font-black text-slate-400 uppercase tracking-wider px-3 py-2">{t('settings.users.selectNewRole')}</DropdownMenuLabel>
-                              <DropdownMenuSeparator className="bg-slate-100 my-1.5 h-px rounded-full" />
-                              <div className="grid gap-1">
-                                {Object.entries(roleLabels).map(([role, label]) => {
-                                  const Icon = roleIcons[role] || Users
-                                  const isActive = currentRole === role
-                                  const isOriginal = user.role === role
-                                  return (
-                                    <DropdownMenuItem 
-                                      key={role}
-                                      onClick={() => handleRoleSelect(user.id, role)}
-                                      className={cn(
-                                        "flex items-center gap-3 rounded-xl cursor-pointer transition-all py-2.5 px-3 text-sm font-bold",
-                                        isActive 
-                                          ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20" 
-                                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                                      )}
-                                    >
-                                      <div className={cn(
-                                        "p-1.5 rounded-lg border transition-colors",
-                                        isActive ? "bg-white/10 border-white/20" : "bg-slate-50 border-slate-100"
-                                      )}>
-                                        <Icon className={cn("h-4 w-4", isActive ? "text-white" : "text-slate-400")} />
-                                      </div>
-                                      <div className="flex flex-col">
-                                        <div className="flex items-center gap-2">
-                                          <span>{label}</span>
-                                          {isOriginal && !isActive && (
-                                            <span className="text-[8px] bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded-md">{t('settings.users.current')}</span>
-                                          )}
-                                        </div>
-                                        <span className={cn("text-[8px] font-black uppercase tracking-wider opacity-60", isActive ? "text-white" : "text-slate-400")}>
-                                          {role === "admin" ? t('roles.permissions.full') : role === "manager" ? t('roles.permissions.management') : t('roles.permissions.view')}
-                                        </span>
-                                      </div>
-                                      {isActive && <Check className="h-4 w-4 ml-auto text-white" />}
-                                    </DropdownMenuItem>
-                                  )
-                                })}
+                            {isSaving && user.id === pendingChangesId ? (
+                              <div className="flex justify-end p-2">
+                                <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
                               </div>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                            ) : (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-9 w-9 p-0 rounded-lg hover:bg-slate-900 hover:text-white transition-all duration-300 border border-transparent hover:border-slate-900 group/btn shadow-sm hover:shadow-lg">
+                                    <MoreHorizontal className="h-5 w-5 transition-transform group-hover/btn:scale-110" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-64 rounded-2xl border border-slate-200 shadow-xl p-3 bg-white/98 backdrop-blur-2xl">
+                                  <DropdownMenuLabel className="text-[9px] font-black text-slate-400 uppercase tracking-wider px-3 py-2">{t('settings.users.selectNewRole')}</DropdownMenuLabel>
+                                  <DropdownMenuSeparator className="bg-slate-100 my-1.5 h-px rounded-full" />
+                                  <div className="grid gap-1">
+                                    {Object.entries(roleLabels).map(([role, label]) => {
+                                      const Icon = roleIcons[role] || Users
+                                      const isActive = currentRole === role
+                                      const isOriginal = user.role === role
+                                      return (
+                                        <DropdownMenuItem 
+                                          key={role}
+                                          onSelect={(e) => {
+                                            e.preventDefault()
+                                            handleRoleSelect(user.id, role)
+                                          }}
+                                          className={cn(
+                                            "flex items-center gap-3 rounded-xl cursor-pointer transition-all py-2.5 px-3 text-sm font-bold",
+                                            isActive 
+                                              ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20" 
+                                              : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                          )}
+                                        >
+                                          <div className={cn(
+                                            "p-1.5 rounded-lg border transition-colors",
+                                            isActive ? "bg-white/10 border-white/20" : "bg-slate-50 border-slate-100"
+                                          )}>
+                                            <Icon className={cn("h-4 w-4", isActive ? "text-white" : "text-slate-400")} />
+                                          </div>
+                                          <div className="flex flex-col">
+                                            <div className="flex items-center gap-2">
+                                              <span>{label}</span>
+                                              {isOriginal && !isActive && (
+                                                <span className="text-[8px] bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded-md">{t('settings.users.current')}</span>
+                                              )}
+                                            </div>
+                                            <span className={cn("text-[8px] font-black uppercase tracking-wider opacity-60", isActive ? "text-white" : "text-slate-400")}>
+                                              {role === "admin" ? t('roles.permissions.full') : role === "manager" ? t('roles.permissions.management') : t('roles.permissions.view')}
+                                            </span>
+                                          </div>
+                                          {isActive && <Check className="h-4 w-4 ml-auto text-white" />}
+                                        </DropdownMenuItem>
+                                      )
+                                    })}
+                                  </div>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
                         </TableCell>
                       </TableRow>
                     )

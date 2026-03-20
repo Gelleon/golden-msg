@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 "use server"
 
 import { revalidatePath } from "next/cache"
@@ -6,6 +8,7 @@ import { getSession } from "./auth"
 import { randomBytes } from "crypto"
 import { headers } from "next/headers"
 import { ensureSchemaFixed } from "@/lib/schema-fix"
+import { sendSSEUpdate } from "@/lib/sse"
 
 export async function createRoomInvite(roomId: string, role: "client" | "partner", maxUses: number = 1) {
   await ensureSchemaFixed()
@@ -272,7 +275,7 @@ export async function createRoom(name: string) {
     }
   } catch (error) {
     console.error("Create room error:", error)
-    return { error: "Failed to create room" }
+    return { error: "Failed to create room", details: error instanceof Error ? error.message : String(error) }
   }
 }
 
@@ -339,6 +342,50 @@ export async function getDMs() {
       }, {} as Record<string, number>)
     }
 
+    // Fetch shared rooms for each DM
+    const sharedRoomsPromises = dms.map(async (dm) => {
+      const otherParticipant = dm.participants.find(p => p.user_id !== session.user.id);
+      if (!otherParticipant) return { dmId: dm.id, sharedRoomName: null };
+      
+      // Find shared rooms
+      const sharedRooms = await prisma.room.findMany({
+        where: {
+          type: 'group',
+          AND: [
+            { participants: { some: { user_id: session.user.id } } },
+            { participants: { some: { user_id: otherParticipant.user_id } } }
+          ]
+        },
+        select: { name: true }
+      });
+      
+      const sharedRoomNames = sharedRooms.map(r => r.name).filter(Boolean);
+      return { 
+        dmId: dm.id, 
+        sharedRoomName: sharedRoomNames.length > 0 ? sharedRoomNames.join(', ') : null 
+      };
+    });
+    
+    const sharedRoomsResults = await Promise.all(sharedRoomsPromises);
+    const sharedRoomsMap = sharedRoomsResults.reduce((acc, result) => {
+      acc[result.dmId] = result.sharedRoomName;
+      return acc;
+    }, {} as Record<string, string | null>);
+
+    // Fetch parent rooms for each DM
+    const parentRoomIds = dms.map(dm => dm.room_id).filter(Boolean) as string[]
+    let parentRoomsMap: Record<string, string> = {}
+    if (parentRoomIds.length > 0) {
+      const parentRooms = await prisma.room.findMany({
+        where: { id: { in: parentRoomIds } },
+        select: { id: true, name: true }
+      })
+      parentRoomsMap = parentRooms.reduce((acc, r) => {
+        if (r.name) acc[r.id] = r.name
+        return acc
+      }, {} as Record<string, string>)
+    }
+
     const processedDMs = dms.map(dm => {
       const otherParticipant = dm.participants.find(
         (p) => p.user_id !== session.user.id
@@ -352,11 +399,14 @@ export async function getDMs() {
 
       return {
         id: dm.id,
+        room_id: dm.room_id,
         name: dm.name,
         type: dm.type,
         created_by: dm.created_by,
         created_at: dm.created_at.toISOString(),
         unreadCount,
+        sharedRoomName: sharedRoomsMap[dm.id],
+        parentRoomName: dm.room_id ? parentRoomsMap[dm.room_id] : null,
         lastReadAt: lastReadAt.toISOString(),
         otherUser: otherParticipant?.user ? {
           id: otherParticipant.user.id,
@@ -378,51 +428,84 @@ export async function getDMs() {
   }
 }
 
-export async function searchUsers(query: string) {
+export async function searchUsers(query: string = "") {
+  console.log("[SERVER] searchUsers called with query:", query);
   const session = await getSession()
-  if (!session?.user) return []
+  if (!session?.user) {
+    console.log("[SERVER] searchUsers: no session user")
+    return []
+  }
 
-  if (!query.trim()) return []
+  const currentUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  })
+
+  // We want to be able to find users to add them to a room/DM.
+  // Allow fetching any active user other than self, depending on use-case we can filter later, 
+  // but for basic search let's just return all users except self.
+  const whereClause: any = {
+    id: {
+      not: session.user.id,
+    }
+  }
 
   try {
+    console.log("[SERVER] searchUsers query:", query);
     const users = await prisma.user.findMany({
-      where: {
-        full_name: {
-          contains: query,
-        },
-        id: {
-          not: session.user.id,
-        },
-        role: {
-          not: "client", // Clients excluded from DMs? Or maybe just can't initiate?
-          // User requirement: "Private chat... excluding Clients"
-          // This implies clients cannot participate in private chats.
-        },
-      },
-      take: 10,
+      where: whereClause,
       select: {
         id: true,
+        email: true,
         full_name: true,
         avatar_url: true,
         role: true,
         created_at: true,
-        // @ts-ignore
-        // preferred_language: true,
+        preferred_language: true,
       }
     })
-    return users.map(user => ({
-      ...user,
-      // @ts-ignore
-      preferred_language: user.preferred_language || "ru",
-      created_at: user.created_at.toISOString()
-    }))
+    
+    console.log("[SERVER] searchUsers found users:", users.length);
+
+    let filteredUsers = users;
+    if (query && query.trim()) {
+      const q = query.trim().toLowerCase();
+      filteredUsers = users.filter(u => 
+        (u.full_name && u.full_name.toLowerCase().includes(q)) || 
+        (u.email && u.email.toLowerCase().includes(q))
+      );
+    }
+    
+    const finalUsers = filteredUsers.slice(0, 50); // Always return up to 50 users
+
+    // Fetch shared rooms for each user
+    const usersWithSharedRooms = await Promise.all(finalUsers.map(async (user) => {
+      const sharedRooms = await prisma.room.findMany({
+        where: {
+          type: 'group',
+          AND: [
+            { participants: { some: { user_id: session.user.id } } },
+            { participants: { some: { user_id: user.id } } }
+          ]
+        },
+        select: { name: true }
+      });
+      return {
+        ...user,
+        preferred_language: user.preferred_language || "ru",
+        created_at: user.created_at.toISOString(),
+        sharedRoomName: sharedRooms.map(r => r.name).filter(Boolean).join(', ') || null
+      };
+    }));
+
+    return usersWithSharedRooms;
   } catch (error) {
     console.error("Search users error:", error)
     return []
   }
 }
 
-export async function startDM(otherUserId: string) {
+export async function startDM(otherUserId: string, roomId?: string | null) {
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
 
@@ -441,31 +524,34 @@ export async function startDM(otherUserId: string) {
   })
 
   if (otherUser?.role === "client") {
-    return { error: "Cannot chat with client" }
+    return { error: "Cannot start private chat with a client" }
   }
 
   try {
-    // Check if DM already exists
+    // Check if DM already exists between these two users in the same room context
+    const existingDMCondition: any = {
+      type: "private",
+      AND: [
+        {
+          participants: {
+            some: {
+              user_id: session.user.id,
+            },
+          },
+        },
+        {
+          participants: {
+            some: {
+              user_id: otherUserId,
+            },
+          },
+        },
+      ],
+      ...(roomId && { room_id: roomId }),
+    }
+
     const existingDM = await prisma.room.findFirst({
-      where: {
-        type: "private",
-        AND: [
-          {
-            participants: {
-              some: {
-                user_id: session.user.id,
-              },
-            },
-          },
-          {
-            participants: {
-              some: {
-                user_id: otherUserId,
-              },
-            },
-          },
-        ],
-      },
+      where: existingDMCondition,
     })
 
     if (existingDM) {
@@ -481,9 +567,10 @@ export async function startDM(otherUserId: string) {
     // Create new DM room
     const room = await prisma.room.create({
       data: {
-        name: "DM", // Placeholder
+        name: "DM",
         created_by: session.user.id,
         type: "private",
+        room_id: roomId,
         participants: {
           create: [
             { user_id: session.user.id },
@@ -503,7 +590,171 @@ export async function startDM(otherUserId: string) {
     }
   } catch (error) {
     console.error("Start DM error:", error)
-    return { error: "Failed to start DM" }
+    return { error: "Failed to start DM", details: error instanceof Error ? error.message : String(error) }
+  }
+}
+
+export async function getRoomDetails(roomId: string) {
+  const session = await getSession()
+  if (!session?.user) return null
+
+  try {
+    const room = await prisma.room.findUnique({
+      where: { id: roomId },
+      select: { created_by: true, type: true }
+    })
+
+    const currentUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true, role: true }
+    })
+
+    const participants = await prisma.roomParticipant.findMany({
+      where: { room_id: roomId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            full_name: true,
+            avatar_url: true,
+            role: true,
+          },
+        },
+      },
+      orderBy: {
+        joined_at: 'asc'
+      }
+    })
+
+    const mappedParticipants = participants.map((p) => ({
+      ...p.user,
+      room_role: p.role, // "owner", "admin", "member"
+      joined_at: p.joined_at.toISOString(),
+    }))
+
+    return {
+      room,
+      currentUser,
+      participants: mappedParticipants
+    }
+  } catch (error) {
+    console.error("Get room info details error:", error)
+    return null
+  }
+}
+
+export async function updateParticipantRole(roomId: string, userId: string, newRole: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  // Check permissions
+  const currentUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  })
+  
+  const room = await prisma.room.findUnique({
+    where: { id: roomId },
+    select: { created_by: true }
+  })
+
+  const currentParticipant = await prisma.roomParticipant.findUnique({
+    where: { room_id_user_id: { room_id: roomId, user_id: session.user.id } }
+  })
+
+  const isCreator = room?.created_by === session.user.id
+  const isGlobalAdminOrManager = ["admin", "manager"].includes(currentUser?.role || "")
+  const isRoomAdmin = currentParticipant?.role === "admin" || currentParticipant?.role === "owner"
+
+  if (!isCreator && !isGlobalAdminOrManager && !isRoomAdmin) {
+    return { error: "Permission denied" }
+  }
+
+  // Cannot change creator's role
+  if (room?.created_by === userId) {
+    return { error: "Cannot change creator's role" }
+  }
+
+  try {
+    await prisma.roomParticipant.update({
+      where: {
+        room_id_user_id: {
+          room_id: roomId,
+          user_id: userId
+        }
+      },
+      data: {
+        role: newRole
+      }
+    })
+
+    sendSSEUpdate(roomId, {
+      type: "participant_updated",
+      userId,
+      role: newRole
+    })
+
+    revalidatePath(`/dashboard/rooms/${roomId}`)
+    return { success: true }
+  } catch (error) {
+    console.error("Update participant role error:", error)
+    return { error: "Failed to update role" }
+  }
+}
+
+export async function removeParticipant(roomId: string, userId: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  })
+  
+  const room = await prisma.room.findUnique({
+    where: { id: roomId },
+    select: { created_by: true }
+  })
+
+  const currentParticipant = await prisma.roomParticipant.findUnique({
+    where: { room_id_user_id: { room_id: roomId, user_id: session.user.id } }
+  })
+
+  const isSelf = session.user.id === userId
+  const isCreator = room?.created_by === session.user.id
+  const isGlobalAdminOrManager = ["admin", "manager"].includes(currentUser?.role || "")
+  const isRoomAdmin = currentParticipant?.role === "admin" || currentParticipant?.role === "owner"
+
+  if (!isSelf && !isCreator && !isGlobalAdminOrManager && !isRoomAdmin) {
+    return { error: "Permission denied" }
+  }
+
+  // Cannot remove creator
+  if (room?.created_by === userId) {
+    return { error: "Cannot remove room creator" }
+  }
+
+  try {
+    await prisma.roomParticipant.delete({
+      where: {
+        room_id_user_id: {
+          room_id: roomId,
+          user_id: userId
+        }
+      }
+    })
+
+    sendSSEUpdate(roomId, {
+      type: "participant_removed",
+      userId
+    })
+
+    revalidatePath(`/dashboard/rooms/${roomId}`)
+    return { success: true }
+  } catch (error) {
+    console.error("Remove participant error:", error)
+    return { error: "Failed to remove participant" }
   }
 }
 
@@ -550,11 +801,17 @@ export async function addParticipant(roomId: string, userId: string) {
     select: { role: true },
   })
   
-  const canManage = ["admin", "manager"].includes(currentUser?.role || "")
+  const room = await prisma.room.findUnique({
+    where: { id: roomId },
+    select: { created_by: true, type: true }
+  })
+
+  const isCreator = room?.created_by === session.user.id
+  const canManage = ["admin", "manager"].includes(currentUser?.role || "") || isCreator
   if (!canManage) return { error: "Permission denied" }
 
-  // If Manager, check if they are inviting only Client or Partner
-  if (currentUser?.role === "manager") {
+  // If Manager (and not creator), check if they are inviting only Client or Partner
+  if (currentUser?.role === "manager" && !isCreator) {
     const targetUser = await prisma.user.findUnique({
       where: { id: userId },
       select: { role: true },
@@ -566,12 +823,34 @@ export async function addParticipant(roomId: string, userId: string) {
   }
 
   try {
-    await prisma.roomParticipant.create({
+    const newParticipant = await prisma.roomParticipant.create({
       data: {
         room_id: roomId,
         user_id: userId,
       },
+      include: {
+        user: {
+          select: {
+            id: true,
+            full_name: true,
+            avatar_url: true,
+            role: true,
+          }
+        }
+      }
     })
+
+    // Map to profile structure expected by UI
+    const participantData = {
+      ...newParticipant.user,
+      joined_at: newParticipant.joined_at.toISOString(),
+    }
+
+    sendSSEUpdate(roomId, {
+      type: "participant_added",
+      participant: participantData
+    })
+
     revalidatePath(`/dashboard/rooms/${roomId}`)
     return { success: true }
   } catch (error) {
@@ -580,37 +859,71 @@ export async function addParticipant(roomId: string, userId: string) {
   }
 }
 
-export async function removeParticipant(roomId: string, userId: string) {
+
+export async function updateUserPresence(roomId: string, status: "online" | "offline") {
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
 
-  // Check permissions (Admin or Manager)
-  const currentUser = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { role: true },
+  sendSSEUpdate(roomId, {
+    type: "presence",
+    userId: session.user.id,
+    status
   })
-  
-  const canManage = ["admin", "manager"].includes(currentUser?.role || "")
-  if (!canManage) return { error: "Permission denied" }
+
+  return { success: true }
+}
+
+export async function searchUsersForRoomPaginated(roomId: string, query: string = "", page: number = 1, limit: number = 10) {
+  const session = await getSession()
+  if (!session?.user) return { users: [], total: 0 }
+
+  // Exclude users already in the room
+  const participants = await prisma.roomParticipant.findMany({
+    where: { room_id: roomId },
+    select: { user_id: true }
+  })
+  const existingUserIds = participants.map(p => p.user_id)
+  existingUserIds.push(session.user.id) // also exclude current user if we want, or keep it. Let's exclude current user.
+
+  const where: any = {
+    id: {
+      notIn: existingUserIds,
+    }
+  }
+
+  if (query && query.trim()) {
+    where.OR = [
+      { full_name: { contains: query.trim(), mode: 'insensitive' } },
+      { email: { contains: query.trim(), mode: 'insensitive' } }
+    ]
+  }
 
   try {
-    await prisma.roomParticipant.delete({
-      where: {
-        room_id_user_id: {
-          room_id: roomId,
-          user_id: userId,
-        },
+    const total = await prisma.user.count({ where })
+    const users = await prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        full_name: true,
+        email: true,
+        avatar_url: true,
+        role: true,
       },
+      orderBy: {
+        full_name: "asc",
+      },
+      skip: (page - 1) * limit,
+      take: limit,
     })
-    revalidatePath(`/dashboard/rooms/${roomId}`)
-    return { success: true }
+    
+    return { users, total }
   } catch (error) {
-    console.error("Remove participant error:", error)
-    return { error: "Failed to remove participant" }
+    console.error("Search users paginated error:", error)
+    return { users: [], total: 0 }
   }
 }
 
-export async function searchUsersForRoom(query: string) {
+export async function searchUsersForRoom(query: string = "") {
   const session = await getSession()
   if (!session?.user) return []
 
@@ -620,9 +933,6 @@ export async function searchUsersForRoom(query: string) {
   })
 
   const roleFilter: any = {}
-  if (currentUser?.role === "manager") {
-    roleFilter.role = { in: ["client", "partner"] }
-  }
 
   const where: any = {
     id: {
@@ -631,19 +941,13 @@ export async function searchUsersForRoom(query: string) {
     ...roleFilter,
   }
 
-  if (query.trim()) {
-    where.full_name = {
-      contains: query,
-    }
-  }
-
   try {
     const users = await prisma.user.findMany({
       where,
-      take: query.trim() ? 10 : 50,
       select: {
         id: true,
         full_name: true,
+        email: true,
         avatar_url: true,
         role: true,
       },
@@ -651,7 +955,17 @@ export async function searchUsersForRoom(query: string) {
         full_name: "asc",
       },
     })
-    return users
+    
+    let filteredUsers = users;
+    if (query && query.trim()) {
+      const q = query.trim().toLowerCase();
+      filteredUsers = users.filter(u => 
+        (u.full_name && u.full_name.toLowerCase().includes(q)) || 
+        (u.email && u.email.toLowerCase().includes(q))
+      );
+    }
+    
+    return filteredUsers.slice(0, 50); // Always return up to 50 users, regardless of query
   } catch (error) {
     console.error("Search users for room error:", error)
     return []
@@ -716,8 +1030,20 @@ export async function deleteRoom(roomId: string) {
     select: { role: true },
   })
   
-  if (currentUser?.role !== "admin") {
-    return { error: "Permission denied. Only admins can delete rooms." }
+  const room = await prisma.room.findUnique({
+    where: { id: roomId },
+    select: { type: true }
+  })
+
+  if (!room) {
+    return { error: "Room not found" }
+  }
+
+  // Admins can delete any room. Managers can delete private chats (DMs).
+  const canDelete = currentUser?.role === "admin" || (currentUser?.role === "manager" && room.type === "private");
+
+  if (!canDelete) {
+    return { error: "Permission denied. You cannot delete this chat/room." }
   }
 
   try {
@@ -726,7 +1052,7 @@ export async function deleteRoom(roomId: string) {
     })
 
     // Log the action
-    console.log(`[LOG] Admin ${session.user.id} deleted room ${roomId}`)
+    console.log(`[LOG] User ${session.user.id} (${currentUser?.role}) deleted room ${roomId} (type: ${room.type})`)
 
     revalidatePath("/dashboard")
     

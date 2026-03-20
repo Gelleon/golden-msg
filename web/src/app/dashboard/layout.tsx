@@ -3,9 +3,9 @@ import { getSession } from "@/app/actions/auth"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { MobileNav } from "@/components/dashboard/mobile-nav"
 import { PageTransition } from "@/components/dashboard/page-transition"
-import { LanguageProvider } from "@/lib/language-context"
 
 import { MobileNavProvider } from "@/lib/mobile-nav-context"
+import { LanguageProvider } from "@/lib/language-context"
 
 export default async function DashboardLayout({
   children,
@@ -21,7 +21,7 @@ export default async function DashboardLayout({
   // Use the user from session as the profile since they are merged in Prisma schema
   const user = session.user
   const profile = user
-  const initialLanguage = (user.preferred_language as "ru" | "cn") || "ru"
+  const initialLanguage = (session?.user?.preferred_language as "ru" | "cn") || "ru"
 
   return (
     <LanguageProvider initialLanguage={initialLanguage}>

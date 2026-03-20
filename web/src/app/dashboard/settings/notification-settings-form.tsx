@@ -62,7 +62,7 @@ export function NotificationSettingsForm({ user }: { user: any }) {
               <Bell className="h-6 w-6 text-white" />
             </div>
             <div className="space-y-1 min-w-0">
-              <CardTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight break-words">
+              <CardTitle className="text-xl md:text-2xl font-black text-slate-900 tracking-tight break-all md:break-words">
                 {t('tabs.notifications')}
               </CardTitle>
               <CardDescription className="text-slate-600 text-sm font-bold break-words">
@@ -79,7 +79,7 @@ export function NotificationSettingsForm({ user }: { user: any }) {
                 <div className="p-1.5 bg-blue-50 rounded-lg border border-blue-100 shrink-0">
                   <Bell className="h-3.5 w-3.5 text-blue-600" />
                 </div>
-                <span className="break-words">Push-уведомления</span>
+                <span className="break-all md:break-words">Push-уведомления</span>
               </Label>
               <p className="text-[11px] text-slate-500 font-bold leading-relaxed pl-1 max-w-md break-words">
                 Получайте мгновенные уведомления о новых сообщениях в браузере или на телефоне.

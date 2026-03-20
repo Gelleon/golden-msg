@@ -64,6 +64,7 @@ export function RoomSettingsDialog({
     setParticipants(data)
   }
 
+
   useEffect(() => {
     if (canManage) {
       const init = async () => {
@@ -82,10 +83,15 @@ export function RoomSettingsDialog({
   }, [roomId, canManage])
 
   useEffect(() => {
-    if (canManage && searchQuery === "") {
-      handleSearch("")
-    }
-  }, [searchQuery, canManage])
+      if (!canManage) return;
+      
+      const timeoutId = setTimeout(() => {
+        handleSearch(searchQuery);
+      }, 300);
+      
+      return () => clearTimeout(timeoutId);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchQuery, canManage])
 
   const handleSearch = async (queryOverride?: string) => {
     const query = typeof queryOverride === 'string' ? queryOverride : searchQuery

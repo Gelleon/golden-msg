@@ -46,3 +46,6 @@ src/generated/prisma
 
 #tasks
 prd-golden-russia.md
+
+#Sound
+*.webm

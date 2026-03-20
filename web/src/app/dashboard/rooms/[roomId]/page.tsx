@@ -10,6 +10,9 @@ import * as motion from "framer-motion/client"
 import ru from "@/locales/ru.json"
 import cnTrans from "@/locales/cn.json"
 import { getInitialRoomMessages } from "@/lib/chat-utils"
+import { RoomInfo } from "@/components/chat/room-info"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Users } from "lucide-react"
 
 interface RoomPageProps {
   params: Promise<{
@@ -68,16 +71,35 @@ export default async function RoomPage({ params }: RoomPageProps) {
   const lastReadAt = participation.last_read_at
 
   // Determine display name for the room
-  let displayName = room.name
-  let displayAvatar = null
-  
-  if (room.type === 'private') {
-    const otherParticipant = room.participants.find(p => p.user_id !== user.id)
-    if (otherParticipant) {
-      displayName = otherParticipant.user.full_name || translations.room.interlocutor
-      displayAvatar = otherParticipant.user.avatar_url
+    let displayName = room.name
+    let displayAvatar = null
+    let sharedRoomNames: string[] = []
+
+    if (room.type === 'private') {
+      const otherParticipant = room.participants.find(p => p.user_id !== user.id)
+      if (otherParticipant) {
+        displayName = otherParticipant.user.full_name || translations.room.interlocutor
+        displayAvatar = otherParticipant.user.avatar_url
+        
+        // Fetch shared rooms
+        try {
+          const sharedRooms = await prisma.room.findMany({
+            where: {
+              type: 'group',
+              AND: [
+                { participants: { some: { user_id: user.id } } },
+                { participants: { some: { user_id: otherParticipant.user_id } } }
+              ]
+            },
+            select: { name: true },
+            take: 3
+          })
+          sharedRoomNames = sharedRooms.map(r => r.name).filter(Boolean) as string[]
+        } catch (error) {
+          console.error("Failed to fetch shared rooms:", error)
+        }
+      }
     }
-  }
 
   const { messages, unreadCount, anchorId } = await getInitialRoomMessages(
     roomId, 
@@ -113,43 +135,70 @@ export default async function RoomPage({ params }: RoomPageProps) {
             <div className="flex flex-col min-w-0">
                 <h2 className="font-bold text-slate-900 text-sm md:text-lg leading-tight tracking-tight truncate pr-2">{displayName}</h2>
                 <div className="flex items-center gap-1.5 md:gap-2 mt-0.5">
-                  <span className={cn(
-                    "inline-flex items-center px-1.5 py-0.5 rounded-full text-[8px] md:text-[10px] font-bold uppercase tracking-wider",
-                    room.type === 'private' ? "bg-blue-50 text-blue-600" : "bg-indigo-50 text-indigo-600"
-                  )}>
-                    {room.type === 'private' ? translations.room.private : translations.room.group}
-                  </span>
-                  <span className="text-[9px] md:text-xs text-slate-400 font-medium flex items-center gap-1">
-                    <span className="w-1 h-1 rounded-full bg-slate-300" />
-                    {room.type === 'private' ? translations.room.online : `${room.participants.length} ${translations.room.participantsCount}`}
-                  </span>
-                </div>
+                    <span className={cn(
+                      "inline-flex items-center px-1.5 py-0.5 rounded-full text-[8px] md:text-[10px] font-bold uppercase tracking-wider",
+                      room.type === 'private' ? "bg-blue-50 text-blue-600" : "bg-indigo-50 text-indigo-600"
+                    )}>
+                      {room.type === 'private' ? translations.room.private : translations.room.group}
+                    </span>
+                    <span className="text-[9px] md:text-xs text-slate-400 font-medium flex items-center gap-1 truncate max-w-[200px] md:max-w-[400px]">
+                      <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
+                      <span className="truncate">
+                        {room.type === 'private' 
+                          ? (sharedRoomNames.length > 0 ? `${(translations.room as any).sharedRooms || 'Общие комнаты'}: ${sharedRoomNames.join(', ')}` : translations.room.online)
+                          : `${room.participants.length} ${translations.room.participantsCount}`}
+                      </span>
+                    </span>
+                  </div>
             </div>
         </div>
         <div className="flex items-center gap-1 md:gap-3 flex-shrink-0">
           <div className="h-6 md:h-8 w-[1px] bg-slate-200 mx-0.5 md:mx-1 hidden sm:block" />
-          <RoomSettingsDialog 
-            roomId={roomId} 
-            currentUserRole={user.role} 
-            roomName={displayName || "Chat"} 
-          />
+          {room.type !== 'private' && (
+            <>
+              <div className="xl:hidden">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <button className="p-2 text-slate-500 hover:text-slate-900 transition-colors rounded-xl hover:bg-slate-100">
+                      <Users className="h-5 w-5" />
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="p-0 bg-[#0F172A] border-l-white/10 w-80">
+                    <RoomInfo roomId={roomId} />
+                  </SheetContent>
+                </Sheet>
+              </div>
+              <RoomSettingsDialog 
+                roomId={roomId} 
+                currentUserRole={user.role} 
+                roomName={displayName || "Chat"} 
+              />
+            </>
+          )}
         </div>
       </div>
-      <div className="flex-1 overflow-hidden relative">
-        <ChatWindow 
-          roomId={roomId} 
-          initialMessages={messages} 
-          currentUser={user}
-          userProfile={user}
-          initialUnreadCount={unreadCount}
-          anchorId={anchorId}
-          lastReadAt={lastReadAt?.toISOString() || new Date(0).toISOString()}
-          participants={room.participants.map(p => ({
-            id: p.user.id,
-            full_name: p.user.full_name,
-            avatar_url: p.user.avatar_url
-          }))}
-        />
+      <div className="flex-1 overflow-hidden relative flex">
+        <div className="flex-1 overflow-hidden relative min-w-0">
+          <ChatWindow 
+            roomId={roomId} 
+            initialMessages={messages} 
+            currentUser={user}
+            userProfile={user}
+            initialUnreadCount={unreadCount}
+            anchorId={anchorId}
+            lastReadAt={lastReadAt?.toISOString() || new Date(0).toISOString()}
+            participants={room.participants.map(p => ({
+              id: p.user.id,
+              full_name: p.user.full_name,
+              avatar_url: p.user.avatar_url
+            }))}
+          />
+        </div>
+        {room.type !== 'private' && (
+          <div className="hidden xl:block w-[320px] border-l border-slate-200/60 bg-[#0F172A] overflow-y-auto">
+            <RoomInfo roomId={roomId} />
+          </div>
+        )}
       </div>
     </motion.div>
   )

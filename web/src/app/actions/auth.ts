@@ -233,8 +233,12 @@ export async function getSession() {
   await ensureSchemaFixed()
   const cookieStore = await cookies()
   const userId = cookieStore.get("session_user_id")?.value
+  console.log("[SERVER] getSession userId:", userId)
 
-  if (!userId) return null
+  if (!userId) {
+    console.log("[SERVER] getSession: no userId in cookies")
+    return null
+  }
 
   try {
     const user = await prisma.user.findUnique({
@@ -247,11 +251,14 @@ export async function getSession() {
         role: true,
         created_at: true,
         // @ts-ignore
-        // preferred_language: true,
+        preferred_language: true,
       }
     })
 
-    if (!user) return null
+    if (!user) {
+      console.log("[SERVER] getSession: user not found in DB for id:", userId)
+      return null
+    }
 
     // Return only serializable data
     return {

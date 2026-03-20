@@ -83,6 +83,7 @@ model Room {
   equipment   String?  // JSON string or comma-separated list
   type        String   @default("private") // private, group
   created_by  String?
+  room_id     String?  // Associated room for DMs
   created_at  DateTime @default(now())
   updated_at  DateTime @default(now()) @updatedAt
 

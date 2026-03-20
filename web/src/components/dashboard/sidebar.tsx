@@ -1,12 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { LogOut, Plus, Settings, User, MessageSquare, Users, Search, Building2, ChevronRight, Hash, Edit, Trash2 } from "lucide-react"
+import { LogOut, Plus, Settings, User, MessageSquare, Users, Search, Building2, ChevronRight, ChevronDown, Hash, Edit, Trash2, Info, UserPlus } from "lucide-react"
 import { logout } from "@/app/actions/auth"
-import { getRooms, createRoom, getDMs, searchUsers, startDM, deleteRoom } from "@/app/actions/room"
+import { getRooms, createRoom, getDMs, searchUsers, startDM, deleteRoom, addParticipant } from "@/app/actions/room"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -39,6 +40,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { EditRoomDialog } from "./edit-room-dialog"
 import { useTranslation } from "@/lib/language-context"
+import { ErrorBoundary } from "@/components/error-boundary"
+import { RoomInfo } from "@/components/chat/room-info"
 
 interface SidebarProps {
   user: any
@@ -57,11 +60,18 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   const [newRoomName, setNewRoomName] = useState("")
   const [isRoomDialogOpen, setIsRoomDialogOpen] = useState(false)
   const [isDMDialogOpen, setIsDMDialogOpen] = useState(false)
+  const [isAddUserToDMDialogOpen, setIsAddUserToDMDialogOpen] = useState(false)
+  const [targetDMId, setTargetDMId] = useState<string | null>(null)
   const [dmSearchQuery, setDmSearchQuery] = useState("")
   const [dmSearchResults, setDmSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
   const [editingRoom, setEditingRoom] = useState<any>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
+  const [roomInfoDialogId, setRoomInfoDialogId] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -105,38 +115,126 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   const handleCreateRoom = async () => {
     if (!newRoomName.trim()) return
 
-    const result = await createRoom(newRoomName)
+    try {
+      const result = await createRoom(newRoomName)
 
-    if (result.success && result.room) {
-      setNewRoomName("")
-      setIsRoomDialogOpen(false)
-      fetchRoomsAndDMs()
-      router.push(`/dashboard/rooms/${result.room.id}`)
-      onClose?.()
-    } else {
-      console.error("Error creating room:", result.error)
+      if (result.success && result.room) {
+        setNewRoomName("")
+        setIsRoomDialogOpen(false)
+        fetchRoomsAndDMs()
+        router.push(`/dashboard/rooms/${result.room.id}`)
+        onClose?.()
+      } else {
+        console.error("Error creating room:", result.error, result.details)
+        alert((result.error || "Failed to create room") + (result.details ? `: ${result.details}` : ""))
+      }
+    } catch (error: any) {
+      console.error("Failed to create room:", error)
+      alert("Произошла ошибка при создании комнаты. Пожалуйста, попробуйте позже.")
     }
   }
 
-  const handleSearchUsers = async () => {
-    if (!dmSearchQuery.trim()) return
-    setIsSearching(true)
+  const performSearch = async (query: string) => {
+    setIsSearching(true);
+    try {
+      const users = await searchUsers(query);
+      setDmSearchResults(users || []);
+    } catch (error) {
+      console.error("Error searching users:", error);
+      setDmSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleManualSearch = () => {
+    performSearch(dmSearchQuery);
+  };
+
+  useEffect(() => {
+    if (!isDMDialogOpen && !isAddUserToDMDialogOpen) {
+      setDmSearchQuery("");
+      setDmSearchResults([]);
+      setHasSearched(false);
+      return;
+    }
+
+    let isMounted = true;
     
-    const users = await searchUsers(dmSearchQuery)
-    setDmSearchResults(users)
-    setIsSearching(false)
-  }
+    // Set searching to true immediately if we haven't searched yet to prevent "No users found" flash
+    if (!hasSearched && dmSearchResults.length === 0) {
+      setIsSearching(true);
+    }
+    
+    const timeoutId = setTimeout(async () => {
+      if (!isMounted) return;
+      setIsSearching(true);
+      try {
+        const users = await searchUsers(dmSearchQuery);
+        if (isMounted) {
+          setDmSearchResults(users || []);
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error("Error searching users:", error);
+          setDmSearchResults([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsSearching(false);
+          setHasSearched(true);
+        }
+      }
+    }, 300);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDMDialogOpen, isAddUserToDMDialogOpen, dmSearchQuery]);
 
   const handleStartDM = async (otherUserId: string) => {
-    const result = await startDM(otherUserId)
+    if (!selectedRoomId) {
+      alert(t('sidebar.selectRoomForDM') || "Пожалуйста, выберите комнату")
+      return
+    }
+    
+    try {
+      const result = await startDM(otherUserId, selectedRoomId)
 
-    if (result.success && result.room) {
-      setIsDMDialogOpen(false)
-      fetchRoomsAndDMs()
-      router.push(`/dashboard/rooms/${result.room.id}`)
-      onClose?.()
-    } else {
-      console.error("Error creating DM:", result.error)
+      if (result.success && result.room) {
+        setIsDMDialogOpen(false)
+        fetchRoomsAndDMs()
+        router.push(`/dashboard/rooms/${result.room.id}`)
+        onClose?.()
+      } else {
+        console.error("Error creating DM:", result.error, result.details)
+        alert(result.error + (result.details ? `: ${result.details}` : ""))
+      }
+    } catch (error: any) {
+      console.error("Failed to start DM:", error)
+      alert("Ошибка при создании чата. Пожалуйста, попробуйте позже.")
+    }
+  }
+
+  const handleAddUserToDM = async (userId: string) => {
+    if (!targetDMId) return
+
+    try {
+      const result = await addParticipant(targetDMId, userId)
+      
+      if (result.success) {
+        setIsAddUserToDMDialogOpen(false)
+        setTargetDMId(null)
+        fetchRoomsAndDMs()
+        alert("Пользователь успешно добавлен")
+      } else {
+        alert(result.error || "Ошибка при добавлении пользователя")
+      }
+    } catch (error) {
+      console.error("Error adding user to DM:", error)
+      alert("Ошибка при добавлении пользователя")
     }
   }
 
@@ -157,6 +255,32 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
       }
     } else {
       alert(result.error || "Failed to delete room")
+    }
+  }
+
+  const handleDeleteDM = async (dmId: string) => {
+    const result = await deleteRoom(dmId)
+
+    if (result.success) {
+      setIsDeleteDialogOpen(false)
+      setDeletingId(null)
+      fetchRoomsAndDMs()
+      if (pathname === `/dashboard/rooms/${dmId}`) {
+        router.push("/dashboard")
+      }
+    } else {
+      alert(result.error || "Failed to delete chat")
+    }
+  }
+
+  const handleDeleteClick = (dmId: string) => {
+    setDeletingId(dmId)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (deletingId) {
+      handleDeleteDM(deletingId)
     }
   }
 
@@ -222,9 +346,10 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
         </div>
       </motion.div>
 
-      <ScrollArea className="flex-1 px-4 py-4">
-        <div className="space-y-8">
-          {/* Group Rooms */}
+      <ErrorBoundary fallback={<div className="p-4 text-center text-red-400 text-sm">Failed to load sidebar content. Please refresh.</div>}>
+        <ScrollArea className="flex-1 px-4 py-4">
+          <div className="space-y-8">
+            {/* Group Rooms */}
           <motion.div
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -337,26 +462,35 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                           </motion.div>
                         </Link>
                       </ContextMenuTrigger>
-                      {canEditRoom && (
-                        <ContextMenuContent className="w-56 bg-[#1E293B] border-white/10 text-slate-200">
-                          <ContextMenuItem 
-                            onClick={() => handleEditRoom(room)}
-                            className="hover:bg-amber-500 hover:text-white focus:bg-amber-500 focus:text-white cursor-pointer"
-                          >
-                            <Edit className="mr-2 h-4 w-4" />
-                            <span>{t('sidebar.editRoom')}</span>
-                          </ContextMenuItem>
-                          {profile?.role === "admin" && (
+                      <ContextMenuContent className="w-56 bg-[#1E293B] border-white/10 text-slate-200">
+                        <ContextMenuItem 
+                          onClick={() => setRoomInfoDialogId(room.id)}
+                          className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+                        >
+                          <Info className="mr-2 h-4 w-4 text-blue-400" />
+                          <span>{t('roomInfo.title') || "Информация о комнате"}</span>
+                        </ContextMenuItem>
+                        {canEditRoom && (
+                          <>
                             <ContextMenuItem 
-                              onClick={() => handleDeleteRoom(room.id)}
-                              className="hover:bg-red-500 hover:text-white focus:bg-red-500 focus:text-white cursor-pointer text-red-400"
+                              onClick={() => handleEditRoom(room)}
+                              className="hover:bg-amber-500 hover:text-white focus:bg-amber-500 focus:text-white cursor-pointer"
                             >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              <span>{t('sidebar.deleteRoom')}</span>
+                              <Edit className="mr-2 h-4 w-4" />
+                              <span>{t('sidebar.editRoom')}</span>
                             </ContextMenuItem>
-                          )}
-                        </ContextMenuContent>
-                      )}
+                            {profile?.role === "admin" && (
+                              <ContextMenuItem 
+                                onClick={() => handleDeleteRoom(room.id)}
+                                className="hover:bg-red-500 hover:text-white focus:bg-red-500 focus:text-white cursor-pointer text-red-400"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>{t('sidebar.deleteRoom')}</span>
+                              </ContextMenuItem>
+                            )}
+                          </>
+                        )}
+                      </ContextMenuContent>
                     </ContextMenu>
                   </motion.div>
                 ))}
@@ -386,7 +520,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                   {t('common.directMessages')}
                 </span>
                 <span className="px-1.5 py-0.5 bg-slate-800 text-[10px] text-slate-400 rounded-md font-bold">
-                    {dms.length}
+                    {selectedRoomId ? dms.filter(dm => dm.room_id === selectedRoomId).length : dms.length}
                   </span>
                 </div>
                 <Dialog open={isDMDialogOpen} onOpenChange={setIsDMDialogOpen}>
@@ -413,6 +547,31 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-6 py-6">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-slate-400 text-sm">{t('sidebar.selectRoomForDM') || "Выберите комнату"}</Label>
+                          {selectedRoomId && (
+                            <span className="text-[10px] text-slate-500">
+                              {dms.filter(dm => dm.room_id === selectedRoomId).length} {t('sidebar.dmCount') || "DM"}
+                            </span>
+                          )}
+                        </div>
+                        <div className="relative">
+                          <select
+                            value={selectedRoomId || ""}
+                            onChange={(e) => setSelectedRoomId(e.target.value || null)}
+                            className="w-full h-11 px-3 pr-10 rounded-xl bg-white/5 border border-white/10 text-white outline-none focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/50 appearance-none cursor-pointer transition-all"
+                          >
+                            <option value="" className="bg-[#0F172A]">{t('sidebar.noRoomSelected') || "Без комнаты"}</option>
+                            {rooms.map((room) => (
+                              <option key={room.id} value={room.id} className="bg-[#0F172A]">
+                                {room.name || t('sidebar.unnamedRoom')}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
+                        </div>
+                      </div>
                       <div className="flex gap-2">
                         <div className="relative flex-1">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
@@ -420,12 +579,12 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                             placeholder={t('sidebar.searchPlaceholder')}
                             value={dmSearchQuery}
                             onChange={(e) => setDmSearchQuery(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && handleSearchUsers()}
+                            onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
                             className="pl-10 bg-white/5 border-white/10 focus:border-amber-500 focus:ring-amber-500/20 text-white h-11 rounded-xl"
                           />
                         </div>
                         <Button 
-                          onClick={handleSearchUsers} 
+                          onClick={handleManualSearch} 
                           disabled={isSearching}
                           className="h-11 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white border-white/10"
                         >
@@ -436,58 +595,128 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                       <ScrollArea className="h-[250px] rounded-xl border border-white/5 bg-white/5 p-2">
                         <div className="space-y-1">
                           <AnimatePresence>
-                            {dmSearchResults.map((u, index) => (
-                              <motion.div
-                                key={u.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.05 }}
-                              >
-                                <Button
+                              {dmSearchResults.map((u, index) => (
+                                <motion.div
                                   key={u.id}
-                                  variant="ghost"
-                                  className="w-full justify-start h-auto py-3 px-3 hover:bg-white/5 group rounded-xl transition-all duration-300"
-                                  onClick={() => handleStartDM(u.id)}
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: index * 0.05 }}
                                 >
-                                  <div className="relative">
-                                    <Avatar className="h-10 w-10 mr-3 ring-2 ring-white/5 group-hover:ring-amber-500/30 transition-all">
-                                      <AvatarImage src={u.avatar_url} />
-                                      <AvatarFallback className="bg-gradient-to-br from-amber-500/20 to-amber-600/20 text-amber-500 font-bold">
-                                        {u.full_name?.charAt(0)}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#1E293B] rounded-full" />
-                                  </div>
-                                  <div className="flex flex-col items-start text-sm">
-                                    <span className="font-semibold text-slate-200 group-hover:text-white transition-colors">{u.full_name}</span>
-                                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">{roleLabels[u.role] || u.role}</span>
-                                  </div>
-                                  <ChevronRight className="h-4 w-4 ml-auto text-slate-600 group-hover:text-amber-500 transition-all group-hover:translate-x-1" />
-                                </Button>
-                              </motion.div>
-                            ))}
+                                  <Button
+                                    variant="ghost"
+                                    className="w-full justify-start h-auto py-3 px-3 hover:bg-white/5 group rounded-xl transition-all duration-300"
+                                    onClick={() => handleStartDM(u.id)}
+                                  >
+                                    <div className="relative">
+                                      <Avatar className="h-10 w-10 mr-3 ring-2 ring-white/5 group-hover:ring-amber-500/30 transition-all">
+                                        <AvatarImage src={u.avatar_url} />
+                                        <AvatarFallback className="bg-gradient-to-br from-amber-500/20 to-amber-600/20 text-amber-500 font-bold">
+                                          {u.full_name?.charAt(0) || u.email?.charAt(0) || "?"}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#1E293B] rounded-full" />
+                                    </div>
+                                    <div className="flex flex-col items-start text-sm overflow-hidden">
+                                      <span className="font-semibold text-slate-200 group-hover:text-white transition-colors truncate w-full text-left">{u.full_name || u.email || "Unknown User"}</span>
+                                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5 flex items-center gap-1 w-full flex-wrap">
+                                        <span>{roleLabels[u.role] || u.role}</span>
+                                        {u.sharedRoomName && (
+                                          <>
+                                            <span className="w-1 h-1 rounded-full bg-slate-500 shrink-0" />
+                                            <span className="truncate normal-case font-medium text-slate-400">{t('room.sharedRooms')}: {u.sharedRoomName}</span>
+                                          </>
+                                        )}
+                                      </span>
+                                    </div>
+                                    <ChevronRight className="h-4 w-4 ml-auto text-slate-600 group-hover:text-amber-500 transition-all group-hover:translate-x-1 shrink-0" />
+                                  </Button>
+                                </motion.div>
+                              ))}
+                              {dmSearchResults.length === 0 && !isSearching && hasSearched && (
+                                <div className="p-4 text-center text-sm text-slate-400">
+                                  {t('sidebar.noUsersFound')}
+                                </div>
+                              )}
                           </AnimatePresence>
-                          {dmSearchResults.length === 0 && dmSearchQuery && !isSearching && (
-                            <motion.div 
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="flex flex-col items-center justify-center py-10 text-slate-500"
-                            >
-                              <Search className="h-8 w-8 mb-2 opacity-20" />
-                              <p className="text-sm">{t('sidebar.noUsersFound')}</p>
-                            </motion.div>
-                          )}
-                          {!dmSearchQuery && (
-                            <motion.div 
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="flex flex-col items-center justify-center py-10 text-slate-500"
-                            >
-                              <Users className="h-8 w-8 mb-2 opacity-20" />
-                              <p className="text-sm">{t('sidebar.searchPrompt')}</p>
-                            </motion.div>
-                          )}
                         </div>
+                      </ScrollArea>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Add User to DM Dialog */}
+                <Dialog open={isAddUserToDMDialogOpen} onOpenChange={setIsAddUserToDMDialogOpen}>
+                  <DialogContent className="bg-[#1E293B] text-white border-white/10 sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>{t('sidebar.addUser') || "Добавить пользователя"}</DialogTitle>
+                      <DialogDescription className="text-slate-400">
+                        {t('sidebar.searchUserToAdd') || "Найдите пользователя, чтобы добавить его в текущую комнату"}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input
+                          placeholder={t('sidebar.searchUsers') || "Поиск пользователей..."}
+                          className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-amber-500/50"
+                          value={dmSearchQuery}
+                          onChange={(e) => setDmSearchQuery(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleManualSearch()}
+                        />
+                      </div>
+                      <ScrollArea className="h-[300px] rounded-xl border border-white/5 bg-white/5 p-2">
+                        {isSearching ? (
+                          <div className="p-4 text-center text-sm text-slate-400 flex items-center justify-center gap-2">
+                            <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                            {t('common.loading')}
+                          </div>
+                        ) : dmSearchResults.length > 0 ? (
+                          <div className="space-y-1">
+                            {dmSearchResults.map((u) => (
+                              <div
+                                key={u.id}
+                                className="flex items-center justify-between p-2 rounded-lg hover:bg-white/10 transition-colors"
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <Avatar className="h-8 w-8 ring-1 ring-white/10">
+                                    <AvatarImage src={u.avatar_url} />
+                                    <AvatarFallback className="bg-slate-800 text-xs text-slate-400">
+                                      {u.full_name?.charAt(0) || "?"}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="text-sm font-medium text-slate-200 truncate">{u.full_name || t('common.unknown')}</span>
+                                    <span className="text-xs text-slate-500 truncate flex flex-wrap items-center gap-1 w-full">
+                                      <span>{u.email}</span>
+                                      <span className="w-1 h-1 rounded-full bg-slate-600 shrink-0" />
+                                      <span>{roleLabels[u.role] || u.role}</span>
+                                      {u.sharedRoomName && (
+                                        <>
+                                          <span className="w-1 h-1 rounded-full bg-slate-500 shrink-0" />
+                                          <span className="truncate normal-case font-medium text-slate-400">{t('room.sharedRooms')}: {u.sharedRoomName}</span>
+                                        </>
+                                      )}
+                                    </span>
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleAddUserToDM(u.id)}
+                                  className="text-amber-500 hover:text-amber-400 hover:bg-amber-500/10 h-8 px-2 gap-2"
+                                  title={t('sidebar.addUser')}
+                                >
+                                  <span className="text-xs font-medium">{t('sidebar.add')}</span>
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : hasSearched ? (
+                          <div className="p-4 text-center text-sm text-slate-400">
+                            {t('sidebar.noUsersFound')}
+                          </div>
+                        ) : null}
                       </ScrollArea>
                     </div>
                   </DialogContent>
@@ -503,56 +732,101 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.2, delay: index * 0.05 }}
                     >
-                      <Link
-                        href={`/dashboard/rooms/${dm.id}`}
-                        className="block"
-                        onClick={onClose}
-                      >
-                        <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
-                          <Button
-                            variant="ghost"
-                            className={cn(
-                              "w-full justify-start font-medium transition-all duration-300 group rounded-xl px-3 h-12 relative",
-                              pathname === `/dashboard/rooms/${dm.id}` 
-                                ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10" 
-                                : "text-slate-400 hover:text-white hover:bg-white/5"
-                            )}
+                      <ContextMenu>
+                        <ContextMenuTrigger asChild className="sidebar-item-trigger">
+                          <Link
+                            href={`/dashboard/rooms/${dm.id}`}
+                            className="block"
+                            onClick={onClose}
                           >
-                            <div className="relative">
-                              <Avatar className={cn(
-                                "h-8 w-8 mr-3 transition-all duration-300",
-                                pathname === `/dashboard/rooms/${dm.id}` ? "ring-2 ring-amber-500/50 shadow-lg shadow-amber-500/10" : "ring-1 ring-white/10 group-hover:ring-white/20"
-                              )}>
-                                <AvatarImage src={dm.otherUser?.avatar_url} />
-                                <AvatarFallback className="bg-slate-800 text-xs text-slate-400 font-bold">
-                                  {dm.otherUser?.full_name?.charAt(0) || "?"}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#0F172A] rounded-full" />
-                            </div>
-                            <div className="flex flex-col items-start min-w-0 flex-1">
-                          <span className="truncate w-full text-left">{dm.otherUser?.full_name || t('common.unknown')}</span>
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mt-1">
-                            {roleLabels[dm.otherUser?.role] || dm.otherUser?.role}
-                          </span>
-                        </div>
-                        {dm.unreadCount > 0 && pathname !== `/dashboard/rooms/${dm.id}` && (
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20">
-                            {dm.unreadCount}
-                          </span>
-                        )}
-                        {pathname === `/dashboard/rooms/${dm.id}` && (
-                          <motion.div 
-                            layoutId="activeDMGlow"
-                            className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse ml-2" 
-                          />
-                        )}
-                      </Button>
+                            <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
+                              <Button
+                                variant="ghost"
+                                className={cn(
+                                  "w-full justify-start font-medium transition-all duration-300 group rounded-xl px-3 h-12 relative",
+                                  pathname === `/dashboard/rooms/${dm.id}` 
+                                    ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10" 
+                                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                                )}
+                              >
+                                <div className="relative">
+                                  <Avatar className={cn(
+                                    "h-8 w-8 mr-3 transition-all duration-300",
+                                    pathname === `/dashboard/rooms/${dm.id}` ? "ring-2 ring-amber-500/50 shadow-lg shadow-amber-500/10" : "ring-1 ring-white/10 group-hover:ring-white/20"
+                                  )}>
+                                    <AvatarImage src={dm.otherUser?.avatar_url} />
+                                    <AvatarFallback className="bg-slate-800 text-xs text-slate-400 font-bold">
+                                      {dm.otherUser?.full_name?.charAt(0) || "?"}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                </div>
+                                <div className="flex flex-col items-start min-w-0 flex-1">
+                                  <span className="truncate w-full text-left">{dm.otherUser?.full_name || t('common.unknown')}</span>
+                                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mt-1 flex items-center gap-1 w-full">
+                                    <span>{roleLabels[dm.otherUser?.role] || dm.otherUser?.role}</span>
+                                    {dm.parentRoomName && (
+                                      <>
+                                        <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
+                                        <span className="truncate normal-case font-medium text-slate-400">{dm.parentRoomName}</span>
+                                      </>
+                                    )}
+                                    {!dm.parentRoomName && dm.sharedRoomName && (
+                                      <>
+                                        <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
+                                        <span className="truncate normal-case font-medium text-slate-400">{t('room.sharedRooms')}: {dm.sharedRoomName}</span>
+                                      </>
+                                    )}
+                                  </span>
+                                </div>
+                                {dm.unreadCount > 0 && pathname !== `/dashboard/rooms/${dm.id}` && (
+                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20">
+                                    {dm.unreadCount}
+                                  </span>
+                                )}
+                                {pathname === `/dashboard/rooms/${dm.id}` && (
+                                  <motion.div 
+                                    layoutId="activeDMGlow"
+                                    className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse ml-2" 
+                                  />
+                                )}
+                              </Button>
+                            </motion.div>
+                          </Link>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent className="w-56 bg-[#1E293B] border-white/10 text-slate-200">
+                          <ContextMenuItem 
+                            onClick={() => setRoomInfoDialogId(dm.id)}
+                            className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+                          >
+                            <Info className="mr-2 h-4 w-4 text-blue-400" />
+                            <span>{t('roomInfo.title') || "Информация о комнате"}</span>
+                          </ContextMenuItem>
+                          {(profile?.role === "admin" || profile?.role === "manager" || dm.created_by === user.id) && (
+                            <>
+                              <ContextMenuItem 
+                                onClick={() => {
+                                  setTargetDMId(dm.id)
+                                  setIsAddUserToDMDialogOpen(true)
+                                }}
+                                className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+                              >
+                                <UserPlus className="mr-2 h-4 w-4 text-amber-500" />
+                                <span>{t('sidebar.addUser') || "Добавить пользователя"}</span>
+                              </ContextMenuItem>
+                              <ContextMenuItem 
+                                onClick={() => handleDeleteClick(dm.id)}
+                                className="hover:bg-red-500 hover:text-white focus:bg-red-500 focus:text-white cursor-pointer text-red-400"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>{t('sidebar.deleteChat') || "Удалить чат"}</span>
+                              </ContextMenuItem>
+                            </>
+                          )}
+                        </ContextMenuContent>
+                      </ContextMenu>
                     </motion.div>
-                  </Link>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                  ))}
+                </AnimatePresence>
             {dms.length === 0 && (
               <motion.div 
                 initial={{ opacity: 0 }}
@@ -567,6 +841,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
           )}
         </div>
       </ScrollArea>
+      </ErrorBoundary>
 
       {/* User Footer */}
       <motion.div 
@@ -636,6 +911,47 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
           onSuccess={fetchRoomsAndDMs}
         />
       )}
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="bg-[#1E293B] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle>{t('sidebar.confirmDeleteChat') || "Удалить чат?"}</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              {t('sidebar.confirmDeleteChatDesc') || "Это действие нельзя отменить."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              className="text-slate-300 hover:bg-white/10"
+            >
+              {t('common.cancel') || "Отмена"}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {t('sidebar.deleteChat') || "Удалить"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!roomInfoDialogId} onOpenChange={(open) => !open && setRoomInfoDialogId(null)}>
+        <DialogContent className="bg-[#0F172A] border-white/10 text-white p-0 overflow-hidden max-w-md w-full h-[80vh] flex flex-col">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle className="sr-only">{t('roomInfo.title') || "Информация о комнате"}</DialogTitle>
+          </DialogHeader>
+          {roomInfoDialogId && (
+            <div className="flex-1 overflow-y-auto">
+              <RoomInfo roomId={roomInfoDialogId} />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </motion.div>
   )
 }

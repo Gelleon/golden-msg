@@ -146,6 +146,28 @@
     "reply": "回复",
     "translationFailed": "翻译失败"
   },
+  "roomInfo": {
+    "title": "房间信息",
+    "participantsTitle": "房间成员",
+    "addUserButton": "添加",
+    "addUserDialogTitle": "添加用户",
+    "searchUserPlaceholder": "按名称搜索...",
+    "noParticipants": "没有成员",
+    "addUserError": "无法添加用户",
+    "roleCreator": "创建者",
+    "roleAdmin": "管理员",
+    "roleSystemAdmin": "系统管理员",
+    "roleManager": "经理",
+    "rolePartner": "合作伙伴",
+    "roleClient": "客户",
+    "roleMember": "成员",
+    "yourRole": "您的角色",
+    "you": "(您)",
+    "manageTitle": "管理",
+    "makeMember": "设为成员",
+    "makeAdmin": "设为管理员",
+    "removeUser": "移除"
+  },
   "settings_status": {
     "success": "成功",
     "error": "错误"
@@ -177,7 +199,19 @@
     "capacityMin": "容纳人数不能为负数。",
     "searchPrompt": "输入姓名进行搜索",
     "noActiveDMs": "没有活跃的对话",
-    "logout": "退出系统"
+    "logout": "退出系统",
+    "deleteChat": "删除聊天",
+    "confirmDeleteChat": "删除聊天？",
+    "confirmDeleteChatDesc": "此操作无法撤销。所有消息都将被删除。",
+    "selectRoomForDM": "选择房间",
+    "noRoomSelected": "无房间",
+    "unnamedRoom": "无名称",
+    "dmCount": "DM",
+    "addUser": "添加用户",
+    "add": "添加",
+    "searchUserToAdd": "寻找用户以将其添加到当前房间",
+    "searchUsers": "搜索用户...",
+    "typeToSearch": "开始输入以搜索"
   },
   "dashboard": {
     "selectChat": "选择聊天",

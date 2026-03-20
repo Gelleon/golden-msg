@@ -21,6 +21,8 @@ import {
 import { useToast } from "@/components/ui/use-toast"
 import { Textarea } from "@/components/ui/textarea"
 import { splitTextWithMentions } from "@/lib/chat-mentions"
+import { AudioVisualizerComponent } from "@/components/ui/audio-visualizer-react"
+import { VoiceMessage } from "@/components/ui/voice-message"
 import {
   ContextMenu,
   ContextMenuContent,
@@ -90,11 +92,14 @@ const isImage = (url: string | null) => {
   return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '')
 }
 
+const isAudio = (url: string | null) => {
+  if (!url) return false
+  const ext = url.split('.').pop()?.toLowerCase()
+  return ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'webm'].includes(ext || '')
+}
+
 export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showSenderName, showAvatar = true, participants = [] }: MessageBubbleProps) {
   const { t } = useTranslation()
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [duration, setDuration] = useState<number | null>(null)
-  const [currentTime, setCurrentTime] = useState(0)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -102,7 +107,6 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
   const [isUpdating, setIsUpdating] = useState(false)
   const [mounted, setMounted] = useState(false)
   const isMountedRef = useRef(false)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -152,87 +156,6 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
   useEffect(() => {
     setEditContent(message.content_original)
   }, [message.content_original])
-
-  useEffect(() => {
-    if (message.message_type === "voice" && message.file_url) {
-      const fileUrl = message.file_url
-      const audio = new Audio(fileUrl)
-      audio.preload = "metadata"
-      
-      const updateDuration = () => {
-        if (audio.duration && audio.duration !== Infinity && !isNaN(audio.duration)) {
-          setDuration(audio.duration)
-        }
-      }
-
-      audio.onloadedmetadata = () => {
-        if (audio.duration === Infinity) {
-          // Chromium WebM duration bug workaround: use a temporary audio object
-          // so we don't break the main playback state.
-          const tempAudio = new Audio(fileUrl)
-          tempAudio.addEventListener('loadedmetadata', () => {
-            tempAudio.currentTime = 1e101
-          })
-          tempAudio.addEventListener('timeupdate', () => {
-            if (tempAudio.duration !== Infinity && !isNaN(tempAudio.duration)) {
-              setDuration(tempAudio.duration)
-            }
-            tempAudio.pause()
-            tempAudio.removeAttribute('src')
-            tempAudio.load()
-          }, { once: true })
-        } else {
-          updateDuration()
-        }
-      }
-
-      audio.ondurationchange = updateDuration
-
-      audio.onended = () => {
-        setIsPlaying(false)
-        setCurrentTime(0)
-        audio.currentTime = 0
-      }
-
-      audio.ontimeupdate = () => {
-        setCurrentTime(audio.currentTime)
-      }
-      
-      audioRef.current = audio
-    }
-
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.removeAttribute('src')
-        audioRef.current.load()
-        audioRef.current = null
-      }
-    }
-  }, [message.message_type, message.file_url])
-
-  const togglePlay = () => {
-    if (!audioRef.current) return
-
-    if (isPlaying) {
-      audioRef.current.pause()
-      setIsPlaying(false)
-    } else {
-      audioRef.current.play().then(() => {
-        setIsPlaying(true)
-      }).catch((err) => {
-        console.error("Error playing audio:", err)
-        setIsPlaying(false)
-      })
-    }
-  }
-
-  const formatTime = (time: number) => {
-    if (!time || isNaN(time) || !isFinite(time)) return "0:00"
-    const minutes = Math.floor(time / 60)
-    const seconds = Math.floor(time % 60)
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`
-  }
 
   const handleDelete = async () => {
     setIsDeleting(true)
@@ -455,59 +378,34 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
           </div>
         )
       case "voice":
+        if (!message.file_url) return null;
         return (
-          <div className="min-w-[180px] md:min-w-[220px]">
-            <div className={cn("flex items-center gap-3 p-3 transition-all duration-300",
-                isCurrentUser ? "text-white" : "text-slate-900"
-            )}>
-              <Button
-                size="icon"
-                className={cn("h-10 w-10 rounded-full shadow-lg transition-all active:scale-95 shrink-0",
-                    isCurrentUser 
-                      ? "bg-white text-blue-600 hover:bg-blue-50" 
-                      : "bg-blue-600 text-white hover:bg-blue-700"
-                )}
-                onClick={togglePlay}
-              >
-                {isPlaying ? (
-                  <Pause className="h-4 w-4 fill-current" />
-                ) : (
-                  <Play className="h-4 w-4 ml-1 fill-current" />
-                )}
-              </Button>
-              <div className="flex-1 min-w-0 space-y-1">
-                {/* Waveform visualizer */}
-                <div className="flex items-center gap-0.5 h-6">
-                  {[...Array(12)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      animate={{
-                        height: isPlaying ? [4, Math.random() * 16 + 4, 4] : 4
-                      }}
-                      transition={{
-                        duration: 0.5,
-                        repeat: Infinity,
-                        delay: i * 0.05
-                      }}
-                      className={cn(
-                        "w-1 rounded-full",
-                        isCurrentUser ? "bg-white/40" : "bg-blue-200"
-                      )}
-                    />
-                  ))}
-                  <span className={cn(
-                    "ml-2 text-[10px] font-mono font-bold",
-                    isCurrentUser ? "text-white/80" : "text-slate-500"
-                  )}>
-                    {isPlaying ? formatTime(currentTime) : (duration ? formatTime(duration) : "0:00")}
-                  </span>
-                </div>
-              </div>
-            </div>
+          <div className="min-w-[250px] md:min-w-[300px]">
+            <VoiceMessage
+              src={message.file_url}
+              senderName={message.sender.full_name || undefined}
+              isCurrentUser={isCurrentUser}
+              className="w-full"
+            />
           </div>
         )
       case "file":
         const isImg = isImage(message.file_url)
+        const isAud = isAudio(message.file_url)
+        
+        if (isAud && message.file_url) {
+          return (
+            <div className="min-w-[250px] md:min-w-[300px]">
+              <VoiceMessage
+                src={message.file_url}
+                senderName={message.content_original || message.sender.full_name || undefined}
+                isCurrentUser={isCurrentUser}
+                className="w-full"
+              />
+            </div>
+          )
+        }
+
         return (
           <div className={cn("overflow-hidden transition-all",
               isCurrentUser ? "text-white" : "text-slate-900"
