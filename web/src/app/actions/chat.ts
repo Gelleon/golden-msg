@@ -19,9 +19,9 @@ export async function markAsRead(roomId: string) {
   if (!session?.user) return { error: "Unauthorized" }
 
   try {
-    await prisma.roomParticipation.update({
+    await prisma.roomParticipant.update({
       where: {
-        user_id_room_id: {
+        room_id_user_id: {
           user_id: session.user.id,
           room_id: roomId
         }
@@ -594,8 +594,12 @@ export async function sendMessageAction(rawData: {
           user: {
             select: {
               id: true,
+              email: true,
               full_name: true,
               push_notifications_enabled: true,
+              email_notifications_enabled: true,
+              last_email_notification_at: true,
+              preferred_language: true
             },
           },
         },

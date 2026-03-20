@@ -47,9 +47,9 @@ export async function queueNotificationIfOffline(userId: string, roomId: string,
   try {
     // 1. Check if user is online (this could be from a Redis store or recent activity)
     // For now, we'll check last_active_at in the database
-    const participation = await prisma.room_participation.findUnique({
+    const participation = await prisma.roomParticipant.findUnique({
       where: {
-        user_id_room_id: {
+        room_id_user_id: {
           user_id: userId,
           room_id: roomId
         }
@@ -148,9 +148,9 @@ async function processQueue() {
       await Promise.all(nextBatch.map(async (item) => {
         try {
           // Re-verify if user is still offline and hasn't read the messages
-          const participation = await prisma.room_participation.findUnique({
+          const participation = await prisma.roomParticipant.findUnique({
             where: {
-              user_id_room_id: {
+              room_id_user_id: {
                 user_id: item.userId,
                 room_id: item.roomId
               }
