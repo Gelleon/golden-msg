@@ -36,6 +36,12 @@ export async function ensureSchemaFixed() {
 
         await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "reply_to_id" TEXT;`).catch(() => {});
         await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "reply_to_id" TEXT;`).catch(() => {});
+
+        await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "is_pinned" BOOLEAN DEFAULT 0;`).catch(() => {});
+        await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "is_pinned" BOOLEAN DEFAULT 0;`).catch(() => {});
+
+        await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "is_important" BOOLEAN DEFAULT 0;`).catch(() => {});
+        await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "is_important" BOOLEAN DEFAULT 0;`).catch(() => {});
       }
       
       if (isUserTable) {

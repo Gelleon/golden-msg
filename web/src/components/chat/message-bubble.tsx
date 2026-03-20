@@ -107,6 +107,15 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
   const [isUpdating, setIsUpdating] = useState(false)
   const [mounted, setMounted] = useState(false)
   const isMountedRef = useRef(false)
+  
+  // To identify if the CURRENT user is an admin, we need to know their role.
+  // We'll add it to the props for reliability, but for now we'll check message.sender.role
+  // if isCurrentUser is true, or use the localStorage fallback if provided.
+  const isCurrentUserAdmin = (isCurrentUser && message.sender.role === "admin") || 
+                            (typeof window !== 'undefined' && localStorage.getItem('user_role') === 'admin')
+  
+  const canDelete = isCurrentUser || isCurrentUserAdmin
+  const canEdit = isCurrentUser
 
   useEffect(() => {
     setMounted(true)
@@ -558,13 +567,14 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
               </div>
             </div>
             
-            {/* Actions - visible on hover for current user */}
-            {isCurrentUser && !isEditing && (
+            {/* Actions - visible on hover */}
+            {canDelete && !isEditing && (
               <div className={cn(
-                "absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover/bubble:opacity-100 transition-opacity flex flex-col items-center gap-1",
+                isCurrentUser ? "absolute -left-10 top-1/2 -translate-y-1/2" : "absolute -right-10 top-1/2 -translate-y-1/2",
+                "opacity-0 group-hover/bubble:opacity-100 transition-opacity flex flex-col items-center gap-1",
                 isDeleting && "opacity-100"
               )}>
-                {message.message_type === "text" && (
+                {canEdit && message.message_type === "text" && (
                   <Button
                     size="icon"
                     variant="ghost"
@@ -613,23 +623,24 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
             </ContextMenuItem>
           )}
 
-          {isCurrentUser && (
-            <>
-              <ContextMenuItem 
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 focus:bg-blue-50 focus:text-blue-600 transition-colors cursor-pointer group"
-                onClick={() => setIsEditing(true)}
-              >
-                <Pencil className="h-4 w-4 text-slate-400 group-focus:text-blue-500" />
-                <span className="font-semibold text-sm">{t("common.edit")}</span>
-              </ContextMenuItem>
-              <ContextMenuItem 
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-600 focus:bg-red-50 focus:text-red-700 transition-colors cursor-pointer group"
-                onClick={() => setShowDeleteConfirm(true)}
-              >
-                <Trash2 className="h-4 w-4 text-red-400 group-focus:text-red-500" />
-                <span className="font-semibold text-sm">{t("common.delete")}</span>
-              </ContextMenuItem>
-            </>
+          {canEdit && (
+            <ContextMenuItem 
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 focus:bg-blue-50 focus:text-blue-600 transition-colors cursor-pointer group"
+              onClick={() => setIsEditing(true)}
+            >
+              <Pencil className="h-4 w-4 text-slate-400 group-focus:text-blue-500" />
+              <span className="font-semibold text-sm">{t("common.edit")}</span>
+            </ContextMenuItem>
+          )}
+
+          {canDelete && (
+            <ContextMenuItem 
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-600 focus:bg-red-50 focus:text-red-700 transition-colors cursor-pointer group"
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <Trash2 className="h-4 w-4 text-red-400 group-focus:text-red-500" />
+              <span className="font-semibold text-sm">{t("common.delete")}</span>
+            </ContextMenuItem>
           )}
         </ContextMenuContent>
       </ContextMenu>
