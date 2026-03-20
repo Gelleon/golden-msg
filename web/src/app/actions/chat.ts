@@ -72,6 +72,58 @@ async function translateWithDewiar(text: string, fromLang: string, toLang: strin
   }
 }
 
+export async function getAllRooms(options?: {
+  search?: string;
+  sortBy?: 'created_at' | 'name' | 'type';
+  sortOrder?: 'asc' | 'desc';
+}) {
+  await ensureSchemaFixed()
+  const session = await getSession()
+  if (!session?.user || session.user.role !== 'admin') {
+    return { error: "Unauthorized. Admin role required." }
+  }
+
+  try {
+    const { search, sortBy = 'created_at', sortOrder = 'desc' } = options || {}
+
+    const whereClause: any = {}
+    if (search) {
+      whereClause.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } }
+      ]
+    }
+
+    const rooms = await prisma.room.findMany({
+      where: whereClause,
+      include: {
+        creator: {
+          select: {
+            id: true,
+            full_name: true,
+            email: true,
+            role: true
+          }
+        },
+        _count: {
+          select: {
+            messages: true,
+            participants: true
+          }
+        }
+      },
+      orderBy: {
+        [sortBy]: sortOrder
+      }
+    })
+
+    return { success: true, rooms }
+  } catch (error) {
+    console.error("Error fetching all rooms:", error)
+    return { error: "Failed to fetch all rooms" }
+  }
+}
+
 export async function deleteMessage(messageId: string) {
   await ensureSchemaFixed()
   const session = await getSession()
@@ -90,7 +142,8 @@ export async function deleteMessage(messageId: string) {
       where: { id: session.user.id }
     })
 
-    if (message.sender_id !== session.user.id && user?.role !== "admin") {
+    const isAdmin = user?.role === "admin"
+    if (message.sender_id !== session.user.id && !isAdmin) {
       return { error: "Permission denied" }
     }
 
@@ -102,12 +155,31 @@ export async function deleteMessage(messageId: string) {
         console.log(`File deleted: ${filePath}`)
       } catch (fileError) {
         console.error("Error deleting file from server:", fileError)
-        // Continue even if file deletion fails (maybe it was already deleted)
       }
     }
 
     await prisma.message.delete({
       where: { id: messageId }
+    })
+
+    // Log administrative deletion
+    if (isAdmin && message.sender_id !== session.user.id) {
+      await logAuditAction({
+        userId: session.user.id,
+        action: "ADMIN_DELETE_MESSAGE",
+        details: {
+          messageId,
+          originalSenderId: message.sender_id,
+          roomId: message.room_id,
+          contentPreview: message.content?.substring(0, 50)
+        }
+      })
+    }
+
+    // Notify all active users in the room via SSE
+    sendSSEUpdate(message.room_id, {
+      type: "message_deleted",
+      messageId: messageId
     })
 
     revalidatePath(`/dashboard/rooms/${message.room_id}`)
@@ -801,58 +873,60 @@ export async function sendMessageAction(rawData: {
 
   console.log(`[DB] Creating message with translation_status: "${translationStatus}"`);
 
-  // Insert Message into Database
-  try {
-    const messageData: any = {
-      room_id: roomId,
-      sender_id: user.id,
-      content: content,
-      content_translated: contentTranslated,
-      language_original: finalLangOriginal,
-      message_type: messageType,
-      file_url: fileUrl,
-      voice_transcription: voiceTranscription,
-      reply_to_id: replyToId,
-      translation_status: translationStatus,
-    };
+    // Insert Message into Database
+    try {
+      console.log(`[DB] Attempting to create message for room ${roomId} by user ${user.id}`);
+      const messageData: any = {
+        room_id: roomId,
+        sender_id: user.id,
+        content: content,
+        content_translated: contentTranslated,
+        language_original: finalLangOriginal,
+        message_type: messageType,
+        file_url: fileUrl,
+        voice_transcription: voiceTranscription,
+        reply_to_id: replyToId,
+        translation_status: translationStatus,
+      };
 
-    const message = await prisma.message.create({
-      data: messageData,
-      select: {
-        id: true,
-        room_id: true,
-        content: true,
-        content_translated: true,
-        language_original: true,
-        message_type: true,
-        file_url: true,
-        voice_transcription: true,
-        created_at: true,
-        is_edited: true,
-        reply_to_id: true,
-        translation_status: true,
-        sender: {
-          select: {
-            id: true,
-            full_name: true,
-            avatar_url: true,
-            role: true,
+      const message = await prisma.message.create({
+        data: messageData,
+        select: {
+          id: true,
+          room_id: true,
+          content: true,
+          content_translated: true,
+          language_original: true,
+          message_type: true,
+          file_url: true,
+          voice_transcription: true,
+          created_at: true,
+          is_edited: true,
+          reply_to_id: true,
+          translation_status: true,
+          sender: {
+            select: {
+              id: true,
+              full_name: true,
+              avatar_url: true,
+              role: true,
+            },
           },
-        },
-        reply_to: {
-          select: {
-            id: true,
-            content: true,
-            sender: {
-              select: {
-                id: true,
-                full_name: true,
+          reply_to: {
+            select: {
+              id: true,
+              content: true,
+              sender: {
+                select: {
+                  id: true,
+                  full_name: true,
+                }
               }
             }
           }
-        }
-      },
-    });
+        },
+      });
+      console.log(`[DB] Message created successfully with ID: ${message.id}`);
 
     // Trigger Async Processing (via Queue) for text messages
     if (messageType === "text") {
@@ -950,8 +1024,13 @@ export async function sendMessageAction(rawData: {
         } : null
       } 
     }
-  } catch (error) {
-    console.error("Send message error:", error)
-    return { error: "Failed to send message" }
+  } catch (error: any) {
+    console.error("!!! [CRITICAL] Send message error details:", {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      meta: error.meta
+    })
+    return { error: `Failed to send message: ${error.message || 'Unknown error'}` }
   }
 }
