@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "jest",
     "test:watch": "jest --watch",
+    "cron": "tsx scripts/cron-worker.ts",
     "security-scan": "node scripts/security-scan.js"
   },
   "dependencies": {
@@ -68,6 +69,9 @@
     "node-mocks-http": "^1.17.2",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

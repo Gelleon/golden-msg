@@ -12,6 +12,38 @@ import { ensureSchemaFixed } from "@/lib/schema-fix"
 import { sendSSEUpdate } from "@/lib/sse"
 import { after } from "next/server"
 import { parseMentions, stripMentionsForTranslation } from "@/lib/chat-mentions"
+import { queueNotificationIfOffline, clearUserFromNotificationQueue } from "@/lib/notification-service"
+
+export async function markAsRead(roomId: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  try {
+    await prisma.roomParticipation.update({
+      where: {
+        user_id_room_id: {
+          user_id: session.user.id,
+          room_id: roomId
+        }
+      },
+      data: {
+        last_read_at: new Date(),
+        last_active_at: new Date()
+      }
+    })
+
+    // Clear user from email notification queue when they read messages
+    clearUserFromNotificationQueue(session.user.id)
+
+    revalidatePath("/dashboard")
+    revalidatePath(`/dashboard/rooms/${roomId}`)
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error marking as read:", error)
+    return { error: "Failed to mark as read" }
+  }
+}
 
 const sendMessageSchema = z.object({
   roomId: z.string().uuid(),
@@ -341,32 +373,6 @@ export async function getMessages(
   } catch (error) {
     console.error("[CHAT ACTION] Error in getMessages:", error);
     return { error: "Failed to fetch messages" }
-  }
-}
-
-export async function markAsRead(roomId: string) {
-  const session = await getSession()
-  if (!session?.user) return { error: "Unauthorized" }
-
-  try {
-    await prisma.roomParticipant.update({
-      where: {
-        room_id_user_id: {
-          room_id: roomId,
-          user_id: session.user.id,
-        },
-      },
-      data: {
-        last_read_at: new Date(),
-        last_active_at: new Date(),
-      },
-    })
-    revalidatePath("/dashboard")
-    revalidatePath(`/dashboard/rooms/${roomId}`)
-    return { success: true }
-  } catch (error) {
-    console.error("Mark as read error:", error)
-    return { error: "Failed to mark as read" }
   }
 }
 
@@ -881,6 +887,17 @@ export async function sendMessageAction(rawData: {
         }
       )
     )).catch(err => console.error("Push notification error:", err));
+
+    // Queue email notifications for offline users without push enabled
+    const offlineParticipants = roomWithParticipants.participants.filter(
+      (participant) => participant.user_id !== session.user.id && !participant.user.push_notifications_enabled
+    )
+    
+    if (offlineParticipants.length > 0) {
+      Promise.all(offlineParticipants.map(p => 
+        queueNotificationIfOffline(p.user_id, roomId, message.id)
+      )).catch(err => console.error("Email queue error:", err));
+    }
 
     const mentionedUserIds = mentionValidation.mentionedUsers
       .map((mentionedUser) => mentionedUser.id)

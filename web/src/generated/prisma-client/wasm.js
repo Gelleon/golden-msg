@@ -199,7 +199,19 @@ exports.Prisma.MessageScalarFieldEnum = {
   is_edited: 'is_edited',
   reply_to_id: 'reply_to_id',
   translation_status: 'translation_status',
-  translation_error: 'translation_error'
+  translation_error: 'translation_error',
+  is_pinned: 'is_pinned',
+  is_important: 'is_important'
+};
+
+exports.Prisma.FileDeletionLogScalarFieldEnum = {
+  id: 'id',
+  message_id: 'message_id',
+  room_id: 'room_id',
+  file_url: 'file_url',
+  backup_path: 'backup_path',
+  deleted_at: 'deleted_at',
+  expires_at: 'expires_at'
 };
 
 exports.Prisma.RoomInviteScalarFieldEnum = {
@@ -244,6 +256,7 @@ exports.Prisma.ModelName = {
   Room: 'Room',
   RoomParticipant: 'RoomParticipant',
   Message: 'Message',
+  FileDeletionLog: 'FileDeletionLog',
   RoomInvite: 'RoomInvite',
   NotificationLog: 'NotificationLog'
 };

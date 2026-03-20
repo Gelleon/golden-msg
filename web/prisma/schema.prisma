@@ -126,12 +126,28 @@ model Message {
   reply_to_id        String?
   translation_status String   @default("completed") // pending, completed, failed, cancelled
   translation_error  String?
+  is_pinned          Boolean  @default(false)
+  is_important       Boolean  @default(false)
 
   // Relations
   room   Room @relation(fields: [room_id], references: [id], onDelete: Cascade)
   sender User @relation(fields: [sender_id], references: [id], onDelete: Cascade)
   reply_to Message? @relation("MessageReplies", fields: [reply_to_id], references: [id], onDelete: SetNull)
   replies  Message[] @relation("MessageReplies")
+  deletion_logs FileDeletionLog[]
+}
+
+model FileDeletionLog {
+  id          String   @id @default(uuid())
+  message_id  String
+  room_id     String
+  file_url    String
+  backup_path String
+  deleted_at  DateTime @default(now())
+  expires_at  DateTime
+
+  // Relations
+  message Message @relation(fields: [message_id], references: [id], onDelete: Cascade)
 }
 
 model RoomInvite {

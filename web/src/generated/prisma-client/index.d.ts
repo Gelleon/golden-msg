@@ -49,6 +49,11 @@ export type RoomParticipant = $Result.DefaultSelection<Prisma.$RoomParticipantPa
  */
 export type Message = $Result.DefaultSelection<Prisma.$MessagePayload>
 /**
+ * Model FileDeletionLog
+ * 
+ */
+export type FileDeletionLog = $Result.DefaultSelection<Prisma.$FileDeletionLogPayload>
+/**
  * Model RoomInvite
  * 
  */
@@ -251,6 +256,16 @@ export class PrismaClient<
     * ```
     */
   get message(): Prisma.MessageDelegate<ExtArgs>;
+
+  /**
+   * `prisma.fileDeletionLog`: Exposes CRUD operations for the **FileDeletionLog** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more FileDeletionLogs
+    * const fileDeletionLogs = await prisma.fileDeletionLog.findMany()
+    * ```
+    */
+  get fileDeletionLog(): Prisma.FileDeletionLogDelegate<ExtArgs>;
 
   /**
    * `prisma.roomInvite`: Exposes CRUD operations for the **RoomInvite** model.
@@ -719,6 +734,7 @@ export namespace Prisma {
     Room: 'Room',
     RoomParticipant: 'RoomParticipant',
     Message: 'Message',
+    FileDeletionLog: 'FileDeletionLog',
     RoomInvite: 'RoomInvite',
     NotificationLog: 'NotificationLog'
   };
@@ -736,7 +752,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "user" | "pushSubscription" | "passwordResetToken" | "auditLog" | "room" | "roomParticipant" | "message" | "roomInvite" | "notificationLog"
+      modelProps: "user" | "pushSubscription" | "passwordResetToken" | "auditLog" | "room" | "roomParticipant" | "message" | "fileDeletionLog" | "roomInvite" | "notificationLog"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1230,6 +1246,76 @@ export namespace Prisma {
           }
         }
       }
+      FileDeletionLog: {
+        payload: Prisma.$FileDeletionLogPayload<ExtArgs>
+        fields: Prisma.FileDeletionLogFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.FileDeletionLogFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FileDeletionLogPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.FileDeletionLogFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FileDeletionLogPayload>
+          }
+          findFirst: {
+            args: Prisma.FileDeletionLogFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FileDeletionLogPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.FileDeletionLogFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FileDeletionLogPayload>
+          }
+          findMany: {
+            args: Prisma.FileDeletionLogFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FileDeletionLogPayload>[]
+          }
+          create: {
+            args: Prisma.FileDeletionLogCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FileDeletionLogPayload>
+          }
+          createMany: {
+            args: Prisma.FileDeletionLogCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.FileDeletionLogCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FileDeletionLogPayload>[]
+          }
+          delete: {
+            args: Prisma.FileDeletionLogDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FileDeletionLogPayload>
+          }
+          update: {
+            args: Prisma.FileDeletionLogUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FileDeletionLogPayload>
+          }
+          deleteMany: {
+            args: Prisma.FileDeletionLogDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.FileDeletionLogUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.FileDeletionLogUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$FileDeletionLogPayload>
+          }
+          aggregate: {
+            args: Prisma.FileDeletionLogAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateFileDeletionLog>
+          }
+          groupBy: {
+            args: Prisma.FileDeletionLogGroupByArgs<ExtArgs>
+            result: $Utils.Optional<FileDeletionLogGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.FileDeletionLogCountArgs<ExtArgs>
+            result: $Utils.Optional<FileDeletionLogCountAggregateOutputType> | number
+          }
+        }
+      }
       RoomInvite: {
         payload: Prisma.$RoomInvitePayload<ExtArgs>
         fields: Prisma.RoomInviteFieldRefs
@@ -1675,10 +1761,12 @@ export namespace Prisma {
 
   export type MessageCountOutputType = {
     replies: number
+    deletion_logs: number
   }
 
   export type MessageCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     replies?: boolean | MessageCountOutputTypeCountRepliesArgs
+    deletion_logs?: boolean | MessageCountOutputTypeCountDeletion_logsArgs
   }
 
   // Custom InputTypes
@@ -1697,6 +1785,13 @@ export namespace Prisma {
    */
   export type MessageCountOutputTypeCountRepliesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: MessageWhereInput
+  }
+
+  /**
+   * MessageCountOutputType without action
+   */
+  export type MessageCountOutputTypeCountDeletion_logsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: FileDeletionLogWhereInput
   }
 
 
@@ -7858,6 +7953,8 @@ export namespace Prisma {
     reply_to_id: string | null
     translation_status: string | null
     translation_error: string | null
+    is_pinned: boolean | null
+    is_important: boolean | null
   }
 
   export type MessageMaxAggregateOutputType = {
@@ -7875,6 +7972,8 @@ export namespace Prisma {
     reply_to_id: string | null
     translation_status: string | null
     translation_error: string | null
+    is_pinned: boolean | null
+    is_important: boolean | null
   }
 
   export type MessageCountAggregateOutputType = {
@@ -7892,6 +7991,8 @@ export namespace Prisma {
     reply_to_id: number
     translation_status: number
     translation_error: number
+    is_pinned: number
+    is_important: number
     _all: number
   }
 
@@ -7911,6 +8012,8 @@ export namespace Prisma {
     reply_to_id?: true
     translation_status?: true
     translation_error?: true
+    is_pinned?: true
+    is_important?: true
   }
 
   export type MessageMaxAggregateInputType = {
@@ -7928,6 +8031,8 @@ export namespace Prisma {
     reply_to_id?: true
     translation_status?: true
     translation_error?: true
+    is_pinned?: true
+    is_important?: true
   }
 
   export type MessageCountAggregateInputType = {
@@ -7945,6 +8050,8 @@ export namespace Prisma {
     reply_to_id?: true
     translation_status?: true
     translation_error?: true
+    is_pinned?: true
+    is_important?: true
     _all?: true
   }
 
@@ -8035,6 +8142,8 @@ export namespace Prisma {
     reply_to_id: string | null
     translation_status: string
     translation_error: string | null
+    is_pinned: boolean
+    is_important: boolean
     _count: MessageCountAggregateOutputType | null
     _min: MessageMinAggregateOutputType | null
     _max: MessageMaxAggregateOutputType | null
@@ -8069,10 +8178,13 @@ export namespace Prisma {
     reply_to_id?: boolean
     translation_status?: boolean
     translation_error?: boolean
+    is_pinned?: boolean
+    is_important?: boolean
     room?: boolean | RoomDefaultArgs<ExtArgs>
     sender?: boolean | UserDefaultArgs<ExtArgs>
     reply_to?: boolean | Message$reply_toArgs<ExtArgs>
     replies?: boolean | Message$repliesArgs<ExtArgs>
+    deletion_logs?: boolean | Message$deletion_logsArgs<ExtArgs>
     _count?: boolean | MessageCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["message"]>
 
@@ -8091,6 +8203,8 @@ export namespace Prisma {
     reply_to_id?: boolean
     translation_status?: boolean
     translation_error?: boolean
+    is_pinned?: boolean
+    is_important?: boolean
     room?: boolean | RoomDefaultArgs<ExtArgs>
     sender?: boolean | UserDefaultArgs<ExtArgs>
     reply_to?: boolean | Message$reply_toArgs<ExtArgs>
@@ -8111,6 +8225,8 @@ export namespace Prisma {
     reply_to_id?: boolean
     translation_status?: boolean
     translation_error?: boolean
+    is_pinned?: boolean
+    is_important?: boolean
   }
 
   export type MessageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -8118,6 +8234,7 @@ export namespace Prisma {
     sender?: boolean | UserDefaultArgs<ExtArgs>
     reply_to?: boolean | Message$reply_toArgs<ExtArgs>
     replies?: boolean | Message$repliesArgs<ExtArgs>
+    deletion_logs?: boolean | Message$deletion_logsArgs<ExtArgs>
     _count?: boolean | MessageCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type MessageIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -8133,6 +8250,7 @@ export namespace Prisma {
       sender: Prisma.$UserPayload<ExtArgs>
       reply_to: Prisma.$MessagePayload<ExtArgs> | null
       replies: Prisma.$MessagePayload<ExtArgs>[]
+      deletion_logs: Prisma.$FileDeletionLogPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -8149,6 +8267,8 @@ export namespace Prisma {
       reply_to_id: string | null
       translation_status: string
       translation_error: string | null
+      is_pinned: boolean
+      is_important: boolean
     }, ExtArgs["result"]["message"]>
     composites: {}
   }
@@ -8517,6 +8637,7 @@ export namespace Prisma {
     sender<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     reply_to<T extends Message$reply_toArgs<ExtArgs> = {}>(args?: Subset<T, Message$reply_toArgs<ExtArgs>>): Prisma__MessageClient<$Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     replies<T extends Message$repliesArgs<ExtArgs> = {}>(args?: Subset<T, Message$repliesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany"> | Null>
+    deletion_logs<T extends Message$deletion_logsArgs<ExtArgs> = {}>(args?: Subset<T, Message$deletion_logsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FileDeletionLogPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -8560,6 +8681,8 @@ export namespace Prisma {
     readonly reply_to_id: FieldRef<"Message", 'String'>
     readonly translation_status: FieldRef<"Message", 'String'>
     readonly translation_error: FieldRef<"Message", 'String'>
+    readonly is_pinned: FieldRef<"Message", 'Boolean'>
+    readonly is_important: FieldRef<"Message", 'Boolean'>
   }
     
 
@@ -8911,6 +9034,26 @@ export namespace Prisma {
   }
 
   /**
+   * Message.deletion_logs
+   */
+  export type Message$deletion_logsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FileDeletionLog
+     */
+    select?: FileDeletionLogSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FileDeletionLogInclude<ExtArgs> | null
+    where?: FileDeletionLogWhereInput
+    orderBy?: FileDeletionLogOrderByWithRelationInput | FileDeletionLogOrderByWithRelationInput[]
+    cursor?: FileDeletionLogWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: FileDeletionLogScalarFieldEnum | FileDeletionLogScalarFieldEnum[]
+  }
+
+  /**
    * Message without action
    */
   export type MessageDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -8922,6 +9065,961 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: MessageInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model FileDeletionLog
+   */
+
+  export type AggregateFileDeletionLog = {
+    _count: FileDeletionLogCountAggregateOutputType | null
+    _min: FileDeletionLogMinAggregateOutputType | null
+    _max: FileDeletionLogMaxAggregateOutputType | null
+  }
+
+  export type FileDeletionLogMinAggregateOutputType = {
+    id: string | null
+    message_id: string | null
+    room_id: string | null
+    file_url: string | null
+    backup_path: string | null
+    deleted_at: Date | null
+    expires_at: Date | null
+  }
+
+  export type FileDeletionLogMaxAggregateOutputType = {
+    id: string | null
+    message_id: string | null
+    room_id: string | null
+    file_url: string | null
+    backup_path: string | null
+    deleted_at: Date | null
+    expires_at: Date | null
+  }
+
+  export type FileDeletionLogCountAggregateOutputType = {
+    id: number
+    message_id: number
+    room_id: number
+    file_url: number
+    backup_path: number
+    deleted_at: number
+    expires_at: number
+    _all: number
+  }
+
+
+  export type FileDeletionLogMinAggregateInputType = {
+    id?: true
+    message_id?: true
+    room_id?: true
+    file_url?: true
+    backup_path?: true
+    deleted_at?: true
+    expires_at?: true
+  }
+
+  export type FileDeletionLogMaxAggregateInputType = {
+    id?: true
+    message_id?: true
+    room_id?: true
+    file_url?: true
+    backup_path?: true
+    deleted_at?: true
+    expires_at?: true
+  }
+
+  export type FileDeletionLogCountAggregateInputType = {
+    id?: true
+    message_id?: true
+    room_id?: true
+    file_url?: true
+    backup_path?: true
+    deleted_at?: true
+    expires_at?: true
+    _all?: true
+  }
+
+  export type FileDeletionLogAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which FileDeletionLog to aggregate.
+     */
+    where?: FileDeletionLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FileDeletionLogs to fetch.
+     */
+    orderBy?: FileDeletionLogOrderByWithRelationInput | FileDeletionLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: FileDeletionLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FileDeletionLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FileDeletionLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned FileDeletionLogs
+    **/
+    _count?: true | FileDeletionLogCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: FileDeletionLogMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: FileDeletionLogMaxAggregateInputType
+  }
+
+  export type GetFileDeletionLogAggregateType<T extends FileDeletionLogAggregateArgs> = {
+        [P in keyof T & keyof AggregateFileDeletionLog]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateFileDeletionLog[P]>
+      : GetScalarType<T[P], AggregateFileDeletionLog[P]>
+  }
+
+
+
+
+  export type FileDeletionLogGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: FileDeletionLogWhereInput
+    orderBy?: FileDeletionLogOrderByWithAggregationInput | FileDeletionLogOrderByWithAggregationInput[]
+    by: FileDeletionLogScalarFieldEnum[] | FileDeletionLogScalarFieldEnum
+    having?: FileDeletionLogScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: FileDeletionLogCountAggregateInputType | true
+    _min?: FileDeletionLogMinAggregateInputType
+    _max?: FileDeletionLogMaxAggregateInputType
+  }
+
+  export type FileDeletionLogGroupByOutputType = {
+    id: string
+    message_id: string
+    room_id: string
+    file_url: string
+    backup_path: string
+    deleted_at: Date
+    expires_at: Date
+    _count: FileDeletionLogCountAggregateOutputType | null
+    _min: FileDeletionLogMinAggregateOutputType | null
+    _max: FileDeletionLogMaxAggregateOutputType | null
+  }
+
+  type GetFileDeletionLogGroupByPayload<T extends FileDeletionLogGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<FileDeletionLogGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof FileDeletionLogGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], FileDeletionLogGroupByOutputType[P]>
+            : GetScalarType<T[P], FileDeletionLogGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type FileDeletionLogSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    message_id?: boolean
+    room_id?: boolean
+    file_url?: boolean
+    backup_path?: boolean
+    deleted_at?: boolean
+    expires_at?: boolean
+    message?: boolean | MessageDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["fileDeletionLog"]>
+
+  export type FileDeletionLogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    message_id?: boolean
+    room_id?: boolean
+    file_url?: boolean
+    backup_path?: boolean
+    deleted_at?: boolean
+    expires_at?: boolean
+    message?: boolean | MessageDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["fileDeletionLog"]>
+
+  export type FileDeletionLogSelectScalar = {
+    id?: boolean
+    message_id?: boolean
+    room_id?: boolean
+    file_url?: boolean
+    backup_path?: boolean
+    deleted_at?: boolean
+    expires_at?: boolean
+  }
+
+  export type FileDeletionLogInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    message?: boolean | MessageDefaultArgs<ExtArgs>
+  }
+  export type FileDeletionLogIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    message?: boolean | MessageDefaultArgs<ExtArgs>
+  }
+
+  export type $FileDeletionLogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "FileDeletionLog"
+    objects: {
+      message: Prisma.$MessagePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      message_id: string
+      room_id: string
+      file_url: string
+      backup_path: string
+      deleted_at: Date
+      expires_at: Date
+    }, ExtArgs["result"]["fileDeletionLog"]>
+    composites: {}
+  }
+
+  type FileDeletionLogGetPayload<S extends boolean | null | undefined | FileDeletionLogDefaultArgs> = $Result.GetResult<Prisma.$FileDeletionLogPayload, S>
+
+  type FileDeletionLogCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<FileDeletionLogFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: FileDeletionLogCountAggregateInputType | true
+    }
+
+  export interface FileDeletionLogDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['FileDeletionLog'], meta: { name: 'FileDeletionLog' } }
+    /**
+     * Find zero or one FileDeletionLog that matches the filter.
+     * @param {FileDeletionLogFindUniqueArgs} args - Arguments to find a FileDeletionLog
+     * @example
+     * // Get one FileDeletionLog
+     * const fileDeletionLog = await prisma.fileDeletionLog.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends FileDeletionLogFindUniqueArgs>(args: SelectSubset<T, FileDeletionLogFindUniqueArgs<ExtArgs>>): Prisma__FileDeletionLogClient<$Result.GetResult<Prisma.$FileDeletionLogPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one FileDeletionLog that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {FileDeletionLogFindUniqueOrThrowArgs} args - Arguments to find a FileDeletionLog
+     * @example
+     * // Get one FileDeletionLog
+     * const fileDeletionLog = await prisma.fileDeletionLog.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends FileDeletionLogFindUniqueOrThrowArgs>(args: SelectSubset<T, FileDeletionLogFindUniqueOrThrowArgs<ExtArgs>>): Prisma__FileDeletionLogClient<$Result.GetResult<Prisma.$FileDeletionLogPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first FileDeletionLog that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FileDeletionLogFindFirstArgs} args - Arguments to find a FileDeletionLog
+     * @example
+     * // Get one FileDeletionLog
+     * const fileDeletionLog = await prisma.fileDeletionLog.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends FileDeletionLogFindFirstArgs>(args?: SelectSubset<T, FileDeletionLogFindFirstArgs<ExtArgs>>): Prisma__FileDeletionLogClient<$Result.GetResult<Prisma.$FileDeletionLogPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first FileDeletionLog that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FileDeletionLogFindFirstOrThrowArgs} args - Arguments to find a FileDeletionLog
+     * @example
+     * // Get one FileDeletionLog
+     * const fileDeletionLog = await prisma.fileDeletionLog.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends FileDeletionLogFindFirstOrThrowArgs>(args?: SelectSubset<T, FileDeletionLogFindFirstOrThrowArgs<ExtArgs>>): Prisma__FileDeletionLogClient<$Result.GetResult<Prisma.$FileDeletionLogPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more FileDeletionLogs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FileDeletionLogFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all FileDeletionLogs
+     * const fileDeletionLogs = await prisma.fileDeletionLog.findMany()
+     * 
+     * // Get first 10 FileDeletionLogs
+     * const fileDeletionLogs = await prisma.fileDeletionLog.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const fileDeletionLogWithIdOnly = await prisma.fileDeletionLog.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends FileDeletionLogFindManyArgs>(args?: SelectSubset<T, FileDeletionLogFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FileDeletionLogPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a FileDeletionLog.
+     * @param {FileDeletionLogCreateArgs} args - Arguments to create a FileDeletionLog.
+     * @example
+     * // Create one FileDeletionLog
+     * const FileDeletionLog = await prisma.fileDeletionLog.create({
+     *   data: {
+     *     // ... data to create a FileDeletionLog
+     *   }
+     * })
+     * 
+     */
+    create<T extends FileDeletionLogCreateArgs>(args: SelectSubset<T, FileDeletionLogCreateArgs<ExtArgs>>): Prisma__FileDeletionLogClient<$Result.GetResult<Prisma.$FileDeletionLogPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many FileDeletionLogs.
+     * @param {FileDeletionLogCreateManyArgs} args - Arguments to create many FileDeletionLogs.
+     * @example
+     * // Create many FileDeletionLogs
+     * const fileDeletionLog = await prisma.fileDeletionLog.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends FileDeletionLogCreateManyArgs>(args?: SelectSubset<T, FileDeletionLogCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many FileDeletionLogs and returns the data saved in the database.
+     * @param {FileDeletionLogCreateManyAndReturnArgs} args - Arguments to create many FileDeletionLogs.
+     * @example
+     * // Create many FileDeletionLogs
+     * const fileDeletionLog = await prisma.fileDeletionLog.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many FileDeletionLogs and only return the `id`
+     * const fileDeletionLogWithIdOnly = await prisma.fileDeletionLog.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends FileDeletionLogCreateManyAndReturnArgs>(args?: SelectSubset<T, FileDeletionLogCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FileDeletionLogPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a FileDeletionLog.
+     * @param {FileDeletionLogDeleteArgs} args - Arguments to delete one FileDeletionLog.
+     * @example
+     * // Delete one FileDeletionLog
+     * const FileDeletionLog = await prisma.fileDeletionLog.delete({
+     *   where: {
+     *     // ... filter to delete one FileDeletionLog
+     *   }
+     * })
+     * 
+     */
+    delete<T extends FileDeletionLogDeleteArgs>(args: SelectSubset<T, FileDeletionLogDeleteArgs<ExtArgs>>): Prisma__FileDeletionLogClient<$Result.GetResult<Prisma.$FileDeletionLogPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one FileDeletionLog.
+     * @param {FileDeletionLogUpdateArgs} args - Arguments to update one FileDeletionLog.
+     * @example
+     * // Update one FileDeletionLog
+     * const fileDeletionLog = await prisma.fileDeletionLog.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends FileDeletionLogUpdateArgs>(args: SelectSubset<T, FileDeletionLogUpdateArgs<ExtArgs>>): Prisma__FileDeletionLogClient<$Result.GetResult<Prisma.$FileDeletionLogPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more FileDeletionLogs.
+     * @param {FileDeletionLogDeleteManyArgs} args - Arguments to filter FileDeletionLogs to delete.
+     * @example
+     * // Delete a few FileDeletionLogs
+     * const { count } = await prisma.fileDeletionLog.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends FileDeletionLogDeleteManyArgs>(args?: SelectSubset<T, FileDeletionLogDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more FileDeletionLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FileDeletionLogUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many FileDeletionLogs
+     * const fileDeletionLog = await prisma.fileDeletionLog.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends FileDeletionLogUpdateManyArgs>(args: SelectSubset<T, FileDeletionLogUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one FileDeletionLog.
+     * @param {FileDeletionLogUpsertArgs} args - Arguments to update or create a FileDeletionLog.
+     * @example
+     * // Update or create a FileDeletionLog
+     * const fileDeletionLog = await prisma.fileDeletionLog.upsert({
+     *   create: {
+     *     // ... data to create a FileDeletionLog
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the FileDeletionLog we want to update
+     *   }
+     * })
+     */
+    upsert<T extends FileDeletionLogUpsertArgs>(args: SelectSubset<T, FileDeletionLogUpsertArgs<ExtArgs>>): Prisma__FileDeletionLogClient<$Result.GetResult<Prisma.$FileDeletionLogPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of FileDeletionLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FileDeletionLogCountArgs} args - Arguments to filter FileDeletionLogs to count.
+     * @example
+     * // Count the number of FileDeletionLogs
+     * const count = await prisma.fileDeletionLog.count({
+     *   where: {
+     *     // ... the filter for the FileDeletionLogs we want to count
+     *   }
+     * })
+    **/
+    count<T extends FileDeletionLogCountArgs>(
+      args?: Subset<T, FileDeletionLogCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], FileDeletionLogCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a FileDeletionLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FileDeletionLogAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends FileDeletionLogAggregateArgs>(args: Subset<T, FileDeletionLogAggregateArgs>): Prisma.PrismaPromise<GetFileDeletionLogAggregateType<T>>
+
+    /**
+     * Group by FileDeletionLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {FileDeletionLogGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends FileDeletionLogGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: FileDeletionLogGroupByArgs['orderBy'] }
+        : { orderBy?: FileDeletionLogGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, FileDeletionLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetFileDeletionLogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the FileDeletionLog model
+   */
+  readonly fields: FileDeletionLogFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for FileDeletionLog.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__FileDeletionLogClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    message<T extends MessageDefaultArgs<ExtArgs> = {}>(args?: Subset<T, MessageDefaultArgs<ExtArgs>>): Prisma__MessageClient<$Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the FileDeletionLog model
+   */ 
+  interface FileDeletionLogFieldRefs {
+    readonly id: FieldRef<"FileDeletionLog", 'String'>
+    readonly message_id: FieldRef<"FileDeletionLog", 'String'>
+    readonly room_id: FieldRef<"FileDeletionLog", 'String'>
+    readonly file_url: FieldRef<"FileDeletionLog", 'String'>
+    readonly backup_path: FieldRef<"FileDeletionLog", 'String'>
+    readonly deleted_at: FieldRef<"FileDeletionLog", 'DateTime'>
+    readonly expires_at: FieldRef<"FileDeletionLog", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * FileDeletionLog findUnique
+   */
+  export type FileDeletionLogFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FileDeletionLog
+     */
+    select?: FileDeletionLogSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FileDeletionLogInclude<ExtArgs> | null
+    /**
+     * Filter, which FileDeletionLog to fetch.
+     */
+    where: FileDeletionLogWhereUniqueInput
+  }
+
+  /**
+   * FileDeletionLog findUniqueOrThrow
+   */
+  export type FileDeletionLogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FileDeletionLog
+     */
+    select?: FileDeletionLogSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FileDeletionLogInclude<ExtArgs> | null
+    /**
+     * Filter, which FileDeletionLog to fetch.
+     */
+    where: FileDeletionLogWhereUniqueInput
+  }
+
+  /**
+   * FileDeletionLog findFirst
+   */
+  export type FileDeletionLogFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FileDeletionLog
+     */
+    select?: FileDeletionLogSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FileDeletionLogInclude<ExtArgs> | null
+    /**
+     * Filter, which FileDeletionLog to fetch.
+     */
+    where?: FileDeletionLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FileDeletionLogs to fetch.
+     */
+    orderBy?: FileDeletionLogOrderByWithRelationInput | FileDeletionLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for FileDeletionLogs.
+     */
+    cursor?: FileDeletionLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FileDeletionLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FileDeletionLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of FileDeletionLogs.
+     */
+    distinct?: FileDeletionLogScalarFieldEnum | FileDeletionLogScalarFieldEnum[]
+  }
+
+  /**
+   * FileDeletionLog findFirstOrThrow
+   */
+  export type FileDeletionLogFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FileDeletionLog
+     */
+    select?: FileDeletionLogSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FileDeletionLogInclude<ExtArgs> | null
+    /**
+     * Filter, which FileDeletionLog to fetch.
+     */
+    where?: FileDeletionLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FileDeletionLogs to fetch.
+     */
+    orderBy?: FileDeletionLogOrderByWithRelationInput | FileDeletionLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for FileDeletionLogs.
+     */
+    cursor?: FileDeletionLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FileDeletionLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FileDeletionLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of FileDeletionLogs.
+     */
+    distinct?: FileDeletionLogScalarFieldEnum | FileDeletionLogScalarFieldEnum[]
+  }
+
+  /**
+   * FileDeletionLog findMany
+   */
+  export type FileDeletionLogFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FileDeletionLog
+     */
+    select?: FileDeletionLogSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FileDeletionLogInclude<ExtArgs> | null
+    /**
+     * Filter, which FileDeletionLogs to fetch.
+     */
+    where?: FileDeletionLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of FileDeletionLogs to fetch.
+     */
+    orderBy?: FileDeletionLogOrderByWithRelationInput | FileDeletionLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing FileDeletionLogs.
+     */
+    cursor?: FileDeletionLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` FileDeletionLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` FileDeletionLogs.
+     */
+    skip?: number
+    distinct?: FileDeletionLogScalarFieldEnum | FileDeletionLogScalarFieldEnum[]
+  }
+
+  /**
+   * FileDeletionLog create
+   */
+  export type FileDeletionLogCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FileDeletionLog
+     */
+    select?: FileDeletionLogSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FileDeletionLogInclude<ExtArgs> | null
+    /**
+     * The data needed to create a FileDeletionLog.
+     */
+    data: XOR<FileDeletionLogCreateInput, FileDeletionLogUncheckedCreateInput>
+  }
+
+  /**
+   * FileDeletionLog createMany
+   */
+  export type FileDeletionLogCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many FileDeletionLogs.
+     */
+    data: FileDeletionLogCreateManyInput | FileDeletionLogCreateManyInput[]
+  }
+
+  /**
+   * FileDeletionLog createManyAndReturn
+   */
+  export type FileDeletionLogCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FileDeletionLog
+     */
+    select?: FileDeletionLogSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many FileDeletionLogs.
+     */
+    data: FileDeletionLogCreateManyInput | FileDeletionLogCreateManyInput[]
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FileDeletionLogIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * FileDeletionLog update
+   */
+  export type FileDeletionLogUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FileDeletionLog
+     */
+    select?: FileDeletionLogSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FileDeletionLogInclude<ExtArgs> | null
+    /**
+     * The data needed to update a FileDeletionLog.
+     */
+    data: XOR<FileDeletionLogUpdateInput, FileDeletionLogUncheckedUpdateInput>
+    /**
+     * Choose, which FileDeletionLog to update.
+     */
+    where: FileDeletionLogWhereUniqueInput
+  }
+
+  /**
+   * FileDeletionLog updateMany
+   */
+  export type FileDeletionLogUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update FileDeletionLogs.
+     */
+    data: XOR<FileDeletionLogUpdateManyMutationInput, FileDeletionLogUncheckedUpdateManyInput>
+    /**
+     * Filter which FileDeletionLogs to update
+     */
+    where?: FileDeletionLogWhereInput
+  }
+
+  /**
+   * FileDeletionLog upsert
+   */
+  export type FileDeletionLogUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FileDeletionLog
+     */
+    select?: FileDeletionLogSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FileDeletionLogInclude<ExtArgs> | null
+    /**
+     * The filter to search for the FileDeletionLog to update in case it exists.
+     */
+    where: FileDeletionLogWhereUniqueInput
+    /**
+     * In case the FileDeletionLog found by the `where` argument doesn't exist, create a new FileDeletionLog with this data.
+     */
+    create: XOR<FileDeletionLogCreateInput, FileDeletionLogUncheckedCreateInput>
+    /**
+     * In case the FileDeletionLog was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<FileDeletionLogUpdateInput, FileDeletionLogUncheckedUpdateInput>
+  }
+
+  /**
+   * FileDeletionLog delete
+   */
+  export type FileDeletionLogDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FileDeletionLog
+     */
+    select?: FileDeletionLogSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FileDeletionLogInclude<ExtArgs> | null
+    /**
+     * Filter which FileDeletionLog to delete.
+     */
+    where: FileDeletionLogWhereUniqueInput
+  }
+
+  /**
+   * FileDeletionLog deleteMany
+   */
+  export type FileDeletionLogDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which FileDeletionLogs to delete
+     */
+    where?: FileDeletionLogWhereInput
+  }
+
+  /**
+   * FileDeletionLog without action
+   */
+  export type FileDeletionLogDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FileDeletionLog
+     */
+    select?: FileDeletionLogSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FileDeletionLogInclude<ExtArgs> | null
   }
 
 
@@ -11024,10 +12122,25 @@ export namespace Prisma {
     is_edited: 'is_edited',
     reply_to_id: 'reply_to_id',
     translation_status: 'translation_status',
-    translation_error: 'translation_error'
+    translation_error: 'translation_error',
+    is_pinned: 'is_pinned',
+    is_important: 'is_important'
   };
 
   export type MessageScalarFieldEnum = (typeof MessageScalarFieldEnum)[keyof typeof MessageScalarFieldEnum]
+
+
+  export const FileDeletionLogScalarFieldEnum: {
+    id: 'id',
+    message_id: 'message_id',
+    room_id: 'room_id',
+    file_url: 'file_url',
+    backup_path: 'backup_path',
+    deleted_at: 'deleted_at',
+    expires_at: 'expires_at'
+  };
+
+  export type FileDeletionLogScalarFieldEnum = (typeof FileDeletionLogScalarFieldEnum)[keyof typeof FileDeletionLogScalarFieldEnum]
 
 
   export const RoomInviteScalarFieldEnum: {
@@ -11592,10 +12705,13 @@ export namespace Prisma {
     reply_to_id?: StringNullableFilter<"Message"> | string | null
     translation_status?: StringFilter<"Message"> | string
     translation_error?: StringNullableFilter<"Message"> | string | null
+    is_pinned?: BoolFilter<"Message"> | boolean
+    is_important?: BoolFilter<"Message"> | boolean
     room?: XOR<RoomRelationFilter, RoomWhereInput>
     sender?: XOR<UserRelationFilter, UserWhereInput>
     reply_to?: XOR<MessageNullableRelationFilter, MessageWhereInput> | null
     replies?: MessageListRelationFilter
+    deletion_logs?: FileDeletionLogListRelationFilter
   }
 
   export type MessageOrderByWithRelationInput = {
@@ -11613,10 +12729,13 @@ export namespace Prisma {
     reply_to_id?: SortOrderInput | SortOrder
     translation_status?: SortOrder
     translation_error?: SortOrderInput | SortOrder
+    is_pinned?: SortOrder
+    is_important?: SortOrder
     room?: RoomOrderByWithRelationInput
     sender?: UserOrderByWithRelationInput
     reply_to?: MessageOrderByWithRelationInput
     replies?: MessageOrderByRelationAggregateInput
+    deletion_logs?: FileDeletionLogOrderByRelationAggregateInput
   }
 
   export type MessageWhereUniqueInput = Prisma.AtLeast<{
@@ -11637,10 +12756,13 @@ export namespace Prisma {
     reply_to_id?: StringNullableFilter<"Message"> | string | null
     translation_status?: StringFilter<"Message"> | string
     translation_error?: StringNullableFilter<"Message"> | string | null
+    is_pinned?: BoolFilter<"Message"> | boolean
+    is_important?: BoolFilter<"Message"> | boolean
     room?: XOR<RoomRelationFilter, RoomWhereInput>
     sender?: XOR<UserRelationFilter, UserWhereInput>
     reply_to?: XOR<MessageNullableRelationFilter, MessageWhereInput> | null
     replies?: MessageListRelationFilter
+    deletion_logs?: FileDeletionLogListRelationFilter
   }, "id">
 
   export type MessageOrderByWithAggregationInput = {
@@ -11658,6 +12780,8 @@ export namespace Prisma {
     reply_to_id?: SortOrderInput | SortOrder
     translation_status?: SortOrder
     translation_error?: SortOrderInput | SortOrder
+    is_pinned?: SortOrder
+    is_important?: SortOrder
     _count?: MessageCountOrderByAggregateInput
     _max?: MessageMaxOrderByAggregateInput
     _min?: MessageMinOrderByAggregateInput
@@ -11681,6 +12805,73 @@ export namespace Prisma {
     reply_to_id?: StringNullableWithAggregatesFilter<"Message"> | string | null
     translation_status?: StringWithAggregatesFilter<"Message"> | string
     translation_error?: StringNullableWithAggregatesFilter<"Message"> | string | null
+    is_pinned?: BoolWithAggregatesFilter<"Message"> | boolean
+    is_important?: BoolWithAggregatesFilter<"Message"> | boolean
+  }
+
+  export type FileDeletionLogWhereInput = {
+    AND?: FileDeletionLogWhereInput | FileDeletionLogWhereInput[]
+    OR?: FileDeletionLogWhereInput[]
+    NOT?: FileDeletionLogWhereInput | FileDeletionLogWhereInput[]
+    id?: StringFilter<"FileDeletionLog"> | string
+    message_id?: StringFilter<"FileDeletionLog"> | string
+    room_id?: StringFilter<"FileDeletionLog"> | string
+    file_url?: StringFilter<"FileDeletionLog"> | string
+    backup_path?: StringFilter<"FileDeletionLog"> | string
+    deleted_at?: DateTimeFilter<"FileDeletionLog"> | Date | string
+    expires_at?: DateTimeFilter<"FileDeletionLog"> | Date | string
+    message?: XOR<MessageRelationFilter, MessageWhereInput>
+  }
+
+  export type FileDeletionLogOrderByWithRelationInput = {
+    id?: SortOrder
+    message_id?: SortOrder
+    room_id?: SortOrder
+    file_url?: SortOrder
+    backup_path?: SortOrder
+    deleted_at?: SortOrder
+    expires_at?: SortOrder
+    message?: MessageOrderByWithRelationInput
+  }
+
+  export type FileDeletionLogWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: FileDeletionLogWhereInput | FileDeletionLogWhereInput[]
+    OR?: FileDeletionLogWhereInput[]
+    NOT?: FileDeletionLogWhereInput | FileDeletionLogWhereInput[]
+    message_id?: StringFilter<"FileDeletionLog"> | string
+    room_id?: StringFilter<"FileDeletionLog"> | string
+    file_url?: StringFilter<"FileDeletionLog"> | string
+    backup_path?: StringFilter<"FileDeletionLog"> | string
+    deleted_at?: DateTimeFilter<"FileDeletionLog"> | Date | string
+    expires_at?: DateTimeFilter<"FileDeletionLog"> | Date | string
+    message?: XOR<MessageRelationFilter, MessageWhereInput>
+  }, "id">
+
+  export type FileDeletionLogOrderByWithAggregationInput = {
+    id?: SortOrder
+    message_id?: SortOrder
+    room_id?: SortOrder
+    file_url?: SortOrder
+    backup_path?: SortOrder
+    deleted_at?: SortOrder
+    expires_at?: SortOrder
+    _count?: FileDeletionLogCountOrderByAggregateInput
+    _max?: FileDeletionLogMaxOrderByAggregateInput
+    _min?: FileDeletionLogMinOrderByAggregateInput
+  }
+
+  export type FileDeletionLogScalarWhereWithAggregatesInput = {
+    AND?: FileDeletionLogScalarWhereWithAggregatesInput | FileDeletionLogScalarWhereWithAggregatesInput[]
+    OR?: FileDeletionLogScalarWhereWithAggregatesInput[]
+    NOT?: FileDeletionLogScalarWhereWithAggregatesInput | FileDeletionLogScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"FileDeletionLog"> | string
+    message_id?: StringWithAggregatesFilter<"FileDeletionLog"> | string
+    room_id?: StringWithAggregatesFilter<"FileDeletionLog"> | string
+    file_url?: StringWithAggregatesFilter<"FileDeletionLog"> | string
+    backup_path?: StringWithAggregatesFilter<"FileDeletionLog"> | string
+    deleted_at?: DateTimeWithAggregatesFilter<"FileDeletionLog"> | Date | string
+    expires_at?: DateTimeWithAggregatesFilter<"FileDeletionLog"> | Date | string
   }
 
   export type RoomInviteWhereInput = {
@@ -12345,10 +13536,13 @@ export namespace Prisma {
     is_edited?: boolean
     translation_status?: string
     translation_error?: string | null
+    is_pinned?: boolean
+    is_important?: boolean
     room: RoomCreateNestedOneWithoutMessagesInput
     sender: UserCreateNestedOneWithoutMessages_sentInput
     reply_to?: MessageCreateNestedOneWithoutRepliesInput
     replies?: MessageCreateNestedManyWithoutReply_toInput
+    deletion_logs?: FileDeletionLogCreateNestedManyWithoutMessageInput
   }
 
   export type MessageUncheckedCreateInput = {
@@ -12366,7 +13560,10 @@ export namespace Prisma {
     reply_to_id?: string | null
     translation_status?: string
     translation_error?: string | null
+    is_pinned?: boolean
+    is_important?: boolean
     replies?: MessageUncheckedCreateNestedManyWithoutReply_toInput
+    deletion_logs?: FileDeletionLogUncheckedCreateNestedManyWithoutMessageInput
   }
 
   export type MessageUpdateInput = {
@@ -12381,10 +13578,13 @@ export namespace Prisma {
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     translation_status?: StringFieldUpdateOperationsInput | string
     translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
     room?: RoomUpdateOneRequiredWithoutMessagesNestedInput
     sender?: UserUpdateOneRequiredWithoutMessages_sentNestedInput
     reply_to?: MessageUpdateOneWithoutRepliesNestedInput
     replies?: MessageUpdateManyWithoutReply_toNestedInput
+    deletion_logs?: FileDeletionLogUpdateManyWithoutMessageNestedInput
   }
 
   export type MessageUncheckedUpdateInput = {
@@ -12402,7 +13602,10 @@ export namespace Prisma {
     reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
     translation_status?: StringFieldUpdateOperationsInput | string
     translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
     replies?: MessageUncheckedUpdateManyWithoutReply_toNestedInput
+    deletion_logs?: FileDeletionLogUncheckedUpdateManyWithoutMessageNestedInput
   }
 
   export type MessageCreateManyInput = {
@@ -12420,6 +13623,8 @@ export namespace Prisma {
     reply_to_id?: string | null
     translation_status?: string
     translation_error?: string | null
+    is_pinned?: boolean
+    is_important?: boolean
   }
 
   export type MessageUpdateManyMutationInput = {
@@ -12434,6 +13639,8 @@ export namespace Prisma {
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     translation_status?: StringFieldUpdateOperationsInput | string
     translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type MessageUncheckedUpdateManyInput = {
@@ -12451,6 +13658,77 @@ export namespace Prisma {
     reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
     translation_status?: StringFieldUpdateOperationsInput | string
     translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type FileDeletionLogCreateInput = {
+    id?: string
+    room_id: string
+    file_url: string
+    backup_path: string
+    deleted_at?: Date | string
+    expires_at: Date | string
+    message: MessageCreateNestedOneWithoutDeletion_logsInput
+  }
+
+  export type FileDeletionLogUncheckedCreateInput = {
+    id?: string
+    message_id: string
+    room_id: string
+    file_url: string
+    backup_path: string
+    deleted_at?: Date | string
+    expires_at: Date | string
+  }
+
+  export type FileDeletionLogUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    room_id?: StringFieldUpdateOperationsInput | string
+    file_url?: StringFieldUpdateOperationsInput | string
+    backup_path?: StringFieldUpdateOperationsInput | string
+    deleted_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    message?: MessageUpdateOneRequiredWithoutDeletion_logsNestedInput
+  }
+
+  export type FileDeletionLogUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    message_id?: StringFieldUpdateOperationsInput | string
+    room_id?: StringFieldUpdateOperationsInput | string
+    file_url?: StringFieldUpdateOperationsInput | string
+    backup_path?: StringFieldUpdateOperationsInput | string
+    deleted_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FileDeletionLogCreateManyInput = {
+    id?: string
+    message_id: string
+    room_id: string
+    file_url: string
+    backup_path: string
+    deleted_at?: Date | string
+    expires_at: Date | string
+  }
+
+  export type FileDeletionLogUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    room_id?: StringFieldUpdateOperationsInput | string
+    file_url?: StringFieldUpdateOperationsInput | string
+    backup_path?: StringFieldUpdateOperationsInput | string
+    deleted_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FileDeletionLogUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    message_id?: StringFieldUpdateOperationsInput | string
+    room_id?: StringFieldUpdateOperationsInput | string
+    file_url?: StringFieldUpdateOperationsInput | string
+    backup_path?: StringFieldUpdateOperationsInput | string
+    deleted_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RoomInviteCreateInput = {
@@ -13079,6 +14357,16 @@ export namespace Prisma {
     isNot?: MessageWhereInput | null
   }
 
+  export type FileDeletionLogListRelationFilter = {
+    every?: FileDeletionLogWhereInput
+    some?: FileDeletionLogWhereInput
+    none?: FileDeletionLogWhereInput
+  }
+
+  export type FileDeletionLogOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type MessageCountOrderByAggregateInput = {
     id?: SortOrder
     room_id?: SortOrder
@@ -13094,6 +14382,8 @@ export namespace Prisma {
     reply_to_id?: SortOrder
     translation_status?: SortOrder
     translation_error?: SortOrder
+    is_pinned?: SortOrder
+    is_important?: SortOrder
   }
 
   export type MessageMaxOrderByAggregateInput = {
@@ -13111,6 +14401,8 @@ export namespace Prisma {
     reply_to_id?: SortOrder
     translation_status?: SortOrder
     translation_error?: SortOrder
+    is_pinned?: SortOrder
+    is_important?: SortOrder
   }
 
   export type MessageMinOrderByAggregateInput = {
@@ -13128,6 +14420,43 @@ export namespace Prisma {
     reply_to_id?: SortOrder
     translation_status?: SortOrder
     translation_error?: SortOrder
+    is_pinned?: SortOrder
+    is_important?: SortOrder
+  }
+
+  export type MessageRelationFilter = {
+    is?: MessageWhereInput
+    isNot?: MessageWhereInput
+  }
+
+  export type FileDeletionLogCountOrderByAggregateInput = {
+    id?: SortOrder
+    message_id?: SortOrder
+    room_id?: SortOrder
+    file_url?: SortOrder
+    backup_path?: SortOrder
+    deleted_at?: SortOrder
+    expires_at?: SortOrder
+  }
+
+  export type FileDeletionLogMaxOrderByAggregateInput = {
+    id?: SortOrder
+    message_id?: SortOrder
+    room_id?: SortOrder
+    file_url?: SortOrder
+    backup_path?: SortOrder
+    deleted_at?: SortOrder
+    expires_at?: SortOrder
+  }
+
+  export type FileDeletionLogMinOrderByAggregateInput = {
+    id?: SortOrder
+    message_id?: SortOrder
+    room_id?: SortOrder
+    file_url?: SortOrder
+    backup_path?: SortOrder
+    deleted_at?: SortOrder
+    expires_at?: SortOrder
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -13839,11 +15168,25 @@ export namespace Prisma {
     connect?: MessageWhereUniqueInput | MessageWhereUniqueInput[]
   }
 
+  export type FileDeletionLogCreateNestedManyWithoutMessageInput = {
+    create?: XOR<FileDeletionLogCreateWithoutMessageInput, FileDeletionLogUncheckedCreateWithoutMessageInput> | FileDeletionLogCreateWithoutMessageInput[] | FileDeletionLogUncheckedCreateWithoutMessageInput[]
+    connectOrCreate?: FileDeletionLogCreateOrConnectWithoutMessageInput | FileDeletionLogCreateOrConnectWithoutMessageInput[]
+    createMany?: FileDeletionLogCreateManyMessageInputEnvelope
+    connect?: FileDeletionLogWhereUniqueInput | FileDeletionLogWhereUniqueInput[]
+  }
+
   export type MessageUncheckedCreateNestedManyWithoutReply_toInput = {
     create?: XOR<MessageCreateWithoutReply_toInput, MessageUncheckedCreateWithoutReply_toInput> | MessageCreateWithoutReply_toInput[] | MessageUncheckedCreateWithoutReply_toInput[]
     connectOrCreate?: MessageCreateOrConnectWithoutReply_toInput | MessageCreateOrConnectWithoutReply_toInput[]
     createMany?: MessageCreateManyReply_toInputEnvelope
     connect?: MessageWhereUniqueInput | MessageWhereUniqueInput[]
+  }
+
+  export type FileDeletionLogUncheckedCreateNestedManyWithoutMessageInput = {
+    create?: XOR<FileDeletionLogCreateWithoutMessageInput, FileDeletionLogUncheckedCreateWithoutMessageInput> | FileDeletionLogCreateWithoutMessageInput[] | FileDeletionLogUncheckedCreateWithoutMessageInput[]
+    connectOrCreate?: FileDeletionLogCreateOrConnectWithoutMessageInput | FileDeletionLogCreateOrConnectWithoutMessageInput[]
+    createMany?: FileDeletionLogCreateManyMessageInputEnvelope
+    connect?: FileDeletionLogWhereUniqueInput | FileDeletionLogWhereUniqueInput[]
   }
 
   export type RoomUpdateOneRequiredWithoutMessagesNestedInput = {
@@ -13886,6 +15229,20 @@ export namespace Prisma {
     deleteMany?: MessageScalarWhereInput | MessageScalarWhereInput[]
   }
 
+  export type FileDeletionLogUpdateManyWithoutMessageNestedInput = {
+    create?: XOR<FileDeletionLogCreateWithoutMessageInput, FileDeletionLogUncheckedCreateWithoutMessageInput> | FileDeletionLogCreateWithoutMessageInput[] | FileDeletionLogUncheckedCreateWithoutMessageInput[]
+    connectOrCreate?: FileDeletionLogCreateOrConnectWithoutMessageInput | FileDeletionLogCreateOrConnectWithoutMessageInput[]
+    upsert?: FileDeletionLogUpsertWithWhereUniqueWithoutMessageInput | FileDeletionLogUpsertWithWhereUniqueWithoutMessageInput[]
+    createMany?: FileDeletionLogCreateManyMessageInputEnvelope
+    set?: FileDeletionLogWhereUniqueInput | FileDeletionLogWhereUniqueInput[]
+    disconnect?: FileDeletionLogWhereUniqueInput | FileDeletionLogWhereUniqueInput[]
+    delete?: FileDeletionLogWhereUniqueInput | FileDeletionLogWhereUniqueInput[]
+    connect?: FileDeletionLogWhereUniqueInput | FileDeletionLogWhereUniqueInput[]
+    update?: FileDeletionLogUpdateWithWhereUniqueWithoutMessageInput | FileDeletionLogUpdateWithWhereUniqueWithoutMessageInput[]
+    updateMany?: FileDeletionLogUpdateManyWithWhereWithoutMessageInput | FileDeletionLogUpdateManyWithWhereWithoutMessageInput[]
+    deleteMany?: FileDeletionLogScalarWhereInput | FileDeletionLogScalarWhereInput[]
+  }
+
   export type MessageUncheckedUpdateManyWithoutReply_toNestedInput = {
     create?: XOR<MessageCreateWithoutReply_toInput, MessageUncheckedCreateWithoutReply_toInput> | MessageCreateWithoutReply_toInput[] | MessageUncheckedCreateWithoutReply_toInput[]
     connectOrCreate?: MessageCreateOrConnectWithoutReply_toInput | MessageCreateOrConnectWithoutReply_toInput[]
@@ -13898,6 +15255,34 @@ export namespace Prisma {
     update?: MessageUpdateWithWhereUniqueWithoutReply_toInput | MessageUpdateWithWhereUniqueWithoutReply_toInput[]
     updateMany?: MessageUpdateManyWithWhereWithoutReply_toInput | MessageUpdateManyWithWhereWithoutReply_toInput[]
     deleteMany?: MessageScalarWhereInput | MessageScalarWhereInput[]
+  }
+
+  export type FileDeletionLogUncheckedUpdateManyWithoutMessageNestedInput = {
+    create?: XOR<FileDeletionLogCreateWithoutMessageInput, FileDeletionLogUncheckedCreateWithoutMessageInput> | FileDeletionLogCreateWithoutMessageInput[] | FileDeletionLogUncheckedCreateWithoutMessageInput[]
+    connectOrCreate?: FileDeletionLogCreateOrConnectWithoutMessageInput | FileDeletionLogCreateOrConnectWithoutMessageInput[]
+    upsert?: FileDeletionLogUpsertWithWhereUniqueWithoutMessageInput | FileDeletionLogUpsertWithWhereUniqueWithoutMessageInput[]
+    createMany?: FileDeletionLogCreateManyMessageInputEnvelope
+    set?: FileDeletionLogWhereUniqueInput | FileDeletionLogWhereUniqueInput[]
+    disconnect?: FileDeletionLogWhereUniqueInput | FileDeletionLogWhereUniqueInput[]
+    delete?: FileDeletionLogWhereUniqueInput | FileDeletionLogWhereUniqueInput[]
+    connect?: FileDeletionLogWhereUniqueInput | FileDeletionLogWhereUniqueInput[]
+    update?: FileDeletionLogUpdateWithWhereUniqueWithoutMessageInput | FileDeletionLogUpdateWithWhereUniqueWithoutMessageInput[]
+    updateMany?: FileDeletionLogUpdateManyWithWhereWithoutMessageInput | FileDeletionLogUpdateManyWithWhereWithoutMessageInput[]
+    deleteMany?: FileDeletionLogScalarWhereInput | FileDeletionLogScalarWhereInput[]
+  }
+
+  export type MessageCreateNestedOneWithoutDeletion_logsInput = {
+    create?: XOR<MessageCreateWithoutDeletion_logsInput, MessageUncheckedCreateWithoutDeletion_logsInput>
+    connectOrCreate?: MessageCreateOrConnectWithoutDeletion_logsInput
+    connect?: MessageWhereUniqueInput
+  }
+
+  export type MessageUpdateOneRequiredWithoutDeletion_logsNestedInput = {
+    create?: XOR<MessageCreateWithoutDeletion_logsInput, MessageUncheckedCreateWithoutDeletion_logsInput>
+    connectOrCreate?: MessageCreateOrConnectWithoutDeletion_logsInput
+    upsert?: MessageUpsertWithoutDeletion_logsInput
+    connect?: MessageWhereUniqueInput
+    update?: XOR<XOR<MessageUpdateToOneWithWhereWithoutDeletion_logsInput, MessageUpdateWithoutDeletion_logsInput>, MessageUncheckedUpdateWithoutDeletion_logsInput>
   }
 
   export type RoomCreateNestedOneWithoutInvitesInput = {
@@ -14163,9 +15548,12 @@ export namespace Prisma {
     is_edited?: boolean
     translation_status?: string
     translation_error?: string | null
+    is_pinned?: boolean
+    is_important?: boolean
     room: RoomCreateNestedOneWithoutMessagesInput
     reply_to?: MessageCreateNestedOneWithoutRepliesInput
     replies?: MessageCreateNestedManyWithoutReply_toInput
+    deletion_logs?: FileDeletionLogCreateNestedManyWithoutMessageInput
   }
 
   export type MessageUncheckedCreateWithoutSenderInput = {
@@ -14182,7 +15570,10 @@ export namespace Prisma {
     reply_to_id?: string | null
     translation_status?: string
     translation_error?: string | null
+    is_pinned?: boolean
+    is_important?: boolean
     replies?: MessageUncheckedCreateNestedManyWithoutReply_toInput
+    deletion_logs?: FileDeletionLogUncheckedCreateNestedManyWithoutMessageInput
   }
 
   export type MessageCreateOrConnectWithoutSenderInput = {
@@ -14429,6 +15820,8 @@ export namespace Prisma {
     reply_to_id?: StringNullableFilter<"Message"> | string | null
     translation_status?: StringFilter<"Message"> | string
     translation_error?: StringNullableFilter<"Message"> | string | null
+    is_pinned?: BoolFilter<"Message"> | boolean
+    is_important?: BoolFilter<"Message"> | boolean
   }
 
   export type RoomParticipantUpsertWithWhereUniqueWithoutUserInput = {
@@ -15053,9 +16446,12 @@ export namespace Prisma {
     is_edited?: boolean
     translation_status?: string
     translation_error?: string | null
+    is_pinned?: boolean
+    is_important?: boolean
     sender: UserCreateNestedOneWithoutMessages_sentInput
     reply_to?: MessageCreateNestedOneWithoutRepliesInput
     replies?: MessageCreateNestedManyWithoutReply_toInput
+    deletion_logs?: FileDeletionLogCreateNestedManyWithoutMessageInput
   }
 
   export type MessageUncheckedCreateWithoutRoomInput = {
@@ -15072,7 +16468,10 @@ export namespace Prisma {
     reply_to_id?: string | null
     translation_status?: string
     translation_error?: string | null
+    is_pinned?: boolean
+    is_important?: boolean
     replies?: MessageUncheckedCreateNestedManyWithoutReply_toInput
+    deletion_logs?: FileDeletionLogUncheckedCreateNestedManyWithoutMessageInput
   }
 
   export type MessageCreateOrConnectWithoutRoomInput = {
@@ -15502,9 +16901,12 @@ export namespace Prisma {
     is_edited?: boolean
     translation_status?: string
     translation_error?: string | null
+    is_pinned?: boolean
+    is_important?: boolean
     room: RoomCreateNestedOneWithoutMessagesInput
     sender: UserCreateNestedOneWithoutMessages_sentInput
     reply_to?: MessageCreateNestedOneWithoutRepliesInput
+    deletion_logs?: FileDeletionLogCreateNestedManyWithoutMessageInput
   }
 
   export type MessageUncheckedCreateWithoutRepliesInput = {
@@ -15522,6 +16924,9 @@ export namespace Prisma {
     reply_to_id?: string | null
     translation_status?: string
     translation_error?: string | null
+    is_pinned?: boolean
+    is_important?: boolean
+    deletion_logs?: FileDeletionLogUncheckedCreateNestedManyWithoutMessageInput
   }
 
   export type MessageCreateOrConnectWithoutRepliesInput = {
@@ -15541,9 +16946,12 @@ export namespace Prisma {
     is_edited?: boolean
     translation_status?: string
     translation_error?: string | null
+    is_pinned?: boolean
+    is_important?: boolean
     room: RoomCreateNestedOneWithoutMessagesInput
     sender: UserCreateNestedOneWithoutMessages_sentInput
     replies?: MessageCreateNestedManyWithoutReply_toInput
+    deletion_logs?: FileDeletionLogCreateNestedManyWithoutMessageInput
   }
 
   export type MessageUncheckedCreateWithoutReply_toInput = {
@@ -15560,7 +16968,10 @@ export namespace Prisma {
     is_edited?: boolean
     translation_status?: string
     translation_error?: string | null
+    is_pinned?: boolean
+    is_important?: boolean
     replies?: MessageUncheckedCreateNestedManyWithoutReply_toInput
+    deletion_logs?: FileDeletionLogUncheckedCreateNestedManyWithoutMessageInput
   }
 
   export type MessageCreateOrConnectWithoutReply_toInput = {
@@ -15570,6 +16981,33 @@ export namespace Prisma {
 
   export type MessageCreateManyReply_toInputEnvelope = {
     data: MessageCreateManyReply_toInput | MessageCreateManyReply_toInput[]
+  }
+
+  export type FileDeletionLogCreateWithoutMessageInput = {
+    id?: string
+    room_id: string
+    file_url: string
+    backup_path: string
+    deleted_at?: Date | string
+    expires_at: Date | string
+  }
+
+  export type FileDeletionLogUncheckedCreateWithoutMessageInput = {
+    id?: string
+    room_id: string
+    file_url: string
+    backup_path: string
+    deleted_at?: Date | string
+    expires_at: Date | string
+  }
+
+  export type FileDeletionLogCreateOrConnectWithoutMessageInput = {
+    where: FileDeletionLogWhereUniqueInput
+    create: XOR<FileDeletionLogCreateWithoutMessageInput, FileDeletionLogUncheckedCreateWithoutMessageInput>
+  }
+
+  export type FileDeletionLogCreateManyMessageInputEnvelope = {
+    data: FileDeletionLogCreateManyMessageInput | FileDeletionLogCreateManyMessageInput[]
   }
 
   export type RoomUpsertWithoutMessagesInput = {
@@ -15693,9 +17131,12 @@ export namespace Prisma {
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     translation_status?: StringFieldUpdateOperationsInput | string
     translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
     room?: RoomUpdateOneRequiredWithoutMessagesNestedInput
     sender?: UserUpdateOneRequiredWithoutMessages_sentNestedInput
     reply_to?: MessageUpdateOneWithoutRepliesNestedInput
+    deletion_logs?: FileDeletionLogUpdateManyWithoutMessageNestedInput
   }
 
   export type MessageUncheckedUpdateWithoutRepliesInput = {
@@ -15713,6 +17154,9 @@ export namespace Prisma {
     reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
     translation_status?: StringFieldUpdateOperationsInput | string
     translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
+    deletion_logs?: FileDeletionLogUncheckedUpdateManyWithoutMessageNestedInput
   }
 
   export type MessageUpsertWithWhereUniqueWithoutReply_toInput = {
@@ -15729,6 +17173,131 @@ export namespace Prisma {
   export type MessageUpdateManyWithWhereWithoutReply_toInput = {
     where: MessageScalarWhereInput
     data: XOR<MessageUpdateManyMutationInput, MessageUncheckedUpdateManyWithoutReply_toInput>
+  }
+
+  export type FileDeletionLogUpsertWithWhereUniqueWithoutMessageInput = {
+    where: FileDeletionLogWhereUniqueInput
+    update: XOR<FileDeletionLogUpdateWithoutMessageInput, FileDeletionLogUncheckedUpdateWithoutMessageInput>
+    create: XOR<FileDeletionLogCreateWithoutMessageInput, FileDeletionLogUncheckedCreateWithoutMessageInput>
+  }
+
+  export type FileDeletionLogUpdateWithWhereUniqueWithoutMessageInput = {
+    where: FileDeletionLogWhereUniqueInput
+    data: XOR<FileDeletionLogUpdateWithoutMessageInput, FileDeletionLogUncheckedUpdateWithoutMessageInput>
+  }
+
+  export type FileDeletionLogUpdateManyWithWhereWithoutMessageInput = {
+    where: FileDeletionLogScalarWhereInput
+    data: XOR<FileDeletionLogUpdateManyMutationInput, FileDeletionLogUncheckedUpdateManyWithoutMessageInput>
+  }
+
+  export type FileDeletionLogScalarWhereInput = {
+    AND?: FileDeletionLogScalarWhereInput | FileDeletionLogScalarWhereInput[]
+    OR?: FileDeletionLogScalarWhereInput[]
+    NOT?: FileDeletionLogScalarWhereInput | FileDeletionLogScalarWhereInput[]
+    id?: StringFilter<"FileDeletionLog"> | string
+    message_id?: StringFilter<"FileDeletionLog"> | string
+    room_id?: StringFilter<"FileDeletionLog"> | string
+    file_url?: StringFilter<"FileDeletionLog"> | string
+    backup_path?: StringFilter<"FileDeletionLog"> | string
+    deleted_at?: DateTimeFilter<"FileDeletionLog"> | Date | string
+    expires_at?: DateTimeFilter<"FileDeletionLog"> | Date | string
+  }
+
+  export type MessageCreateWithoutDeletion_logsInput = {
+    id?: string
+    content?: string | null
+    content_translated?: string | null
+    language_original?: string | null
+    message_type?: string
+    file_url?: string | null
+    voice_transcription?: string | null
+    created_at?: Date | string
+    is_edited?: boolean
+    translation_status?: string
+    translation_error?: string | null
+    is_pinned?: boolean
+    is_important?: boolean
+    room: RoomCreateNestedOneWithoutMessagesInput
+    sender: UserCreateNestedOneWithoutMessages_sentInput
+    reply_to?: MessageCreateNestedOneWithoutRepliesInput
+    replies?: MessageCreateNestedManyWithoutReply_toInput
+  }
+
+  export type MessageUncheckedCreateWithoutDeletion_logsInput = {
+    id?: string
+    room_id: string
+    sender_id: string
+    content?: string | null
+    content_translated?: string | null
+    language_original?: string | null
+    message_type?: string
+    file_url?: string | null
+    voice_transcription?: string | null
+    created_at?: Date | string
+    is_edited?: boolean
+    reply_to_id?: string | null
+    translation_status?: string
+    translation_error?: string | null
+    is_pinned?: boolean
+    is_important?: boolean
+    replies?: MessageUncheckedCreateNestedManyWithoutReply_toInput
+  }
+
+  export type MessageCreateOrConnectWithoutDeletion_logsInput = {
+    where: MessageWhereUniqueInput
+    create: XOR<MessageCreateWithoutDeletion_logsInput, MessageUncheckedCreateWithoutDeletion_logsInput>
+  }
+
+  export type MessageUpsertWithoutDeletion_logsInput = {
+    update: XOR<MessageUpdateWithoutDeletion_logsInput, MessageUncheckedUpdateWithoutDeletion_logsInput>
+    create: XOR<MessageCreateWithoutDeletion_logsInput, MessageUncheckedCreateWithoutDeletion_logsInput>
+    where?: MessageWhereInput
+  }
+
+  export type MessageUpdateToOneWithWhereWithoutDeletion_logsInput = {
+    where?: MessageWhereInput
+    data: XOR<MessageUpdateWithoutDeletion_logsInput, MessageUncheckedUpdateWithoutDeletion_logsInput>
+  }
+
+  export type MessageUpdateWithoutDeletion_logsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
+    message_type?: StringFieldUpdateOperationsInput | string
+    file_url?: NullableStringFieldUpdateOperationsInput | string | null
+    voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_edited?: BoolFieldUpdateOperationsInput | boolean
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
+    room?: RoomUpdateOneRequiredWithoutMessagesNestedInput
+    sender?: UserUpdateOneRequiredWithoutMessages_sentNestedInput
+    reply_to?: MessageUpdateOneWithoutRepliesNestedInput
+    replies?: MessageUpdateManyWithoutReply_toNestedInput
+  }
+
+  export type MessageUncheckedUpdateWithoutDeletion_logsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    room_id?: StringFieldUpdateOperationsInput | string
+    sender_id?: StringFieldUpdateOperationsInput | string
+    content?: NullableStringFieldUpdateOperationsInput | string | null
+    content_translated?: NullableStringFieldUpdateOperationsInput | string | null
+    language_original?: NullableStringFieldUpdateOperationsInput | string | null
+    message_type?: StringFieldUpdateOperationsInput | string
+    file_url?: NullableStringFieldUpdateOperationsInput | string | null
+    voice_transcription?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_edited?: BoolFieldUpdateOperationsInput | boolean
+    reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
+    translation_status?: StringFieldUpdateOperationsInput | string
+    translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
+    replies?: MessageUncheckedUpdateManyWithoutReply_toNestedInput
   }
 
   export type RoomCreateWithoutInvitesInput = {
@@ -16037,6 +17606,8 @@ export namespace Prisma {
     reply_to_id?: string | null
     translation_status?: string
     translation_error?: string | null
+    is_pinned?: boolean
+    is_important?: boolean
   }
 
   export type RoomParticipantCreateManyUserInput = {
@@ -16117,9 +17688,12 @@ export namespace Prisma {
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     translation_status?: StringFieldUpdateOperationsInput | string
     translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
     room?: RoomUpdateOneRequiredWithoutMessagesNestedInput
     reply_to?: MessageUpdateOneWithoutRepliesNestedInput
     replies?: MessageUpdateManyWithoutReply_toNestedInput
+    deletion_logs?: FileDeletionLogUpdateManyWithoutMessageNestedInput
   }
 
   export type MessageUncheckedUpdateWithoutSenderInput = {
@@ -16136,7 +17710,10 @@ export namespace Prisma {
     reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
     translation_status?: StringFieldUpdateOperationsInput | string
     translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
     replies?: MessageUncheckedUpdateManyWithoutReply_toNestedInput
+    deletion_logs?: FileDeletionLogUncheckedUpdateManyWithoutMessageNestedInput
   }
 
   export type MessageUncheckedUpdateManyWithoutSenderInput = {
@@ -16153,6 +17730,8 @@ export namespace Prisma {
     reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
     translation_status?: StringFieldUpdateOperationsInput | string
     translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type RoomParticipantUpdateWithoutUserInput = {
@@ -16383,6 +17962,8 @@ export namespace Prisma {
     reply_to_id?: string | null
     translation_status?: string
     translation_error?: string | null
+    is_pinned?: boolean
+    is_important?: boolean
   }
 
   export type RoomInviteCreateManyRoomInput = {
@@ -16438,9 +18019,12 @@ export namespace Prisma {
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     translation_status?: StringFieldUpdateOperationsInput | string
     translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
     sender?: UserUpdateOneRequiredWithoutMessages_sentNestedInput
     reply_to?: MessageUpdateOneWithoutRepliesNestedInput
     replies?: MessageUpdateManyWithoutReply_toNestedInput
+    deletion_logs?: FileDeletionLogUpdateManyWithoutMessageNestedInput
   }
 
   export type MessageUncheckedUpdateWithoutRoomInput = {
@@ -16457,7 +18041,10 @@ export namespace Prisma {
     reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
     translation_status?: StringFieldUpdateOperationsInput | string
     translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
     replies?: MessageUncheckedUpdateManyWithoutReply_toNestedInput
+    deletion_logs?: FileDeletionLogUncheckedUpdateManyWithoutMessageNestedInput
   }
 
   export type MessageUncheckedUpdateManyWithoutRoomInput = {
@@ -16474,6 +18061,8 @@ export namespace Prisma {
     reply_to_id?: NullableStringFieldUpdateOperationsInput | string | null
     translation_status?: StringFieldUpdateOperationsInput | string
     translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type RoomInviteUpdateWithoutRoomInput = {
@@ -16523,6 +18112,17 @@ export namespace Prisma {
     is_edited?: boolean
     translation_status?: string
     translation_error?: string | null
+    is_pinned?: boolean
+    is_important?: boolean
+  }
+
+  export type FileDeletionLogCreateManyMessageInput = {
+    id?: string
+    room_id: string
+    file_url: string
+    backup_path: string
+    deleted_at?: Date | string
+    expires_at: Date | string
   }
 
   export type MessageUpdateWithoutReply_toInput = {
@@ -16537,9 +18137,12 @@ export namespace Prisma {
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     translation_status?: StringFieldUpdateOperationsInput | string
     translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
     room?: RoomUpdateOneRequiredWithoutMessagesNestedInput
     sender?: UserUpdateOneRequiredWithoutMessages_sentNestedInput
     replies?: MessageUpdateManyWithoutReply_toNestedInput
+    deletion_logs?: FileDeletionLogUpdateManyWithoutMessageNestedInput
   }
 
   export type MessageUncheckedUpdateWithoutReply_toInput = {
@@ -16556,7 +18159,10 @@ export namespace Prisma {
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     translation_status?: StringFieldUpdateOperationsInput | string
     translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
     replies?: MessageUncheckedUpdateManyWithoutReply_toNestedInput
+    deletion_logs?: FileDeletionLogUncheckedUpdateManyWithoutMessageNestedInput
   }
 
   export type MessageUncheckedUpdateManyWithoutReply_toInput = {
@@ -16573,6 +18179,35 @@ export namespace Prisma {
     is_edited?: BoolFieldUpdateOperationsInput | boolean
     translation_status?: StringFieldUpdateOperationsInput | string
     translation_error?: NullableStringFieldUpdateOperationsInput | string | null
+    is_pinned?: BoolFieldUpdateOperationsInput | boolean
+    is_important?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type FileDeletionLogUpdateWithoutMessageInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    room_id?: StringFieldUpdateOperationsInput | string
+    file_url?: StringFieldUpdateOperationsInput | string
+    backup_path?: StringFieldUpdateOperationsInput | string
+    deleted_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FileDeletionLogUncheckedUpdateWithoutMessageInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    room_id?: StringFieldUpdateOperationsInput | string
+    file_url?: StringFieldUpdateOperationsInput | string
+    backup_path?: StringFieldUpdateOperationsInput | string
+    deleted_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type FileDeletionLogUncheckedUpdateManyWithoutMessageInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    room_id?: StringFieldUpdateOperationsInput | string
+    file_url?: StringFieldUpdateOperationsInput | string
+    backup_path?: StringFieldUpdateOperationsInput | string
+    deleted_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    expires_at?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 
@@ -16620,6 +18255,10 @@ export namespace Prisma {
      * @deprecated Use MessageDefaultArgs instead
      */
     export type MessageArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = MessageDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use FileDeletionLogDefaultArgs instead
+     */
+    export type FileDeletionLogArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = FileDeletionLogDefaultArgs<ExtArgs>
     /**
      * @deprecated Use RoomInviteDefaultArgs instead
      */
