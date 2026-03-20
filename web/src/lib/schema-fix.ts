@@ -7,11 +7,12 @@ import prisma from "./db";
  */
 export async function ensureSchemaFixed() {
   try {
-    const tables = ["Message", "User", "RoomParticipant", "message", "user", "roomparticipant", "messages", "users", "profiles"];
+    const tables = ["Message", "User", "RoomParticipant", "Room", "message", "user", "roomparticipant", "room", "messages", "users", "profiles", "rooms"];
     for (const table of tables) {
       const isMessageTable = table.toLowerCase() === "message" || table.toLowerCase() === "messages";
       const isUserTable = table.toLowerCase() === "user" || table.toLowerCase() === "users" || table.toLowerCase() === "profiles";
       const isRoomParticipantTable = table.toLowerCase() === "roomparticipant";
+      const isRoomTable = table.toLowerCase() === "room" || table.toLowerCase() === "rooms";
       
       if (isMessageTable) {
         // Try both quoted and unquoted for maximum compatibility
@@ -48,6 +49,11 @@ export async function ensureSchemaFixed() {
         
         await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "typing_at" DATETIME;`).catch(() => {});
         await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "typing_at" DATETIME;`).catch(() => {});
+      }
+
+      if (isRoomTable) {
+        await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "room_id" TEXT;`).catch(() => {});
+        await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "room_id" TEXT;`).catch(() => {});
       }
     }
     // console.log("[DB FIX] Schema check/fix completed");

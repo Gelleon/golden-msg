@@ -21,7 +21,28 @@ set -a
 [ -f "$WEB_DIR/.env" ] && . "$WEB_DIR/.env"
 set +a
 
-if [ -f "$ROOT_DB" ] || [ -f "$PRISMA_DB" ]; then
+KEY_FILE="$WEB_DIR/.next-server-actions.key"
+if [ -z "$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY" ]; then
+    if [ -f "$KEY_FILE" ]; then
+        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=$(cat "$KEY_FILE")
+    else
+        NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=$(node -e "console.log(require('crypto').randomBytes(32).toString('base64'))")
+        echo "$NEXT_SERVER_ACTIONS_ENCRYPTION_KEY" > "$KEY_FILE"
+    fi
+    export NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
+fi
+
+if [ -n "$FORCE_DB_FILE" ]; then
+    if [ ! -f "$FORCE_DB_FILE" ]; then
+        echo ">>> Ошибка: FORCE_DB_FILE не существует: $FORCE_DB_FILE"
+        exit 1
+    fi
+    export DATABASE_URL="file:$FORCE_DB_FILE"
+    echo ">>> Принудительно выбрана SQLite база: $FORCE_DB_FILE"
+elif [ -n "$FORCE_DATABASE_URL" ]; then
+    export DATABASE_URL="$FORCE_DATABASE_URL"
+    echo ">>> Принудительно выбрана DATABASE_URL из FORCE_DATABASE_URL"
+elif [ -f "$ROOT_DB" ] || [ -f "$PRISMA_DB" ]; then
     if [ -f "$ROOT_DB" ] && [ -f "$PRISMA_DB" ]; then
         ROOT_SIZE=$(wc -c < "$ROOT_DB")
         PRISMA_SIZE=$(wc -c < "$PRISMA_DB")
