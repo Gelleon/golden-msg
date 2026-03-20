@@ -3,8 +3,11 @@ set -e
 
 PROJECT_DIR="/var/www/golden-msg"
 WEB_DIR="$PROJECT_DIR/web"
+DB_FILE="$WEB_DIR/dev.db"
+export DATABASE_URL="file:$DB_FILE"
 
 echo "--- Начинаю обновление проекта на сервере ---"
+echo ">>> Используется база данных: $DATABASE_URL"
 
 # 1. Обновление кода из Git
 cd "$PROJECT_DIR"
@@ -28,9 +31,9 @@ npm run build
 # 3. Перезапуск приложения через PM2
 echo ">>> Перезапуск процесса в PM2..."
 if pm2 show golden-msg > /dev/null; then
-    pm2 restart golden-msg
+    pm2 restart golden-msg --update-env
 else
-    pm2 start npm --name "golden-msg" -- start
+    pm2 start npm --name "golden-msg" --cwd "$WEB_DIR" -- start
 fi
 
 echo "--- Деплой успешно завершен! ---"
