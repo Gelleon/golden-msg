@@ -433,6 +433,7 @@ export function ChatWindow({
                       onDelete={(id) => setMessages(prev => prev.filter(m => m.id !== id))}
                       showSenderName={showSenderName}
                       showAvatar={showAvatar}
+                      currentUserRole={currentUser.role}
                       participants={participants}
                     />
                   </div>

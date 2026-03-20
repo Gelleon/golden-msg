@@ -61,6 +61,7 @@ interface MessageBubbleProps {
   onDelete?: (messageId: string) => void
   showSenderName?: boolean
   showAvatar?: boolean
+  currentUserRole?: string
   participants?: Array<{
     id: string
     full_name: string | null
@@ -98,7 +99,7 @@ const isAudio = (url: string | null) => {
   return ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'webm'].includes(ext || '')
 }
 
-export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showSenderName, showAvatar = true, participants = [] }: MessageBubbleProps) {
+export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showSenderName, showAvatar = true, currentUserRole, participants = [] }: MessageBubbleProps) {
   const { t } = useTranslation()
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -108,14 +109,18 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
   const [mounted, setMounted] = useState(false)
   const isMountedRef = useRef(false)
   
-  // To identify if the CURRENT user is an admin, we need to know their role.
-  // We'll add it to the props for reliability, but for now we'll check message.sender.role
-  // if isCurrentUser is true, or use the localStorage fallback if provided.
-  const isCurrentUserAdmin = (isCurrentUser && message.sender.role === "admin") || 
+  // To identify if the CURRENT user is an admin, we check the prop or fallback to localStorage
+  const isCurrentUserAdmin = currentUserRole === "admin" || 
                             (typeof window !== 'undefined' && localStorage.getItem('user_role') === 'admin')
   
   const canDelete = isCurrentUser || isCurrentUserAdmin
   const canEdit = isCurrentUser
+
+  useEffect(() => {
+    if (mounted && isCurrentUserAdmin) {
+      console.log(`[DEBUG] Message ${message.id} from ${message.sender.full_name}: canDelete=${canDelete}, role=${currentUserRole}, isCurrentUser=${isCurrentUser}`);
+    }
+  }, [mounted, isCurrentUser, isCurrentUserAdmin, canDelete, currentUserRole, message.id, message.sender.full_name]);
 
   useEffect(() => {
     setMounted(true)
@@ -521,7 +526,7 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
       <ContextMenu>
         <ContextMenuTrigger asChild className="message-bubble-trigger">
           <div className={cn(
-            "flex-1 relative group/bubble max-w-fit min-w-[60px]",
+            "flex-1 relative group/bubble max-w-[85%]",
             isCurrentUser ? "flex flex-col items-end" : "flex flex-col items-start"
           )}>
             {isDeleting && (
@@ -570,8 +575,9 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
             {/* Actions - visible on hover */}
             {canDelete && !isEditing && (
               <div className={cn(
-                isCurrentUser ? "absolute -left-10 top-1/2 -translate-y-1/2" : "absolute -right-10 top-1/2 -translate-y-1/2",
-                "opacity-0 group-hover/bubble:opacity-100 transition-opacity flex flex-col items-center gap-1",
+                isCurrentUser ? "absolute -left-10" : "absolute -right-10",
+                "top-1/2 -translate-y-1/2",
+                "opacity-0 group-hover/bubble:opacity-100 transition-all duration-200 flex flex-col items-center gap-1 z-20",
                 isDeleting && "opacity-100"
               )}>
                 {canEdit && message.message_type === "text" && (
