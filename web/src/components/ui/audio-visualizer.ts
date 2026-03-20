@@ -365,13 +365,4 @@ export class AudioVisualizer {
 
     this.animationId = requestAnimationFrame(this.renderFrame);
   }
-
-  public destroy() {
-    this.pause();
-    if (this.audioContext && this.audioContext.state !== "closed") {
-      this.audioContext.close();
-    }
-    this.audioElement.src = "";
-    this.container.innerHTML = "";
-  }
 }
