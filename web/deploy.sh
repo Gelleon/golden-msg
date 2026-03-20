@@ -3,11 +3,8 @@ set -e
 
 PROJECT_DIR="/var/www/golden-msg"
 WEB_DIR="$PROJECT_DIR/web"
-DB_FILE="$WEB_DIR/dev.db"
-export DATABASE_URL="file:$DB_FILE"
 
 echo "--- Начинаю обновление проекта на сервере ---"
-echo ">>> Используется база данных: $DATABASE_URL"
 
 # 1. Обновление кода из Git
 cd "$PROJECT_DIR"
@@ -18,6 +15,16 @@ git pull origin main
 
 # 2. Установка зависимостей и сборка
 cd "$WEB_DIR"
+set -a
+[ -f "$WEB_DIR/.env" ] && . "$WEB_DIR/.env"
+set +a
+
+if [ -n "$DATABASE_URL" ]; then
+    echo ">>> DATABASE_URL загружен из .env"
+else
+    echo ">>> DATABASE_URL не найден в .env"
+fi
+
 echo ">>> Установка npm зависимостей..."
 npm install
 
