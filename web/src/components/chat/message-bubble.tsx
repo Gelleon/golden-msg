@@ -526,88 +526,92 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
       <ContextMenu>
         <ContextMenuTrigger asChild className="message-bubble-trigger">
           <div className={cn(
-            "flex-1 relative group/bubble max-w-[85%]",
-            isCurrentUser ? "flex flex-col items-end" : "flex flex-col items-start"
+            "flex-1 relative group/bubble max-w-[85%] flex flex-col",
+            isCurrentUser ? "items-end" : "items-start"
           )}>
             {isDeleting && (
               <div className="absolute inset-0 z-50 bg-white/50 dark:bg-black/50 backdrop-blur-[1px] rounded-2xl flex items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
               </div>
             )}
-            <div className={cn(
-              "rounded-[20px] shadow-sm transition-all duration-300 overflow-hidden relative",
-              isCurrentUser 
-                ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white" 
-                : "bg-white text-slate-900 border border-slate-100",
-              isCurrentUser && showSenderName && "rounded-tr-[5px]",
-              isCurrentUser && !showSenderName && "rounded-tr-[20px]",
-              !isCurrentUser && showSenderName && "rounded-tl-[5px]",
-              !isCurrentUser && !showSenderName && "rounded-tl-[20px]",
-              "hover:shadow-md max-w-[320px] sm:max-w-[400px]"
-            )}>
-              {showSenderName && !isCurrentUser && (
-                <div className={cn(
-                  "px-4 pt-2.5 pb-0 text-[13px] font-bold leading-none select-none truncate max-w-full",
-                  getUserColor(message.sender.id)
-                )}>
-                  {message.sender.full_name}
-                </div>
-              )}
-              {renderContent()}
-              
-              {/* Message Info (Time & Status) */}
-              <div className={cn(
-                "flex items-center gap-1 px-2 pb-1 justify-end",
-                isCurrentUser ? "text-white/70" : "text-slate-400"
-              )}>
-                {message.is_edited && (
-                  <span className="text-[9px] italic font-medium">{t("chat.edited")}</span>
-                )}
-                <span className="text-[10px] font-medium">
-                  {new Date(message.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', hour12: false })}
-                </span>
-                {isCurrentUser && (
-                  <Check className="h-3 w-3" />
-                )}
-              </div>
-            </div>
             
-            {/* Actions - visible on hover */}
-            {canDelete && !isEditing && (
+            <div className={cn(
+              "flex items-center gap-2 group/bubble-content max-w-full",
+              isCurrentUser ? "flex-row-reverse" : "flex-row"
+            )}>
               <div className={cn(
-                isCurrentUser ? "absolute -left-10" : "absolute -right-10",
-                "top-1/2 -translate-y-1/2",
-                "opacity-0 group-hover/bubble:opacity-100 transition-all duration-200 flex flex-col items-center gap-1 z-20",
-                isDeleting && "opacity-100"
+                "rounded-[20px] shadow-sm transition-all duration-300 overflow-hidden relative",
+                isCurrentUser 
+                  ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white" 
+                  : "bg-white text-slate-900 border border-slate-100",
+                isCurrentUser && showSenderName && "rounded-tr-[5px]",
+                isCurrentUser && !showSenderName && "rounded-tr-[20px]",
+                !isCurrentUser && showSenderName && "rounded-tl-[5px]",
+                !isCurrentUser && !showSenderName && "rounded-tl-[20px]",
+                "hover:shadow-md max-w-[320px] sm:max-w-[400px]"
               )}>
-                {canEdit && message.message_type === "text" && (
+                {showSenderName && !isCurrentUser && (
+                  <div className={cn(
+                    "px-4 pt-2.5 pb-0 text-[13px] font-bold leading-none select-none truncate max-w-full",
+                    getUserColor(message.sender.id)
+                  )}>
+                    {message.sender.full_name}
+                  </div>
+                )}
+                {renderContent()}
+                
+                {/* Message Info (Time & Status) */}
+                <div className={cn(
+                  "flex items-center gap-1 px-2 pb-1 justify-end",
+                  isCurrentUser ? "text-white/70" : "text-slate-400"
+                )}>
+                  {message.is_edited && (
+                    <span className="text-[9px] italic font-medium">{t("chat.edited")}</span>
+                  )}
+                  <span className="text-[10px] font-medium">
+                    {new Date(message.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                  </span>
+                  {isCurrentUser && (
+                    <Check className="h-3 w-3" />
+                  )}
+                </div>
+              </div>
+              
+              {/* Actions - visible on hover */}
+              {canDelete && !isEditing && (
+                <div className={cn(
+                  "opacity-0 group-hover/bubble-content:opacity-100 transition-all duration-200 flex flex-col items-center gap-1 z-20 shrink-0",
+                  isDeleting && "opacity-100"
+                )}>
+                  {canEdit && message.message_type === "text" && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 border-none shadow-sm"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 border-none shadow-sm"
-                    onClick={() => setIsEditing(true)}
+                    className={cn(
+                      "h-7 w-7 rounded-full bg-slate-100 hover:bg-red-50 text-red-400 border-none shadow-sm",
+                      isDeleting && "cursor-not-allowed"
+                    )}
+                    onClick={() => setShowDeleteConfirm(true)}
+                    disabled={isDeleting}
                   >
-                    <Pencil className="h-3.5 w-3.5" />
+                    {isDeleting ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
                   </Button>
-                )}
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className={cn(
-                    "h-7 w-7 rounded-full bg-slate-100 hover:bg-red-50 text-red-400 border-none shadow-sm",
-                    isDeleting && "cursor-not-allowed"
-                  )}
-                  onClick={() => setShowDeleteConfirm(true)}
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-3.5 w-3.5" />
-                  )}
-                </Button>
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent className="w-48 p-1.5 rounded-xl shadow-2xl border-slate-200/60 bg-white/95 backdrop-blur-sm">
