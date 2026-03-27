@@ -5,8 +5,8 @@ import crypto from 'crypto';
 import ruTranslations from '@/locales/ru.json';
 import cnTranslations from '@/locales/cn.json';
 
-const INACTIVITY_MINUTES = 10;
-const EMAIL_COOLDOWN_HOURS = 24;
+const INACTIVITY_MINUTES = 5;
+const EMAIL_COOLDOWN_MINUTES = 5;
 
 interface TranslationSet {
   welcome: {
@@ -74,7 +74,7 @@ export async function queueNotificationIfOffline(userId: string, roomId: string,
     if (participation.last_active_at > tenMinutesAgo) return;
 
     // Check email cooldown (don't spam)
-    const emailCooldownThreshold = new Date(now.getTime() - EMAIL_COOLDOWN_HOURS * 60 * 60 * 1000);
+    const emailCooldownThreshold = new Date(now.getTime() - EMAIL_COOLDOWN_MINUTES * 60 * 1000);
     if (participation.user.last_email_notification_at && participation.user.last_email_notification_at > emailCooldownThreshold) {
       return;
     }
@@ -207,7 +207,7 @@ export async function notifyUsersOfUnreadMessages() {
   
   const now = new Date();
   const inactivityThreshold = subMinutes(now, INACTIVITY_MINUTES);
-  const emailCooldownThreshold = new Date(now.getTime() - EMAIL_COOLDOWN_HOURS * 60 * 60 * 1000);
+  const emailCooldownThreshold = new Date(now.getTime() - EMAIL_COOLDOWN_MINUTES * 60 * 1000);
 
   try {
     const BATCH_SIZE = 50;
@@ -300,6 +300,13 @@ interface User {
  * Sends a personalized email to a user.
  */
 async function sendNotificationEmail(user: User, rooms: { roomName: string; unreadCount: number }[]) {
+  // Validate email address
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!user.email || !emailRegex.test(user.email)) {
+    console.error(`Invalid email address for user ${user.id}: ${user.email}`);
+    return { success: false, error: 'Invalid email address' };
+  }
+
   const lang = user.preferred_language || 'ru';
   const t = translations[lang]?.welcome?.email || translations.ru.welcome.email;
   
@@ -333,13 +340,30 @@ async function sendNotificationEmail(user: User, rooms: { roomName: string; unre
     </div>
   `;
 
-  try {
-    const result = await sendEmail({
-      to: user.email,
-      subject,
-      html
-    });
+  let result: { success: boolean; error?: string; messageId?: string } = { success: false, error: 'Not attempted' };
+  let attempts = 0;
+  const MAX_ATTEMPTS = 3;
 
+  while (attempts < MAX_ATTEMPTS) {
+    attempts++;
+    try {
+      result = await sendEmail({
+        to: user.email,
+        subject,
+        html
+      });
+      if (result.success) break;
+    } catch (error: any) {
+      result = { success: false, error: error.message };
+    }
+    
+    if (!result.success && attempts < MAX_ATTEMPTS) {
+      console.warn(`Attempt ${attempts} to send email to ${user.email} failed. Retrying in 2 seconds...`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+
+  try {
     // Log the notification
     await prisma.notificationLog.create({
       data: {
@@ -357,12 +381,27 @@ async function sendNotificationEmail(user: User, rooms: { roomName: string; unre
         where: { id: user.id },
         data: { last_email_notification_at: new Date() }
       });
-      console.log(`Notification sent to ${user.email}`);
+      console.log(`Notification sent to ${user.email} after ${attempts} attempt(s)`);
+    } else {
+      console.error(`Failed to send notification email to ${user.email} after ${attempts} attempts:`, result.error);
+      
+      // Alert Admin if max attempts reached and failed
+      if (process.env.ADMIN_EMAIL) {
+        try {
+          await sendEmail({
+            to: process.env.ADMIN_EMAIL,
+            subject: 'System Alert: Email Delivery Failed',
+            html: `<p>Failed to deliver unread messages notification to <b>${user.email}</b>.</p><p>Error: ${result.error}</p>`
+          });
+        } catch (adminErr) {
+          console.error('Failed to send alert to admin:', adminErr);
+        }
+      }
     }
 
     return result;
   } catch (error: any) {
-    console.error('Error sending notification email:', error);
+    console.error('Error in sendNotificationEmail finalize block:', error);
     return { success: false, error: error.message };
   }
 }

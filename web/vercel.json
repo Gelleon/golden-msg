@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/notifications/scan",
-      "schedule": "0 * * * *"
+      "schedule": "*/5 * * * *"
     },
     {
       "path": "/api/admin/file-cleanup",
