@@ -347,6 +347,7 @@ export function MessageInput({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const chunksRef = useRef<Blob[]>([])
+  const recordingStartTimeRef = useRef<number>(0)
 
   const stopMediaTracks = () => {
     mediaStreamRef.current?.getTracks().forEach((track) => track.stop())
@@ -423,6 +424,7 @@ export function MessageInput({
           return
         }
 
+        const durationSeconds = (Date.now() - recordingStartTimeRef.current) / 1000
         const detectedType = chunksRef.current[0]?.type || mediaRecorder.mimeType || "audio/webm"
         const fileExtension = detectedType.includes("mp4")
           ? "m4a"
@@ -446,12 +448,14 @@ export function MessageInput({
           const result = await uploadFile(formData)
           if (result.error || !result.url) throw new Error(result.error || "Upload failed")
 
+          const fileUrlWithDuration = `${result.url}#d=${durationSeconds.toFixed(2)}`
+
           const sendResult = await sendMessageAction({
             roomId,
             content: t("chat.voiceMessageContent"),
             messageType: "voice",
-            fileUrl: result.url,
-        userRole,
+            fileUrl: fileUrlWithDuration,
+            userRole,
           })
 
           if (sendResult.error) {
@@ -470,6 +474,7 @@ export function MessageInput({
       }
 
       mediaRecorder.start(250)
+      recordingStartTimeRef.current = Date.now()
       setIsRecording(true)
     } catch (err) {
       console.error("Error accessing microphone:", err)

@@ -89,13 +89,15 @@ const getUserColor = (userId: string) => {
 
 const isImage = (url: string | null) => {
   if (!url) return false
-  const ext = url.split('.').pop()?.toLowerCase()
+  const cleanUrl = url.split('#')[0].split('?')[0]
+  const ext = cleanUrl.split('.').pop()?.toLowerCase()
   return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '')
 }
 
 const isAudio = (url: string | null) => {
   if (!url) return false
-  const ext = url.split('.').pop()?.toLowerCase()
+  const cleanUrl = url.split('#')[0].split('?')[0]
+  const ext = cleanUrl.split('.').pop()?.toLowerCase()
   return ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'webm'].includes(ext || '')
 }
 
@@ -393,10 +395,21 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
         )
       case "voice":
         if (!message.file_url) return null;
+        
+        let voiceUrl = message.file_url;
+        let voiceDuration = undefined;
+        if (voiceUrl.includes("#d=")) {
+          const parts = voiceUrl.split("#d=");
+          voiceUrl = parts[0];
+          const parsed = parseFloat(parts[1]);
+          if (!isNaN(parsed)) voiceDuration = Math.round(parsed);
+        }
+
         return (
           <div className="min-w-[250px] md:min-w-[300px]">
             <VoiceMessage
-              src={message.file_url}
+              src={voiceUrl}
+              duration={voiceDuration}
               senderName={message.sender.full_name || undefined}
               isCurrentUser={isCurrentUser}
               className="w-full"
@@ -408,10 +421,20 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
         const isAud = isAudio(message.file_url)
         
         if (isAud && message.file_url) {
+          let audUrl = message.file_url;
+          let audDuration = undefined;
+          if (audUrl.includes("#d=")) {
+            const parts = audUrl.split("#d=");
+            audUrl = parts[0];
+            const parsed = parseFloat(parts[1]);
+            if (!isNaN(parsed)) audDuration = Math.round(parsed);
+          }
+
           return (
             <div className="min-w-[250px] md:min-w-[300px]">
               <VoiceMessage
-                src={message.file_url}
+                src={audUrl}
+                duration={audDuration}
                 senderName={message.content_original || message.sender.full_name || undefined}
                 isCurrentUser={isCurrentUser}
                 className="w-full"

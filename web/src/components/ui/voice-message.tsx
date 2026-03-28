@@ -406,17 +406,22 @@ export function VoiceMessage({
 
   const handleLoadedMetadata = () => {
     if (!audioRef.current) return
+    setIsLoaded(true)
+
     const d = audioRef.current.duration
     if (d === Infinity) {
       audioRef.current.currentTime = 1e101
       audioRef.current.addEventListener("timeupdate", () => {
         audioRef.current!.currentTime = 0
-        setDuration(audioRef.current!.duration)
+        if (!initialDuration) {
+          setDuration(audioRef.current!.duration)
+        }
       }, { once: true })
     } else {
-      setDuration(d)
+      if (!initialDuration) {
+        setDuration(d)
+      }
     }
-    setIsLoaded(true)
   }
 
   const handleTimeUpdate = () => {
