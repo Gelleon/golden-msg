@@ -10,7 +10,7 @@ const EMAIL_COOLDOWN_MINUTES = 5;
 
 interface TranslationSet {
   welcome: {
-    email: {
+    emailNotifications: {
       unreadMessagesSubject: string;
       hello: string;
       inactiveMessage: string;
@@ -308,7 +308,7 @@ async function sendNotificationEmail(user: User, rooms: { roomName: string; unre
   }
 
   const lang = user.preferred_language || 'ru';
-  const t = translations[lang]?.welcome?.email || translations.ru.welcome.email;
+  const t = translations[lang]?.welcome?.emailNotifications || translations.ru.welcome.emailNotifications;
   
   const totalUnread = rooms.reduce((sum, r) => sum + r.unreadCount, 0);
   const subject = t.unreadMessagesSubject.replace('{count}', totalUnread.toString());
