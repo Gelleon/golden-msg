@@ -37,8 +37,12 @@ interface NotificationQueueItem {
 const notificationQueue: NotificationQueueItem[] = [];
 let isQueueProcessing = false;
 
+// В оперативной памяти храним блокировки для предотвращения race conditions
+const processingUsers = new Set<string>();
+
 /**
  * Adds a notification to the queue if a user is offline.
+
  * @param userId ID of the user to notify
  * @param roomId ID of the room where the message was sent
  * @param messageId ID of the message that triggered the notification
@@ -142,6 +146,10 @@ async function processQueue() {
 
       // Process batch
       await Promise.all(nextBatch.map(async (item) => {
+        // Prevent concurrent processing for the same user
+        if (processingUsers.has(item.userId)) return;
+        processingUsers.add(item.userId);
+
         try {
           // Re-verify if user is still offline and hasn't read the messages
           const participation = await prisma.roomParticipant.findUnique({
@@ -162,19 +170,32 @@ async function processQueue() {
           // If user became active or read messages, skip
           if (participation.last_active_at > subMinutes(now, INACTIVITY_MINUTES)) return;
 
-          // Count unread messages
-          const unreadCount = await prisma.message.count({
+          // Find all unread messages
+          const unreadMessages = await prisma.message.findMany({
             where: {
               room_id: item.roomId,
               sender_id: { not: item.userId },
               created_at: { gt: participation.last_read_at }
-            }
+            },
+            select: { created_at: true },
+            orderBy: { created_at: 'desc' }
           });
 
-          if (unreadCount > 0) {
+          if (unreadMessages.length > 0) {
+            const latestMessageDate = unreadMessages[0].created_at;
+
+            // Блокировка повторной отправки: проверяем, отправляли ли мы уже уведомление после появления этого сообщения
+            if (
+              participation.user.last_email_notification_at &&
+              latestMessageDate <= participation.user.last_email_notification_at
+            ) {
+              console.log(`[NotificationQueue] Skipping duplicate notification for user ${item.userId} in room ${item.roomId}`);
+              return;
+            }
+
             const result = await sendNotificationEmail(participation.user, [{
               roomName: participation.room.name || `Room ${item.roomId.substring(0, 8)}`,
-              unreadCount
+              unreadCount: unreadMessages.length
             }]);
             
             if (result.success) {
@@ -185,6 +206,8 @@ async function processQueue() {
           }
         } catch (err) {
           console.error(`Failed to process queued notification for user ${item.userId}:`, err);
+        } finally {
+          processingUsers.delete(item.userId);
         }
       }));
     }
@@ -237,35 +260,52 @@ export async function notifyUsersOfUnreadMessages() {
 
       // Process batch in parallel for better performance
       await Promise.all(users.map(async (user) => {
-        // Fetch unread counts for all user rooms
-        const unreadCounts = await Promise.all(user.room_participations.map(async (participant) => {
-          // Check if user has been inactive for more than 60 minutes in this room
-          if (participant.last_active_at > inactivityThreshold) {
-            return null;
-          }
+        if (processingUsers.has(user.id)) return;
+        processingUsers.add(user.id);
 
-          // Count unread messages since last_read_at
-          const count = await prisma.message.count({
-            where: {
-              room_id: participant.room_id,
-              sender_id: { not: user.id },
-              created_at: { gt: participant.last_read_at }
+        try {
+          let hasNewUnreadMessages = false;
+          const roomsToNotify: { roomName: string; unreadCount: number }[] = [];
+
+          // Fetch unread counts for all user rooms
+          await Promise.all(user.room_participations.map(async (participant) => {
+            // Check if user has been inactive for more than 5 minutes in this room
+            if (participant.last_active_at > inactivityThreshold) {
+              return;
             }
-          });
 
-          if (count > 0) {
-            return {
-              roomName: participant.room.name || `Room ${participant.room_id.substring(0, 8)}`,
-              unreadCount: count
-            };
+            // Find all unread messages
+            const unreadMessages = await prisma.message.findMany({
+              where: {
+                room_id: participant.room_id,
+                sender_id: { not: user.id },
+                created_at: { gt: participant.last_read_at }
+              },
+              select: { created_at: true },
+              orderBy: { created_at: 'desc' }
+            });
+
+            if (unreadMessages.length > 0) {
+              const latestMessageDate = unreadMessages[0].created_at;
+
+              // Проверяем, есть ли новые сообщения с момента последнего уведомления
+              if (!user.last_email_notification_at || latestMessageDate > user.last_email_notification_at) {
+                hasNewUnreadMessages = true;
+              }
+
+              roomsToNotify.push({
+                roomName: participant.room.name || `Room ${participant.room_id.substring(0, 8)}`,
+                unreadCount: unreadMessages.length
+              });
+            }
+          }));
+
+          // Отправляем письмо ТОЛЬКО если есть новые сообщения, о которых мы еще не уведомляли
+          if (hasNewUnreadMessages && roomsToNotify.length > 0) {
+            await sendNotificationEmail(user, roomsToNotify);
           }
-          return null;
-        }));
-
-        const filteredNotifications = unreadCounts.filter((n): n is { roomName: string; unreadCount: number } => n !== null);
-
-        if (filteredNotifications.length > 0) {
-          await sendNotificationEmail(user, filteredNotifications);
+        } finally {
+          processingUsers.delete(user.id);
         }
       }));
 
