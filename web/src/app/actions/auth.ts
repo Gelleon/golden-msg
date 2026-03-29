@@ -377,6 +377,52 @@ export async function forgotPassword(formData: FormData) {
   }
 }
 
+export async function validateResetToken(token: string) {
+  const headerList = await headers();
+  const ip = headerList.get('x-forwarded-for') || 'unknown';
+
+  // Rate Limiting for token validation to prevent token enumeration
+  const isAllowed = await checkRateLimit(ip, "TOKEN_VALIDATION_ATTEMPT", 10, 15 * 60 * 1000);
+  if (!isAllowed) {
+    return { error: "welcome.recovery.errorRateLimit" };
+  }
+
+  try {
+    const resetToken = await prisma.passwordResetToken.findUnique({
+      where: { token },
+      select: { expires_at: true }
+    });
+
+    if (!resetToken) {
+      await logAuditAction({
+        action: "TOKEN_VALIDATION_FAILED",
+        ipAddress: ip,
+        details: { reason: "invalid_token" }
+      });
+      return { error: "welcome.recovery.errorTokenInvalid" };
+    }
+
+    if (resetToken.expires_at < new Date()) {
+      await logAuditAction({
+        action: "TOKEN_VALIDATION_FAILED",
+        ipAddress: ip,
+        details: { reason: "expired_token" }
+      });
+      return { error: "welcome.recovery.errorTokenExpired" };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Validate token error:", error);
+    await logAuditAction({
+      action: "TOKEN_VALIDATION_ERROR",
+      ipAddress: ip,
+      details: { error: String(error) }
+    });
+    return { error: "errorUnknown" };
+  }
+}
+
 export async function resetPassword(formData: FormData) {
   const token = formData.get("token") as string;
   const password = formData.get("password") as string;
@@ -385,6 +431,12 @@ export async function resetPassword(formData: FormData) {
 
   if (!token || !password || password.length < 8) {
     return { error: "errorFieldsRequired" };
+  }
+
+  // Rate Limiting (max 5 per 15 minutes) for reset attempts
+  const isAllowed = await checkRateLimit(ip, "PASSWORD_RESET_ATTEMPT", 5, 15 * 60 * 1000);
+  if (!isAllowed) {
+    return { error: "welcome.recovery.errorRateLimit" };
   }
 
   // Password complexity check (OWASP)
@@ -411,6 +463,11 @@ export async function resetPassword(formData: FormData) {
     });
 
     if (!resetToken || resetToken.expires_at < new Date()) {
+      await logAuditAction({
+        action: "PASSWORD_RESET_FAILED",
+        ipAddress: ip,
+        details: { reason: "invalid_or_expired_token" }
+      });
       return { error: "welcome.recovery.errorTokenInvalid" };
     }
 
@@ -465,6 +522,11 @@ export async function resetPassword(formData: FormData) {
     return { success: true };
   } catch (error) {
     console.error("Reset password error:", error);
+    await logAuditAction({
+      action: "PASSWORD_RESET_ERROR",
+      ipAddress: ip,
+      details: { error: String(error) }
+    });
     return { error: "errorUnknown" };
   }
 }

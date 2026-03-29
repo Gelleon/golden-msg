@@ -33,7 +33,16 @@ export function WelcomeScreen() {
   const authSchema = z.object({
     email: z.string().email(t("welcome.emailError")),
     password: z.string().min(6, t("welcome.passwordError")),
+    confirmPassword: z.string().optional(),
     fullName: z.string().optional(),
+  }).superRefine((data, ctx) => {
+    if (!isLogin && data.password !== data.confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: t("welcome.recovery.confirmPasswordError") || "Passwords do not match",
+        path: ["confirmPassword"]
+      });
+    }
   })
 
   type AuthSchema = z.infer<typeof authSchema>
@@ -43,6 +52,7 @@ export function WelcomeScreen() {
     defaultValues: {
       email: "",
       password: "",
+      confirmPassword: "",
       fullName: "",
     },
     mode: "onChange",
@@ -411,18 +421,34 @@ export function WelcomeScreen() {
                           <motion.div 
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
-                            className="space-y-2 overflow-hidden"
+                            className="space-y-4 overflow-hidden"
                           >
-                            <Label htmlFor="fullName" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.fullName")}</Label>
-                            <Input
-                              id="fullName"
-                              placeholder={t("welcome.fullNamePlaceholder")}
-                              {...form.register("fullName")}
-                              className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
-                            />
-                            {form.formState.errors.fullName && (
-                              <p className="text-xs text-red-400 ml-1">{form.formState.errors.fullName.message}</p>
-                            )}
+                            <div className="space-y-2">
+                              <Label htmlFor="confirmPassword" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.recovery.confirmPassword") || "Confirm Password"}</Label>
+                              <Input
+                                id="confirmPassword"
+                                type="password"
+                                placeholder={t("welcome.passwordPlaceholder")}
+                                {...form.register("confirmPassword")}
+                                className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
+                              />
+                              {form.formState.errors.confirmPassword && (
+                                <p className="text-xs text-red-400 ml-1">{form.formState.errors.confirmPassword.message as string}</p>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="fullName" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.fullName")}</Label>
+                              <Input
+                                id="fullName"
+                                placeholder={t("welcome.fullNamePlaceholder")}
+                                {...form.register("fullName")}
+                                className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
+                              />
+                              {form.formState.errors.fullName && (
+                                <p className="text-xs text-red-400 ml-1">{form.formState.errors.fullName.message as string}</p>
+                              )}
+                            </div>
                           </motion.div>
                         )}
                       </div>

@@ -126,6 +126,7 @@ describe('WelcomeScreen', () => {
     await user.type(screen.getByLabelText('welcome.fullName'), 'Test User')
     await user.type(screen.getByLabelText('welcome.email'), 'test@example.com')
     await user.type(screen.getByLabelText('welcome.password'), 'password123')
+    await user.type(screen.getByLabelText('welcome.recovery.confirmPassword'), 'password123')
     
     fireEvent.click(screen.getByText('welcome.submitRegister'))
     
@@ -165,6 +166,7 @@ describe('WelcomeScreen', () => {
     await user.type(screen.getByLabelText('welcome.fullName'), 'Test User')
     await user.type(screen.getByLabelText('welcome.email'), 'existing@example.com')
     await user.type(screen.getByLabelText('welcome.password'), 'password123')
+    await user.type(screen.getByLabelText('welcome.recovery.confirmPassword'), 'password123')
     
     fireEvent.click(screen.getByText('welcome.submitRegister'))
     

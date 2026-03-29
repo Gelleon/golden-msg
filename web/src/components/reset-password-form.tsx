@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ChinaRussiaBackground } from "@/components/china-russia-background"
 
-export function ResetPasswordForm() {
+export function ResetPasswordForm({ initialError, isValid }: { initialError?: string | null, isValid?: boolean }) {
   const { t } = useTranslation()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -23,7 +23,7 @@ export function ResetPasswordForm() {
   
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(initialError ? t(initialError as any) : null)
 
   const schema = z.object({
     password: z.string().min(8, t("welcome.recovery.passwordComplexity")),
@@ -115,9 +115,9 @@ export function ResetPasswordForm() {
           <p className="text-slate-500 font-light text-sm">{t("welcome.recovery.resetDesc")}</p>
         </div>
 
-        {!token ? (
+        {(!token || !isValid) ? (
           <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-center">
-            {t("welcome.recovery.errorTokenInvalid")}
+            {error || t("welcome.recovery.errorTokenInvalid")}
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
