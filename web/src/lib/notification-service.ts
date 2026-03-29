@@ -6,7 +6,7 @@ import ruTranslations from '@/locales/ru.json';
 import cnTranslations from '@/locales/cn.json';
 
 const INACTIVITY_MINUTES = 5;
-const EMAIL_COOLDOWN_MINUTES = 5;
+const EMAIL_COOLDOWN_MINUTES = 10;
 
 interface TranslationSet {
   welcome: {

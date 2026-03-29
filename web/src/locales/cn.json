@@ -321,7 +321,7 @@
     "emailNotifications": {
       "unreadMessagesSubject": "您在 Golden Russia 有 {count} 条未读消息",
       "hello": "您好，{name}！",
-      "inactiveMessage": "您已超过一小时未进入聊天。在此期间，您的房间中有新消息：",
+      "inactiveMessage": "您已超过10分钟未进入聊天。在此期间，您的房间中有新消息：",
       "roomMessage": "条新消息",
       "goToMessages": "前往查看消息",
       "unsubscribeNote": "您收到此邮件是因为您的个人资料中开启了通知。",
