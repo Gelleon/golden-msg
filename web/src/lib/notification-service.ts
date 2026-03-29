@@ -68,10 +68,6 @@ export async function queueNotificationIfOffline(userId: string, roomId: string,
     if (!participation || !participation.user.email_notifications_enabled) return;
 
     const now = new Date();
-    const tenMinutesAgo = subMinutes(now, INACTIVITY_MINUTES);
-
-    // If user was active recently, don't queue email notification
-    if (participation.last_active_at > tenMinutesAgo) return;
 
     // Check email cooldown (don't spam)
     const emailCooldownThreshold = new Date(now.getTime() - EMAIL_COOLDOWN_MINUTES * 60 * 1000);
