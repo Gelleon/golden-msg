@@ -3,13 +3,13 @@ import { Suspense } from "react"
 import { Loader2 } from "lucide-react"
 import { validateResetToken } from "@/app/actions/auth"
 
-export default async function ResetPasswordPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined }
+export default async function ResetPasswordPage(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const params = await searchParams;
-  const token = typeof params.token === 'string' ? params.token : undefined;
+  const searchParams = await props.searchParams;
+  const token = typeof searchParams.token === 'string' ? searchParams.token : undefined;
+  
+  console.log(`[RESET_PAGE] Received token: ${token ? token.substring(0, 10) + '...' : 'NONE'}`);
   
   let validationError = null;
   if (token) {

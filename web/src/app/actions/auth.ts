@@ -326,21 +326,24 @@ export async function forgotPassword(formData: FormData) {
     // 4. Generate unique token (Secure random)
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    console.log(`[AUTH] Generating token for user ${user.id}. Token length: ${token.length}`);
 
     // 5. Save to DB
-    await prisma.passwordResetToken.create({
+    const savedToken = await prisma.passwordResetToken.create({
       data: {
         token,
         user_id: user.id,
         expires_at: expiresAt
       }
     });
+    console.log(`[AUTH] Token saved successfully in DB. ID: ${savedToken.id}`);
 
     // 6. Send Email
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
     // Ensure baseUrl doesn't end with a slash
     const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     const resetUrl = `${cleanBaseUrl}/auth/reset-password?token=${token}`;
+    console.log(`[AUTH] Generated reset token for ${email}. Token: ${token}, Expires: ${expiresAt}`);
     
     // Simple template selection based on user language
     // @ts-ignore
@@ -434,6 +437,8 @@ export async function validateResetToken(token: string) {
       where: { token },
       select: { expires_at: true }
     });
+    
+    console.log(`[AUTH] Validating token: ${token.substring(0, 10)}... Found: ${!!resetToken}`);
 
     if (!resetToken) {
       await logAuditAction({
