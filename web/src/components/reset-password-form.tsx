@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { motion } from "framer-motion"
-import { Loader2, Lock, ShieldCheck, CheckCircle2 } from "lucide-react"
+import { Loader2, Lock, ShieldCheck, CheckCircle2, Eye, EyeOff } from "lucide-react"
 import { resetPassword } from "@/app/actions/auth"
 import { useTranslation } from "@/lib/language-context"
 
@@ -24,6 +24,8 @@ export function ResetPasswordForm({ initialError, isValid }: { initialError?: st
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState<string | null>(initialError ? t(initialError as any) : null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const schema = z.object({
     password: z.string().min(8, t("welcome.recovery.passwordComplexity")),
@@ -129,19 +131,31 @@ export function ResetPasswordForm({ initialError, isValid }: { initialError?: st
                 <div className="relative">
                   <Input
                     id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     {...register("password")}
-                    className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all pl-12"
+                    className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all pl-12 pr-12"
                     required
                   />
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
                 </div>
                 {errors.password && (
                   <p className="text-xs text-red-400 ml-1">{errors.password.message}</p>
                 )}
                 <p className="text-[10px] text-slate-500 ml-1 font-light italic">
-                  {t("recovery.passwordComplexity")}
+                  {t("welcome.recovery.passwordComplexity")}
                 </p>
               </div>
 
@@ -152,12 +166,25 @@ export function ResetPasswordForm({ initialError, isValid }: { initialError?: st
                 <div className="relative">
                   <Input
                     id="confirmPassword"
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="••••••••"
                     {...register("confirmPassword")}
-                    className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all pl-12"
+                    className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all pl-12 pr-12"
                     required
                   />
                   <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
                 </div>
                 {errors.confirmPassword && (
                   <p className="text-xs text-red-400 ml-1">{errors.confirmPassword.message}</p>
