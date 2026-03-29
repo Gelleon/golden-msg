@@ -154,9 +154,6 @@ export function ResetPasswordForm({ initialError, isValid }: { initialError?: st
                 {errors.password && (
                   <p className="text-xs text-red-400 ml-1">{errors.password.message}</p>
                 )}
-                <p className="text-[10px] text-slate-500 ml-1 font-light italic">
-                  {t("welcome.recovery.passwordComplexity")}
-                </p>
               </div>
 
               <div className="space-y-2">
