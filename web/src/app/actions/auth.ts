@@ -337,7 +337,10 @@ export async function forgotPassword(formData: FormData) {
     });
 
     // 6. Send Email
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password?token=${token}`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    // Ensure baseUrl doesn't end with a slash
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const resetUrl = `${cleanBaseUrl}/auth/reset-password?token=${token}`;
     
     // Simple template selection based on user language
     // @ts-ignore
@@ -356,10 +359,14 @@ export async function forgotPassword(formData: FormData) {
           <p>${t("welcome.recovery.emailHello", lang)}</p>
           <p>${t("welcome.recovery.emailBody", lang)}</p>
           <div style="margin: 30px 0; text-align: center;">
-            <a href="${resetUrl}" style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+            <a href="${resetUrl}" target="_blank" rel="noopener noreferrer" style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
               ${t("welcome.recovery.emailAction", lang)}
             </a>
           </div>
+          <p style="font-size: 12px; color: #64748b; word-break: break-all;">
+            Если кнопка не работает, скопируйте и вставьте эту ссылку в браузер:<br>
+            <a href="${resetUrl}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6;">${resetUrl}</a>
+          </p>
           <p style="font-size: 12px; color: #64748b;">
             ${t("welcome.recovery.emailExpire", lang)}<br>
             ${t("welcome.recovery.emailSecurity", lang)}
