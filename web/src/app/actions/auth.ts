@@ -354,26 +354,61 @@ export async function forgotPassword(formData: FormData) {
       to: user.email,
       subject: subjects[lang],
       html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-          <h2 style="color: #0f172a;">Golden Russia</h2>
-          <p>${t("welcome.recovery.emailHello", lang)}</p>
-          <p>${t("welcome.recovery.emailBody", lang)}</p>
-          <div style="margin: 30px 0; text-align: center;">
-            <a href="${resetUrl}" target="_blank" rel="noopener noreferrer" style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-              ${t("welcome.recovery.emailAction", lang)}
-            </a>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Сброс пароля</title>
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+          <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+            <h2 style="color: #0f172a; margin-top: 0; margin-bottom: 24px; font-size: 24px; font-weight: 700; text-align: center;">Golden Russia</h2>
+            
+            <p style="color: #334155; font-size: 16px; line-height: 24px; margin-bottom: 16px;">
+              ${t("welcome.recovery.emailHello", lang)}
+            </p>
+            
+            <p style="color: #334155; font-size: 16px; line-height: 24px; margin-bottom: 32px;">
+              ${t("welcome.recovery.emailBody", lang)}
+            </p>
+            
+            <div style="text-align: center; margin-bottom: 32px;">
+              <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin: 0 auto;">
+                <tr>
+                  <td align="center" bgcolor="#0f172a" style="border-radius: 6px;">
+                    <a href="${resetUrl}" target="_blank" style="display: inline-block; padding: 14px 28px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 6px; border: 1px solid #0f172a;">
+                      ${t("welcome.recovery.emailAction", lang)}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            
+            <div style="background-color: #f1f5f9; padding: 16px; border-radius: 8px; margin-bottom: 32px;">
+              <p style="color: #475569; font-size: 14px; line-height: 20px; margin: 0; word-break: break-all;">
+                <strong>Если кнопка не работает:</strong><br>
+                Скопируйте и вставьте эту ссылку в адресную строку браузера:<br>
+                <a href="${resetUrl}" target="_blank" style="color: #3b82f6; text-decoration: underline;">${resetUrl}</a>
+              </p>
+            </div>
+            
+            <p style="color: #64748b; font-size: 14px; line-height: 20px; margin-bottom: 8px;">
+              ${t("welcome.recovery.emailExpire", lang)}
+            </p>
+            
+            <p style="color: #64748b; font-size: 14px; line-height: 20px; margin-bottom: 32px;">
+              ${t("welcome.recovery.emailSecurity", lang)}
+            </p>
+            
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-bottom: 24px;">
+            
+            <p style="color: #94a3b8; font-size: 12px; text-align: center; margin: 0;">
+              GOLDEN RUSSIA &copy; ${new Date().getFullYear()}
+            </p>
           </div>
-          <p style="font-size: 12px; color: #64748b; word-break: break-all;">
-            Если кнопка не работает, скопируйте и вставьте эту ссылку в браузер:<br>
-            <a href="${resetUrl}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6;">${resetUrl}</a>
-          </p>
-          <p style="font-size: 12px; color: #64748b;">
-            ${t("welcome.recovery.emailExpire", lang)}<br>
-            ${t("welcome.recovery.emailSecurity", lang)}
-          </p>
-          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="font-size: 10px; color: #94a3b8; text-align: center;">GOLDEN RUSSIA &copy; 2024</p>
-        </div>
+        </body>
+        </html>
       `
     });
 
