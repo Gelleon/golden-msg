@@ -224,6 +224,7 @@ export async function getRooms() {
         id: room.id,
         name: room.name,
         type: room.type,
+        description: room.description || null,
         created_at: room.created_at.toISOString(),
         unreadCount: unreadCounts[room.id] || 0,
         lastReadAt: lastReadAt.toISOString()
@@ -403,11 +404,12 @@ export async function getDMs() {
         room_id: dm.room_id,
         name: dm.name,
         type: dm.type,
+        description: dm.description || null,
         created_by: dm.created_by,
         created_at: dm.created_at.toISOString(),
         unreadCount,
-        sharedRoomName: sharedRoomsMap[dm.id],
-        parentRoomName: dm.room_id ? parentRoomsMap[dm.room_id] : null,
+        sharedRoomName: sharedRoomsMap[dm.id] || null,
+        parentRoomName: dm.room_id ? (parentRoomsMap[dm.room_id] || null) : null,
         lastReadAt: lastReadAt.toISOString(),
         otherUser: otherParticipant?.user ? {
           id: otherParticipant.user.id,
@@ -418,7 +420,7 @@ export async function getDMs() {
           // @ts-ignore
           preferred_language: otherParticipant.user.preferred_language || "ru",
           created_at: otherParticipant.user.created_at.toISOString()
-        } : undefined,
+        } : null,
       }
     })
 
@@ -642,6 +644,38 @@ export async function getRoomDetails(roomId: string) {
   } catch (error) {
     console.error("Get room info details error:", error)
     return null
+  }
+}
+
+export async function getRoomDescription(roomId: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  try {
+    const room = await prisma.room.findFirst({
+      where: {
+        id: roomId,
+        participants: {
+          some: {
+            user_id: session.user.id,
+          },
+        },
+      },
+      select: {
+        description: true,
+      },
+    })
+
+    if (!room) {
+      return { error: "Room not found" }
+    }
+
+    return {
+      description: room.description,
+    }
+  } catch (error) {
+    console.error("Get room description error:", error)
+    return { error: "Failed to load room description" }
   }
 }
 

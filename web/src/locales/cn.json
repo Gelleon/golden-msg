@@ -248,7 +248,12 @@
     "private": "私聊",
     "group": "群组",
     "online": "在线",
-    "participantsCount": "人"
+    "participantsCount": "人",
+    "sharedRooms": "共同房间",
+    "descriptionTitle": "房间描述",
+    "descriptionEmpty": "暂未添加房间描述。",
+    "descriptionError": "无法加载房间描述。",
+    "descriptionRetry": "重试"
   },
   "notifications_admin": {
     "stats": {

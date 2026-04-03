@@ -10,7 +10,7 @@ import { logout } from "@/app/actions/auth"
 import { getRooms, createRoom, getDMs, searchUsers, startDM, deleteRoom, addParticipant } from "@/app/actions/room"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -433,32 +433,41 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                           onClick={onClose}
                         >
                           <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
-                            <Button
-                              variant="ghost"
+                            <div
                               className={cn(
-                                "w-full justify-start font-medium transition-all duration-300 group rounded-xl px-3 h-10 relative",
+                                buttonVariants({ variant: "ghost" }),
+                                "w-full justify-start font-medium transition-all duration-300 group rounded-xl px-3 h-auto min-h-[2.5rem] py-2 relative cursor-pointer",
                                 pathname === `/dashboard/rooms/${room.id}` 
                                   ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10" 
                                   : "text-slate-400 hover:text-white hover:bg-white/5"
                               )}
                             >
                               <div className={cn(
-                                "w-2 h-2 rounded-full mr-3 transition-all duration-300",
+                                "w-2 h-2 rounded-full mr-3 mt-1.5 transition-all duration-300 shrink-0",
                                 pathname === `/dashboard/rooms/${room.id}` ? "bg-amber-500 scale-125" : "bg-slate-700 group-hover:bg-slate-500"
                               )} />
-                              <span className="truncate flex-1 text-left">{room.name}</span>
-                              {room.unreadCount > 0 && pathname !== `/dashboard/rooms/${room.id}` && (
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20">
-                                  {room.unreadCount}
-                                </span>
-                              )}
-                              {pathname === `/dashboard/rooms/${room.id}` && (
-                                <motion.div 
-                                  layoutId="activeRoomGlow"
-                                  className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse ml-2" 
-                                />
-                              )}
-                            </Button>
+                              <div className="flex flex-col min-w-0 flex-1">
+                                <div className="flex items-center">
+                                  <span className="truncate flex-1 text-left">{room.name}</span>
+                                  {room.unreadCount > 0 && pathname !== `/dashboard/rooms/${room.id}` && (
+                                    <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20 ml-2">
+                                      {room.unreadCount}
+                                    </span>
+                                  )}
+                                  {pathname === `/dashboard/rooms/${room.id}` && (
+                                    <motion.div 
+                                      layoutId="activeRoomGlow"
+                                      className="w-1.5 h-1.5 shrink-0 rounded-full bg-amber-500 animate-pulse ml-2" 
+                                    />
+                                  )}
+                                </div>
+                                {room.description && (
+                                  <span className="text-[10px] text-slate-500 mt-0.5 line-clamp-1 text-left font-normal pr-2">
+                                    {room.description}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </motion.div>
                         </Link>
                       </ContextMenuTrigger>
@@ -740,57 +749,57 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                             onClick={onClose}
                           >
                             <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
-                              <Button
-                                variant="ghost"
-                                className={cn(
-                                  "w-full justify-start font-medium transition-all duration-300 group rounded-xl px-3 h-12 relative",
-                                  pathname === `/dashboard/rooms/${dm.id}` 
-                                    ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10" 
-                                    : "text-slate-400 hover:text-white hover:bg-white/5"
-                                )}
-                              >
-                                <div className="relative">
-                                  <Avatar className={cn(
-                                    "h-8 w-8 mr-3 transition-all duration-300",
-                                    pathname === `/dashboard/rooms/${dm.id}` ? "ring-2 ring-amber-500/50 shadow-lg shadow-amber-500/10" : "ring-1 ring-white/10 group-hover:ring-white/20"
-                                  )}>
-                                    <AvatarImage src={dm.otherUser?.avatar_url} />
-                                    <AvatarFallback className="bg-slate-800 text-xs text-slate-400 font-bold">
-                                      {dm.otherUser?.full_name?.charAt(0) || "?"}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                </div>
-                                <div className="flex flex-col items-start min-w-0 flex-1">
-                                  <span className="truncate w-full text-left">{dm.otherUser?.full_name || t('common.unknown')}</span>
-                                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mt-1 flex items-center gap-1 w-full">
-                                    <span>{roleLabels[dm.otherUser?.role] || dm.otherUser?.role}</span>
-                                    {dm.parentRoomName && (
-                                      <>
-                                        <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
-                                        <span className="truncate normal-case font-medium text-slate-400">{dm.parentRoomName}</span>
-                                      </>
-                                    )}
-                                    {!dm.parentRoomName && dm.sharedRoomName && (
-                                      <>
-                                        <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
-                                        <span className="truncate normal-case font-medium text-slate-400">{t('room.sharedRooms')}: {dm.sharedRoomName}</span>
-                                      </>
-                                    )}
-                                  </span>
-                                </div>
-                                {dm.unreadCount > 0 && pathname !== `/dashboard/rooms/${dm.id}` && (
-                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20">
-                                    {dm.unreadCount}
-                                  </span>
-                                )}
-                                {pathname === `/dashboard/rooms/${dm.id}` && (
-                                  <motion.div 
-                                    layoutId="activeDMGlow"
-                                    className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse ml-2" 
-                                  />
-                                )}
-                              </Button>
-                            </motion.div>
+                            <div
+                              className={cn(
+                                buttonVariants({ variant: "ghost" }),
+                                "w-full justify-start font-medium transition-all duration-300 group rounded-xl px-3 h-12 relative cursor-pointer",
+                                pathname === `/dashboard/rooms/${dm.id}` 
+                                  ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10" 
+                                  : "text-slate-400 hover:text-white hover:bg-white/5"
+                              )}
+                            >
+                              <div className="relative">
+                                <Avatar className={cn(
+                                  "h-8 w-8 mr-3 transition-all duration-300",
+                                  pathname === `/dashboard/rooms/${dm.id}` ? "ring-2 ring-amber-500/50 shadow-lg shadow-amber-500/10" : "ring-1 ring-white/10 group-hover:ring-white/20"
+                                )}>
+                                  <AvatarImage src={dm.otherUser?.avatar_url} />
+                                  <AvatarFallback className="bg-slate-800 text-xs text-slate-400 font-bold">
+                                    {dm.otherUser?.full_name?.charAt(0) || "?"}
+                                  </AvatarFallback>
+                                </Avatar>
+                              </div>
+                              <div className="flex flex-col items-start min-w-0 flex-1">
+                                <span className="truncate w-full text-left">{dm.otherUser?.full_name || t('common.unknown')}</span>
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mt-1 flex items-center gap-1 w-full">
+                                  <span>{roleLabels[dm.otherUser?.role] || dm.otherUser?.role}</span>
+                                  {dm.parentRoomName && (
+                                    <>
+                                      <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
+                                      <span className="truncate normal-case font-medium text-slate-400">{dm.parentRoomName}</span>
+                                    </>
+                                  )}
+                                  {!dm.parentRoomName && dm.sharedRoomName && (
+                                    <>
+                                      <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
+                                      <span className="truncate normal-case font-medium text-slate-400">{t('room.sharedRooms')}: {dm.sharedRoomName}</span>
+                                    </>
+                                  )}
+                                </span>
+                              </div>
+                              {dm.unreadCount > 0 && pathname !== `/dashboard/rooms/${dm.id}` && (
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20">
+                                  {dm.unreadCount}
+                                </span>
+                              )}
+                              {pathname === `/dashboard/rooms/${dm.id}` && (
+                                <motion.div 
+                                  layoutId="activeDMGlow"
+                                  className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse ml-2" 
+                                />
+                              )}
+                            </div>
+                          </motion.div>
                           </Link>
                         </ContextMenuTrigger>
                         <ContextMenuContent className="w-56 bg-[#1E293B] border-white/10 text-slate-200">

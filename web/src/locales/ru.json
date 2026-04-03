@@ -248,7 +248,12 @@
     "private": "Личный",
     "group": "Группа",
     "online": "В сети",
-    "participantsCount": "уч."
+    "participantsCount": "уч.",
+    "sharedRooms": "Общие комнаты",
+    "descriptionTitle": "Описание комнаты",
+    "descriptionEmpty": "Описание пока не добавлено.",
+    "descriptionError": "Не удалось загрузить описание комнаты.",
+    "descriptionRetry": "Повторить"
   },
   "notifications_admin": {
     "stats": {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect, useMemo, useCallback } from "react"
+import { useState, useRef, useEffect, useMemo, useCallback, useLayoutEffect } from "react"
 import { Mic, Paperclip, Send, X, StopCircle, FileText, Loader2, UploadCloud } from "lucide-react"
 import { uploadFile } from "@/app/actions/upload"
 
@@ -58,6 +58,27 @@ export function MessageInput({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const pendingCursorPositionRef = useRef<number | null>(null)
   const lastTypingUpdateRef = useRef<number>(0)
+
+  // Auto-resize logic (Telegram style)
+  useLayoutEffect(() => {
+    if (textareaRef.current) {
+      const el = textareaRef.current;
+      // Temporarily disable transition to avoid visual jump
+      el.style.transition = 'none';
+      el.style.height = "0px";
+      
+      const scrollHeight = el.scrollHeight;
+      // Add 2px to account for top and bottom borders (1px each) in border-box
+      const targetHeight = scrollHeight + 2;
+      
+      el.style.height = `${Math.min(Math.max(targetHeight, 48), 128)}px`;
+      
+      // Force reflow
+      void el.offsetHeight;
+      // Restore transition
+      el.style.transition = '';
+    }
+  }, [message]);
 
   const mentionUsers = useMemo(() => {
     const avatarsById = new Map(
@@ -304,8 +325,10 @@ export function MessageInput({
         return {}
       })
       setUploadProgress({})
-      if (onCancelReply) onCancelReply()
-      if (onMessageSent) onMessageSent()
+      setIsMentionOpen(false)
+
+      onCancelReply?.()
+      onMessageSent?.()
     } catch (error) {
       console.error("Error sending message:", error)
       alert(t("chat.errorSendMessage"))
@@ -609,7 +632,7 @@ export function MessageInput({
                 ))}
               </div>
             )}
-            <Textarea
+              <Textarea
               ref={textareaRef}
               value={message}
               onChange={(e) => {
@@ -618,9 +641,10 @@ export function MessageInput({
               }}
               placeholder={isRecording ? t("chat.placeholderRecording") : t("chat.placeholderMessage")}
               className={cn(
-                "min-h-[36px] md:min-h-[48px] h-9 md:h-12 max-h-32 py-2 md:py-3 px-3 md:px-4 rounded-2xl md:rounded-3xl border-slate-200 bg-slate-50 focus-visible:ring-amber-500 transition-all shadow-sm text-sm md:text-base resize-none scrollbar-none",
+                "min-h-[36px] md:min-h-[48px] max-h-32 py-2 md:py-3 px-3 md:px-4 rounded-2xl md:rounded-3xl border-slate-200 bg-slate-50 focus-visible:ring-amber-500 transition-all shadow-sm text-sm md:text-base resize-none scrollbar-none",
                 isInputFocused && "border-blue-400 ring-2 ring-blue-200 shadow-[0_0_0_3px_rgba(59,130,246,0.12)]",
-                isRecording && "border-red-500 bg-red-50 placeholder:text-red-400"
+                isRecording && "border-red-500 bg-red-50 placeholder:text-red-400",
+                message.length > 0 && "overflow-y-auto"
               )}
               onFocus={() => {
                 setIsInputFocused(true)
@@ -664,10 +688,10 @@ export function MessageInput({
                     return;
                   } else {
                     // On PC:
-                    if (e.ctrlKey || e.metaKey) {
-                      // Ctrl+Enter = New Line
-                      // We don't preventDefault to allow newline
-                    } else if (!e.shiftKey) {
+                    if (e.ctrlKey || e.metaKey || e.shiftKey) {
+                      // Modifiers + Enter = New Line
+                      // We do nothing, let newline be inserted
+                    } else {
                       // Enter (without modifiers) = Send
                       e.preventDefault();
                       handleSend();

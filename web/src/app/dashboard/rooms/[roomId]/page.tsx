@@ -6,13 +6,9 @@ import { ChatWindow } from "@/components/chat/chat-window"
 import { RoomSettingsDialog } from "@/components/chat/room-settings-dialog"
 import { ChevronLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
-import * as motion from "framer-motion/client"
 import ru from "@/locales/ru.json"
 import cnTrans from "@/locales/cn.json"
 import { getInitialRoomMessages } from "@/lib/chat-utils"
-import { RoomInfo } from "@/components/chat/room-info"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Users } from "lucide-react"
 
 interface RoomPageProps {
   params: Promise<{
@@ -108,9 +104,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
   )
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div 
       className="h-full flex flex-col bg-[#F8FAFC]"
     >
       <div className="h-[64px] md:h-[72px] border-b border-slate-200/60 bg-white/90 backdrop-blur-xl flex justify-between items-center px-3 md:px-6 sticky top-0 z-20 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
@@ -145,7 +139,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
                       <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
                       <span className="truncate">
                         {room.type === 'private' 
-                          ? (sharedRoomNames.length > 0 ? `${(translations.room as any).sharedRooms || 'Общие комнаты'}: ${sharedRoomNames.join(', ')}` : translations.room.online)
+                          ? (sharedRoomNames.length > 0 ? `${translations.room.sharedRooms}: ${sharedRoomNames.join(', ')}` : translations.room.online)
                           : `${room.participants.length} ${translations.room.participantsCount}`}
                       </span>
                     </span>
@@ -163,7 +157,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
           )}
         </div>
       </div>
-      <div className="flex-1 overflow-hidden relative flex">
+      <div className="flex-1 min-h-0 overflow-hidden relative flex">
         <div className="flex-1 overflow-hidden relative min-w-0">
           <ChatWindow 
             roomId={roomId} 
@@ -181,6 +175,6 @@ export default async function RoomPage({ params }: RoomPageProps) {
           />
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
