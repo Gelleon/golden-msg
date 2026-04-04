@@ -230,7 +230,7 @@ export async function logout() {
 }
 
 export async function getSession() {
-  await ensureSchemaFixed()
+  ensureSchemaFixed().catch(console.error)
   const cookieStore = await cookies()
   const userId = cookieStore.get("session_user_id")?.value
   console.log("[SERVER] getSession userId:", userId)

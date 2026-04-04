@@ -5,7 +5,12 @@ import prisma from "./db";
  * This is a workaround for production environments where migrations haven't run.
  * It attempts to add missing columns to multiple table name variations.
  */
+let isSchemaFixed = false;
+
 export async function ensureSchemaFixed() {
+  if (isSchemaFixed) return;
+  isSchemaFixed = true;
+
   try {
     const tables = ["Message", "User", "RoomParticipant", "Room", "message", "user", "roomparticipant", "room", "messages", "users", "profiles", "rooms"];
     for (const table of tables) {

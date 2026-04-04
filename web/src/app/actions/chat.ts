@@ -118,7 +118,13 @@ export async function getAllRooms(options?: {
       }
     })
 
-    return { success: true, rooms }
+    const formattedRooms = rooms.map(room => ({
+      ...room,
+      created_at: room.created_at.toISOString(),
+      updated_at: room.updated_at.toISOString(),
+    }))
+
+    return { success: true, rooms: formattedRooms }
   } catch (error) {
     console.error("Error fetching all rooms:", error)
     return { error: "Failed to fetch all rooms" }
@@ -252,7 +258,65 @@ export async function updateMessage(messageId: string, content: string) {
         language_original: finalLangOriginal,
         is_edited: true,
       },
+      select: {
+        id: true,
+        content: true,
+        content_translated: true,
+        language_original: true,
+        message_type: true,
+        file_url: true,
+        voice_transcription: true,
+        created_at: true,
+        is_edited: true,
+        translation_status: true,
+        reply_to_id: true,
+        sender: {
+          select: {
+            id: true,
+            full_name: true,
+            avatar_url: true,
+            role: true,
+          },
+        },
+        reply_to: {
+          select: {
+            id: true,
+            content: true,
+            sender: {
+              select: {
+                id: true,
+                full_name: true,
+              }
+            }
+          }
+        }
+      }
     })
+
+    const formattedUpdatedMessage = {
+      id: updatedMessage.id,
+      content_original: updatedMessage.content,
+      content_translated: updatedMessage.content_translated ?? null,
+      language_original: updatedMessage.language_original || "ru",
+      message_type: updatedMessage.message_type,
+      file_url: updatedMessage.file_url ?? null,
+      voice_transcription: updatedMessage.voice_transcription ?? null,
+      created_at: updatedMessage.created_at.toISOString(),
+      is_edited: updatedMessage.is_edited,
+      translation_status: updatedMessage.translation_status,
+      reply_to_id: updatedMessage.reply_to_id ?? null,
+      reply_to: updatedMessage.reply_to ? {
+        id: updatedMessage.reply_to.id,
+        content: updatedMessage.reply_to.content,
+        sender_name: updatedMessage.reply_to.sender.full_name ?? "User",
+      } : null,
+      sender: {
+        id: updatedMessage.sender.id,
+        full_name: updatedMessage.sender.full_name ?? "User",
+        avatar_url: updatedMessage.sender.avatar_url ?? null,
+        role: updatedMessage.sender.role,
+      },
+    }
 
     // Trigger Async Translation (Fire and Forget via Queue)
     after(async () => {
@@ -270,7 +334,7 @@ export async function updateMessage(messageId: string, content: string) {
     });
 
     revalidatePath(`/dashboard/rooms/${message.room_id}`)
-    return { success: true, message: updatedMessage }
+    return { success: true, message: formattedUpdatedMessage }
   } catch (error) {
     console.error("Update message error:", error)
     return { error: "Failed to update message" }
@@ -416,24 +480,24 @@ export async function getMessages(
     const formattedMessages = messages.map((msg) => ({
       id: msg.id,
       content_original: msg.content,
-      content_translated: msg.content_translated,
+      content_translated: msg.content_translated ?? null,
       language_original: msg.language_original || "ru",
       message_type: msg.message_type,
-      file_url: msg.file_url,
-      voice_transcription: msg.voice_transcription,
+      file_url: msg.file_url ?? null,
+      voice_transcription: msg.voice_transcription ?? null,
       created_at: msg.created_at.toISOString(),
       is_edited: msg.is_edited,
       translation_status: msg.translation_status,
-      reply_to_id: msg.reply_to_id,
+      reply_to_id: msg.reply_to_id ?? null,
       reply_to: msg.reply_to ? {
         id: msg.reply_to.id,
         content: msg.reply_to.content,
-        sender_name: msg.reply_to.sender.full_name,
+        sender_name: msg.reply_to.sender.full_name ?? "User",
       } : null,
       sender: {
         id: msg.sender.id,
-        full_name: msg.sender.full_name,
-        avatar_url: msg.sender.avatar_url,
+        full_name: msg.sender.full_name ?? "User",
+        avatar_url: msg.sender.avatar_url ?? null,
         role: msg.sender.role,
       },
     }))
@@ -1013,15 +1077,28 @@ export async function sendMessageAction(rawData: {
     return { 
       success: true, 
       message: {
-        ...message,
+        id: message.id,
+        room_id: message.room_id,
+        content: message.content,
+        content_translated: message.content_translated ?? null,
+        language_original: message.language_original,
+        message_type: message.message_type,
+        file_url: message.file_url ?? null,
+        voice_transcription: message.voice_transcription ?? null,
         created_at: message.created_at.toISOString(),
         is_edited: message.is_edited,
-        // Ensure frontend gets the correct status
+        reply_to_id: message.reply_to_id ?? null,
         translation_status: translationStatus,
+        sender: {
+          id: message.sender.id,
+          full_name: message.sender.full_name ?? "User",
+          avatar_url: message.sender.avatar_url ?? null,
+          role: message.sender.role,
+        },
         reply_to: message.reply_to ? {
           id: message.reply_to.id,
           content: message.reply_to.content,
-          sender_name: message.reply_to.sender.full_name,
+          sender_name: message.reply_to.sender.full_name ?? "User",
         } : null
       } 
     }

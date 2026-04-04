@@ -158,7 +158,7 @@ export async function acceptRoomInvite(roomId: string, token: string) {
 }
 
 export async function getRooms() {
-  await ensureSchemaFixed()
+  ensureSchemaFixed().catch(console.error)
   const session = await getSession()
   if (!session?.user) return []
 
@@ -222,9 +222,9 @@ export async function getRooms() {
 
       return {
         id: room.id,
-        name: room.name,
+        name: room.name ?? null,
         type: room.type,
-        description: room.description || null,
+        description: room.description ?? null,
         created_at: room.created_at.toISOString(),
         unreadCount: unreadCounts[room.id] || 0,
         lastReadAt: lastReadAt.toISOString()
@@ -307,7 +307,7 @@ export async function getDMs() {
                 role: true,
                 created_at: true,
                 // @ts-ignore
-                // preferred_language: true, 
+                preferred_language: true, 
               }
             },
           },
@@ -401,24 +401,24 @@ export async function getDMs() {
 
       return {
         id: dm.id,
-        room_id: dm.room_id,
-        name: dm.name,
+        room_id: dm.room_id ?? null,
+        name: dm.name ?? null,
         type: dm.type,
-        description: dm.description || null,
-        created_by: dm.created_by,
+        description: dm.description ?? null,
+        created_by: dm.created_by ?? null,
         created_at: dm.created_at.toISOString(),
         unreadCount,
-        sharedRoomName: sharedRoomsMap[dm.id] || null,
-        parentRoomName: dm.room_id ? (parentRoomsMap[dm.room_id] || null) : null,
+        sharedRoomName: sharedRoomsMap[dm.id] ?? null,
+        parentRoomName: dm.room_id ? (parentRoomsMap[dm.room_id] ?? null) : null,
         lastReadAt: lastReadAt.toISOString(),
         otherUser: otherParticipant?.user ? {
           id: otherParticipant.user.id,
-          email: otherParticipant.user.email,
-          full_name: otherParticipant.user.full_name,
-          avatar_url: otherParticipant.user.avatar_url,
+          email: otherParticipant.user.email ?? null,
+          full_name: otherParticipant.user.full_name ?? null,
+          avatar_url: otherParticipant.user.avatar_url ?? null,
           role: otherParticipant.user.role,
           // @ts-ignore
-          preferred_language: otherParticipant.user.preferred_language || "ru",
+          preferred_language: otherParticipant.user.preferred_language ?? "ru",
           created_at: otherParticipant.user.created_at.toISOString()
         } : null,
       }
