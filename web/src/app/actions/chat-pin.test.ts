@@ -51,9 +51,8 @@ describe("Pin/Unpin Messages", () => {
       expect(result.error).toBe("Unauthorized");
     });
 
-    it("should fail if user is not admin or owner", async () => {
-      (prisma.roomParticipant.findUnique as jest.Mock).mockResolvedValue({ role: "client" });
-      (prisma.room.findUnique as jest.Mock).mockResolvedValue({ created_by: "other-user" });
+    it("should fail if user is not a participant", async () => {
+      (prisma.roomParticipant.findUnique as jest.Mock).mockResolvedValue(null);
 
       const result = await pinMessage("msg-1", "room-1");
       expect(result.error).toContain("Permission denied");

@@ -625,12 +625,12 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
               </div>
               
               {/* Actions - visible on hover */}
-              {(canDelete || isCurrentUserAdmin) && !isEditing && (
+              {!isEditing && (
                 <div className={cn(
                   "opacity-0 group-hover/bubble-content:opacity-100 transition-all duration-200 flex flex-col items-center gap-1 z-20 shrink-0",
                   isDeleting && "opacity-100"
                 )}>
-                  {isCurrentUserAdmin && roomId && !message.is_pinned && (
+                  {roomId && !message.is_pinned && (
                     <Button
                       size="icon"
                       variant="ghost"
@@ -641,7 +641,7 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
                       <Pin className="h-3.5 w-3.5" />
                     </Button>
                   )}
-                  {isCurrentUserAdmin && roomId && message.is_pinned && (
+                  {roomId && message.is_pinned && (
                     <Button
                       size="icon"
                       variant="ghost"
@@ -662,6 +662,7 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                   )}
+                  {canDelete && (
                   <Button
                     size="icon"
                     variant="ghost"
@@ -678,6 +679,7 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
                       <Trash2 className="h-3.5 w-3.5" />
                     )}
                   </Button>
+                  )}
                 </div>
               )}
             </div>
@@ -692,7 +694,7 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
             <span className="font-semibold text-sm">{t("chat.reply")}</span>
           </ContextMenuItem>
 
-          {isCurrentUserAdmin && !message.is_pinned && (
+          {!message.is_pinned && (
             <ContextMenuItem 
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 focus:bg-blue-50 focus:text-blue-600 transition-colors cursor-pointer group"
               onClick={handlePin}
@@ -702,7 +704,7 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
             </ContextMenuItem>
           )}
 
-          {isCurrentUserAdmin && message.is_pinned && (
+          {message.is_pinned && (
             <ContextMenuItem 
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-orange-600 focus:bg-orange-50 focus:text-orange-700 transition-colors cursor-pointer group"
               onClick={handleUnpin}

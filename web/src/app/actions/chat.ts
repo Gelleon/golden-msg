@@ -1120,7 +1120,7 @@ export async function pinMessage(messageId: string, roomId: string) {
 
   try {
     console.log(`[PIN MESSAGE] Checking permissions for user ${session.user.id} in room ${roomId}`);
-    // Verify permissions
+    // Verify permissions (Any participant can pin)
     const participation = await prisma.roomParticipant.findUnique({
       where: {
         room_id_user_id: {
@@ -1132,14 +1132,9 @@ export async function pinMessage(messageId: string, roomId: string) {
 
     console.log(`[PIN MESSAGE] Participation:`, participation);
     
-    if (!participation || (participation.role !== 'admin' && participation.role !== 'owner')) {
-      // Actually we should check if they are owner of room, or just admin role
-      const room = await prisma.room.findUnique({ where: { id: roomId } })
-      console.log(`[PIN MESSAGE] Room:`, room);
-      if (room?.created_by !== session.user.id && participation?.role !== 'admin') {
-        console.log(`[PIN MESSAGE] Permission denied. Created by: ${room?.created_by}, Role: ${participation?.role}`);
-        return { error: "Permission denied: Only room owner or admins can pin messages" }
-      }
+    if (!participation) {
+      console.log(`[PIN MESSAGE] Permission denied. User is not a participant of this room.`);
+      return { error: "Permission denied: Only room participants can pin messages" }
     }
 
     // Check max pinned messages
@@ -1232,7 +1227,7 @@ export async function unpinMessage(messageId: string, roomId: string) {
 
   try {
     console.log(`[UNPIN MESSAGE] Checking permissions for user ${session.user.id} in room ${roomId}`);
-    // Verify permissions
+    // Verify permissions (Any participant can unpin)
     const participation = await prisma.roomParticipant.findUnique({
       where: {
         room_id_user_id: {
@@ -1244,13 +1239,9 @@ export async function unpinMessage(messageId: string, roomId: string) {
 
     console.log(`[UNPIN MESSAGE] Participation:`, participation);
     
-    if (!participation || (participation.role !== 'admin' && participation.role !== 'owner')) {
-      const room = await prisma.room.findUnique({ where: { id: roomId } })
-      console.log(`[UNPIN MESSAGE] Room:`, room);
-      if (room?.created_by !== session.user.id && participation?.role !== 'admin') {
-        console.log(`[UNPIN MESSAGE] Permission denied. Created by: ${room?.created_by}, Role: ${participation?.role}`);
-        return { error: "Permission denied: Only room owner or admins can unpin messages" }
-      }
+    if (!participation) {
+      console.log(`[UNPIN MESSAGE] Permission denied. User is not a participant of this room.`);
+      return { error: "Permission denied: Only room participants can unpin messages" }
     }
 
     const message = await prisma.message.update({

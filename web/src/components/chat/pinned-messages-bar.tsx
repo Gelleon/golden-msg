@@ -122,11 +122,9 @@ export function PinnedMessagesBar({ roomId, onMessageClick, currentUserRole }: P
             </Button>
           </div>
         )}
-        {isCurrentUserAdmin && (
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={handleUnpin}>
-            <X className="h-4 w-4" />
-          </Button>
-        )}
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600 hover:bg-slate-100" onClick={handleUnpin}>
+          <X className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   )
