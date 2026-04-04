@@ -144,7 +144,10 @@
     "voiceMessageContent": "Голосовое сообщение",
     "newMessages": "Новые сообщения",
     "reply": "Ответить",
-    "translationFailed": "Ошибка перевода"
+    "translationFailed": "Ошибка перевода",
+    "pin": "Закрепить",
+    "unpin": "Открепить",
+    "pinnedMessage": "Закрепленное сообщение"
   },
   "roomInfo": {
     "title": "Информация о комнате",

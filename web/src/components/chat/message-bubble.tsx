@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Download, Play, Pause, Loader2, FileText, CheckCircle2, Languages, Image as ImageIcon, Trash2, AlertTriangle, Pencil, X, Check, Reply, CornerUpLeft, Copy } from "lucide-react"
+import { Download, Play, Pause, Loader2, FileText, CheckCircle2, Languages, Image as ImageIcon, Trash2, AlertTriangle, Pencil, X, Check, Reply, CornerUpLeft, Copy, Pin } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 
@@ -9,7 +9,7 @@ import { useTranslation } from "@/lib/language-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { deleteMessage, updateMessage } from "@/app/actions/chat"
+import { deleteMessage, updateMessage, pinMessage, unpinMessage } from "@/app/actions/chat"
 import {
   Dialog,
   DialogContent,
@@ -40,6 +40,7 @@ interface Message {
   voice_transcription: string | null
   created_at: string
   is_edited?: boolean
+  is_pinned?: boolean
   translation_status?: string
   sender: {
     id: string
@@ -61,6 +62,7 @@ interface MessageBubbleProps {
   onDelete?: (messageId: string) => void
   showSenderName?: boolean
   showAvatar?: boolean
+  roomId?: string
   currentUserRole?: string
   participants?: Array<{
     id: string
@@ -101,7 +103,7 @@ const isAudio = (url: string | null) => {
   return ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'webm'].includes(ext || '')
 }
 
-export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showSenderName, showAvatar = true, currentUserRole, participants = [] }: MessageBubbleProps) {
+export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelete, showSenderName, showAvatar = true, currentUserRole, participants = [] }: MessageBubbleProps) {
   const { t } = useTranslation()
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -140,6 +142,28 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
       await navigator.clipboard.writeText(message.content_original)
     } catch (err) {
       console.error("Failed to copy:", err)
+    }
+  }
+
+  const handlePin = async () => {
+    console.log(`[HANDLE PIN] messageId: ${message.id}, roomId: ${roomId}`);
+    if (!roomId) return;
+    const res = await pinMessage(message.id, roomId);
+    if (res?.error) {
+      toast({ title: t("settings_status.error") || "Error", description: res.error, variant: "destructive" });
+    } else {
+      toast({ title: t("settings_status.success") || "Success", description: t("chat.messageUpdated") || "Message pinned" });
+    }
+  }
+
+  const handleUnpin = async () => {
+    console.log(`[HANDLE UNPIN] messageId: ${message.id}, roomId: ${roomId}`);
+    if (!roomId) return;
+    const res = await unpinMessage(message.id, roomId);
+    if (res?.error) {
+      toast({ title: t("settings_status.error") || "Error", description: res.error, variant: "destructive" });
+    } else {
+      toast({ title: t("settings_status.success") || "Success", description: t("chat.messageUpdated") || "Message unpinned" });
     }
   }
 
@@ -601,11 +625,33 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
               </div>
               
               {/* Actions - visible on hover */}
-              {canDelete && !isEditing && (
+              {(canDelete || isCurrentUserAdmin) && !isEditing && (
                 <div className={cn(
                   "opacity-0 group-hover/bubble-content:opacity-100 transition-all duration-200 flex flex-col items-center gap-1 z-20 shrink-0",
                   isDeleting && "opacity-100"
                 )}>
+                  {isCurrentUserAdmin && roomId && !message.is_pinned && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 border-none shadow-sm"
+                      onClick={handlePin}
+                      title={t("chat.pin")}
+                    >
+                      <Pin className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  {isCurrentUserAdmin && roomId && message.is_pinned && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 rounded-full bg-orange-100 hover:bg-orange-200 text-orange-500 border-none shadow-sm"
+                      onClick={handleUnpin}
+                      title={t("chat.unpin")}
+                    >
+                      <Pin className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                   {canEdit && message.message_type === "text" && (
                     <Button
                       size="icon"
@@ -645,6 +691,26 @@ export function MessageBubble({ message, isCurrentUser, onReply, onDelete, showS
             <Reply className="h-4 w-4 text-slate-400 group-focus:text-blue-500" />
             <span className="font-semibold text-sm">{t("chat.reply")}</span>
           </ContextMenuItem>
+
+          {isCurrentUserAdmin && !message.is_pinned && (
+            <ContextMenuItem 
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 focus:bg-blue-50 focus:text-blue-600 transition-colors cursor-pointer group"
+              onClick={handlePin}
+            >
+              <Pin className="h-4 w-4 text-slate-400 group-focus:text-blue-500" />
+              <span className="font-semibold text-sm">{t("chat.pin")}</span>
+            </ContextMenuItem>
+          )}
+
+          {isCurrentUserAdmin && message.is_pinned && (
+            <ContextMenuItem 
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-orange-600 focus:bg-orange-50 focus:text-orange-700 transition-colors cursor-pointer group"
+              onClick={handleUnpin}
+            >
+              <Pin className="h-4 w-4 text-orange-400 group-focus:text-orange-500" />
+              <span className="font-semibold text-sm">{t("chat.unpin")}</span>
+            </ContextMenuItem>
+          )}
 
           {message.message_type === "text" && (
             <ContextMenuItem 

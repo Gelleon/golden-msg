@@ -144,7 +144,10 @@
     "voiceMessageContent": "语音消息",
     "newMessages": "新消息",
     "reply": "回复",
-    "translationFailed": "翻译失败"
+    "translationFailed": "翻译失败",
+    "pin": "置顶",
+    "unpin": "取消置顶",
+    "pinnedMessage": "置顶消息"
   },
   "roomInfo": {
     "title": "房间信息",

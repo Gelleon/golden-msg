@@ -1112,3 +1112,243 @@ export async function sendMessageAction(rawData: {
     return { error: `Failed to send message: ${error.message || 'Unknown error'}` }
   }
 }
+
+
+export async function pinMessage(messageId: string, roomId: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  try {
+    console.log(`[PIN MESSAGE] Checking permissions for user ${session.user.id} in room ${roomId}`);
+    // Verify permissions
+    const participation = await prisma.roomParticipant.findUnique({
+      where: {
+        room_id_user_id: {
+          room_id: roomId,
+          user_id: session.user.id,
+        },
+      },
+    })
+
+    console.log(`[PIN MESSAGE] Participation:`, participation);
+    
+    if (!participation || (participation.role !== 'admin' && participation.role !== 'owner')) {
+      // Actually we should check if they are owner of room, or just admin role
+      const room = await prisma.room.findUnique({ where: { id: roomId } })
+      console.log(`[PIN MESSAGE] Room:`, room);
+      if (room?.created_by !== session.user.id && participation?.role !== 'admin') {
+        console.log(`[PIN MESSAGE] Permission denied. Created by: ${room?.created_by}, Role: ${participation?.role}`);
+        return { error: "Permission denied: Only room owner or admins can pin messages" }
+      }
+    }
+
+    // Check max pinned messages
+    const pinnedCount = await prisma.message.count({
+      where: {
+        room_id: roomId,
+        is_pinned: true,
+      }
+    })
+
+    if (pinnedCount >= 5) {
+      return { error: "Maximum of 5 pinned messages reached" }
+    }
+
+    const message = await prisma.message.update({
+      where: { id: messageId },
+      data: { is_pinned: true },
+      select: {
+        id: true,
+        content: true,
+        message_type: true,
+        is_pinned: true,
+        sender: { select: { full_name: true } }
+      }
+    })
+
+    sendSSEUpdate(roomId, {
+      type: 'message_update',
+      messageId: messageId,
+      payload: { is_pinned: true }
+    })
+
+    sendSSEUpdate(roomId, {
+      type: 'pinned_messages_update'
+    })
+
+    // Create system message
+    const sysMsg = await prisma.message.create({
+      data: {
+        room_id: roomId,
+        sender_id: session.user.id,
+        content: message.is_pinned 
+          ? `📌 ${session.user.full_name || 'User'} закрепил(а) сообщение`
+          : `📌 ${session.user.full_name || 'User'} открепил(а) сообщение`,
+        message_type: 'system',
+        language_original: 'ru',
+        translation_status: 'completed'
+      },
+      select: {
+        id: true,
+        room_id: true,
+        content: true,
+        content_translated: true,
+        language_original: true,
+        message_type: true,
+        file_url: true,
+        voice_transcription: true,
+        created_at: true,
+        is_edited: true,
+        is_pinned: true,
+        reply_to_id: true,
+        translation_status: true,
+        sender: {
+          select: {
+            id: true,
+            full_name: true,
+            avatar_url: true,
+            role: true,
+          }
+        }
+      }
+    })
+
+    sendSSEUpdate(roomId, {
+      type: 'new_message', // This assumes the client handles new_message event, wait, does it?
+      message: sysMsg
+    })
+
+    revalidatePath(`/dashboard/rooms/${roomId}`)
+    return { success: true, message: sysMsg }
+  } catch (error) {
+    console.error("Pin message error:", error)
+    return { error: "Failed to pin message" }
+  }
+}
+
+export async function unpinMessage(messageId: string, roomId: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  try {
+    console.log(`[UNPIN MESSAGE] Checking permissions for user ${session.user.id} in room ${roomId}`);
+    // Verify permissions
+    const participation = await prisma.roomParticipant.findUnique({
+      where: {
+        room_id_user_id: {
+          room_id: roomId,
+          user_id: session.user.id,
+        },
+      },
+    })
+
+    console.log(`[UNPIN MESSAGE] Participation:`, participation);
+    
+    if (!participation || (participation.role !== 'admin' && participation.role !== 'owner')) {
+      const room = await prisma.room.findUnique({ where: { id: roomId } })
+      console.log(`[UNPIN MESSAGE] Room:`, room);
+      if (room?.created_by !== session.user.id && participation?.role !== 'admin') {
+        console.log(`[UNPIN MESSAGE] Permission denied. Created by: ${room?.created_by}, Role: ${participation?.role}`);
+        return { error: "Permission denied: Only room owner or admins can unpin messages" }
+      }
+    }
+
+    const message = await prisma.message.update({
+      where: { id: messageId },
+      data: { is_pinned: false },
+      select: {
+        id: true,
+        is_pinned: true,
+      }
+    })
+
+    sendSSEUpdate(roomId, {
+      type: 'message_update',
+      messageId: messageId,
+      payload: { is_pinned: false }
+    })
+
+    sendSSEUpdate(roomId, {
+      type: 'pinned_messages_update'
+    })
+
+    // Create system message
+    const sysMsg = await prisma.message.create({
+      data: {
+        room_id: roomId,
+        sender_id: session.user.id,
+        content: message.is_pinned 
+          ? `📌 ${session.user.full_name || 'User'} закрепил(а) сообщение`
+          : `📌 ${session.user.full_name || 'User'} открепил(а) сообщение`,
+        message_type: 'system',
+        language_original: 'ru',
+        translation_status: 'completed'
+      },
+      select: {
+        id: true,
+        room_id: true,
+        content: true,
+        content_translated: true,
+        language_original: true,
+        message_type: true,
+        file_url: true,
+        voice_transcription: true,
+        created_at: true,
+        is_edited: true,
+        is_pinned: true,
+        reply_to_id: true,
+        translation_status: true,
+        sender: {
+          select: {
+            id: true,
+            full_name: true,
+            avatar_url: true,
+            role: true,
+          }
+        }
+      }
+    })
+
+    sendSSEUpdate(roomId, {
+      type: 'new_message', // This assumes the client handles new_message event, wait, does it?
+      message: sysMsg
+    })
+
+    revalidatePath(`/dashboard/rooms/${roomId}`)
+    return { success: true, message: sysMsg }
+  } catch (error) {
+    console.error("Unpin message error:", error)
+    return { error: "Failed to unpin message" }
+  }
+}
+
+export async function getPinnedMessages(roomId: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  try {
+    const messages = await prisma.message.findMany({
+      where: {
+        room_id: roomId,
+        is_pinned: true,
+      },
+      orderBy: { created_at: 'desc' },
+      select: {
+        id: true,
+        content: true,
+        message_type: true,
+        file_url: true,
+        sender: {
+          select: {
+            full_name: true,
+          }
+        }
+      }
+    })
+
+    return { messages }
+  } catch (error) {
+    console.error("Get pinned messages error:", error)
+    return { error: "Failed to get pinned messages" }
+  }
+}

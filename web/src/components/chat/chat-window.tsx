@@ -6,6 +6,7 @@ import { useTranslation } from "@/lib/language-context"
 import { cn } from "@/lib/utils"
 
 import { MessageBubble } from "@/components/chat/message-bubble"
+import { PinnedMessagesBar } from "@/components/chat/pinned-messages-bar"
 import { MessageInput } from "@/components/chat/message-input"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -141,6 +142,22 @@ export function ChatWindow({
     } finally {
       setIsLoadingOlder(false)
       isLoadingOlderRef.current = false
+    }
+  }
+
+  const handlePinnedMessageClick = (messageId: string) => {
+    const el = document.getElementById(`message-${messageId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Add a highlight effect
+      el.classList.add('bg-orange-100', 'dark:bg-orange-900/30', 'transition-colors', 'duration-1000');
+      setTimeout(() => {
+        el.classList.remove('bg-orange-100', 'dark:bg-orange-900/30');
+      }, 2000);
+    } else {
+      // Message might not be loaded, load it or just scroll to top for now
+      // In a full implementation, we would fetch the message context
+      console.log('Message not found in DOM:', messageId);
     }
   }
 
@@ -306,14 +323,7 @@ export function ChatWindow({
              return msg;
            }));
         } else if (data.type === 'new_message') {
-           // Handle new message if SSE sends full message (optional, currently we poll/fetch)
-           // But user asked for real-time updates.
-           // If I rely on polling for new messages, it might be slow (3s).
-           // Ideally, sendMessageAction adds it to state immediately (optimistic), 
-           // and SSE updates the translation.
-           // For messages from others, polling is okay-ish, but SSE is better.
-           // For now, let's stick to polling for new messages + SSE for updates.
-           // Or I can trigger a fetchMessages() on 'new_message' event if I implement it.
+           fetchMessages();
         }
       } catch (e) {
         console.error("SSE Parse Error", e);
@@ -341,7 +351,8 @@ export function ChatWindow({
   }, [roomId, participants.length, currentUser.id])
 
   return (
-    <div className="flex flex-col h-full bg-[#F8FAFC]">
+    <div className="flex flex-col h-full bg-[#F8FAFC] relative">
+      <PinnedMessagesBar roomId={roomId} onMessageClick={handlePinnedMessageClick} currentUserRole={currentUser.role} />
       {/* Unread Banner */}
       <AnimatePresence>
         {unreadCount > 0 && (
@@ -349,7 +360,7 @@ export function ChatWindow({
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="absolute top-4 left-1/2 -translate-x-1/2 z-10"
+            className="absolute top-16 left-1/2 -translate-x-1/2 z-10"
           >
             <button
               onClick={() => scrollToBottom()}
@@ -367,7 +378,7 @@ export function ChatWindow({
       <div 
         ref={containerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-8 space-y-4 relative"
+        className="flex-1 overflow-y-auto px-3 py-4 md:px-6 md:py-8 space-y-4 pt-16"
       >
         <div className="flex flex-col justify-end min-h-full">
           {isLoadingOlder && (
@@ -426,7 +437,15 @@ export function ChatWindow({
                       isUnread && "before:absolute before:-left-2 before:top-1/2 before:-translate-y-1/2 before:w-1 before:h-2/3 before:bg-amber-500 before:rounded-full before:shadow-[0_0_8px_rgba(245,158,11,0.5)]"
                     )}
                   >
+                    {message.message_type === 'system' ? (
+                      <div className="flex justify-center w-full my-2">
+                        <span className="bg-slate-100 text-slate-500 text-xs px-3 py-1 rounded-full text-center max-w-[80%]">
+                          {message.content_original || message.content}
+                        </span>
+                      </div>
+                    ) : (
                     <MessageBubble
+                      roomId={roomId}
                       message={message}
                       isCurrentUser={message.sender.id === currentUser.id}
                       onReply={(msg) => setReplyTo(msg)}
@@ -436,6 +455,7 @@ export function ChatWindow({
                       currentUserRole={currentUser.role}
                       participants={participants}
                     />
+                    )}
                   </div>
                 </motion.div>
               )
