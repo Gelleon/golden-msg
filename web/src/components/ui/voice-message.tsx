@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import { Mic, Square, Pause, Play, X, Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { globalAudioController } from "@/lib/audio-controller"
 import "./voice-message.css"
 
 interface VoiceRecorderProps {
@@ -432,25 +433,30 @@ export function VoiceMessage({
   const handleEnded = () => {
     setIsPlaying(false)
     setCurrentTime(0)
+    if (audioRef.current) {
+      globalAudioController.clear(audioRef.current)
+    }
     onEnded?.()
   }
 
   const handleError = () => {
     setError("Ошибка воспроизведения")
     setIsPlaying(false)
+    if (audioRef.current) {
+      globalAudioController.clear(audioRef.current)
+    }
   }
 
   const togglePlay = async () => {
     if (!audioRef.current || error) return
     try {
       if (isPlaying) {
-        audioRef.current.pause()
+        globalAudioController.pause(audioRef.current)
         onPause?.()
       } else {
-        await audioRef.current.play()
+        await globalAudioController.play(audioRef.current, setIsPlaying)
         onPlay?.()
       }
-      setIsPlaying(!isPlaying)
     } catch {
       setError("Не удалось воспроизвести")
     }
@@ -516,6 +522,7 @@ export function VoiceMessage({
       audio.removeEventListener("timeupdate", handleTimeUpdate)
       audio.removeEventListener("ended", handleEnded)
       audio.removeEventListener("error", handleError)
+      globalAudioController.clear(audio)
     }
   }, [error])
 
