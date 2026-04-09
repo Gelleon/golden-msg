@@ -44,11 +44,15 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
     try {
       const data = await getRoomDetails(roomId);
       if (data) {
+        setError(null);
         setParticipants(data.participants);
         setRoomCreator(data.room?.created_by || null);
         setCurrentUser(data.currentUser);
       } else {
         setParticipants([]);
+        setRoomCreator(null);
+        setCurrentUser(null);
+        setError("Нет доступа к информации о комнате");
       }
     } catch {
       setError("Failed to fetch participants");

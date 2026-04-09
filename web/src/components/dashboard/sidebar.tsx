@@ -145,14 +145,14 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     try {
       if (isAddUserToDMDialogOpen && targetDMId) {
         const result = await searchUsersForRoomPaginated(targetDMId, query, 1, 50)
-        setDmSearchResults(result?.users || [])
+        setDmSearchResults((result?.users || []).filter((u: any) => u?.role !== "client"))
       } else {
         if (!selectedRoomId) {
           setDmSearchResults([])
           return
         }
         const result = await searchUsersForRoomPaginated(selectedRoomId, query, 1, 50)
-        setDmSearchResults(result?.users || [])
+        setDmSearchResults((result?.users || []).filter((u: any) => u?.role !== "client"))
       }
     } catch (error) {
       console.error("Error searching users:", error)
@@ -189,7 +189,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
         if (isAddUserToDMDialogOpen && targetDMId) {
           const result = await searchUsersForRoomPaginated(targetDMId, dmSearchQuery, 1, 50)
           if (isMounted) {
-            setDmSearchResults(result?.users || [])
+            setDmSearchResults((result?.users || []).filter((u: any) => u?.role !== "client"))
           }
         } else {
           if (!selectedRoomId) {
@@ -200,7 +200,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
           } else {
             const result = await searchUsersForRoomPaginated(selectedRoomId, dmSearchQuery, 1, 50)
             if (isMounted) {
-              setDmSearchResults(result?.users || [])
+              setDmSearchResults((result?.users || []).filter((u: any) => u?.role !== "client"))
             }
           }
         }

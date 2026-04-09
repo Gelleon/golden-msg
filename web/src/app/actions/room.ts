@@ -681,7 +681,8 @@ export async function getRoomDetails(roomId: string) {
     if (!currentUser) return null
 
     const isAdminOrManager = ["admin", "manager"].includes(currentUser.role || "")
-    if (!isAdminOrManager) {
+    const isCreator = room.created_by === session.user.id
+    if (!isAdminOrManager && !isCreator) {
       const membership = await prisma.roomParticipant.findUnique({
         where: { room_id_user_id: { room_id: roomId, user_id: session.user.id } },
         select: { user_id: true },
@@ -879,6 +880,12 @@ export async function getRoomParticipants(roomId: string) {
 
   try {
     await ensureSchemaFixed()
+    const room = await prisma.room.findUnique({
+      where: { id: roomId },
+      select: { created_by: true },
+    })
+    if (!room) return []
+
     const currentUser = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { role: true },
@@ -886,7 +893,8 @@ export async function getRoomParticipants(roomId: string) {
     if (!currentUser) return []
 
     const isAdminOrManager = ["admin", "manager"].includes(currentUser.role || "")
-    if (!isAdminOrManager) {
+    const isCreator = room.created_by === session.user.id
+    if (!isAdminOrManager && !isCreator) {
       const membership = await prisma.roomParticipant.findUnique({
         where: { room_id_user_id: { room_id: roomId, user_id: session.user.id } },
         select: { user_id: true },
@@ -1122,6 +1130,12 @@ export async function searchUsersForRoomPaginated(roomId: string, query: string 
   const session = await getSession()
   if (!session?.user) return { users: [], total: 0 }
 
+  const room = await prisma.room.findUnique({
+    where: { id: roomId },
+    select: { type: true },
+  })
+  if (!room) return { users: [], total: 0 }
+
   // Exclude users already in the room
   const participants = await prisma.roomParticipant.findMany({
     where: { room_id: roomId },
@@ -1134,6 +1148,10 @@ export async function searchUsersForRoomPaginated(roomId: string, query: string 
     id: {
       notIn: existingUserIds,
     }
+  }
+
+  if (room.type === "private") {
+    where.role = { not: "client" }
   }
 
   if (query && query.trim()) {

@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
   const room = await prisma.room.findUnique({
     where: { id: roomId },
-    select: { id: true },
+    select: { id: true, created_by: true },
   })
   if (!room) {
     return new Response("Room not found", { status: 404 })
@@ -36,7 +36,8 @@ export async function GET(req: NextRequest) {
   }
 
   const isAdminOrManager = ["admin", "manager"].includes(currentUser.role || "")
-  if (!isAdminOrManager) {
+  const isCreator = room.created_by === session.user.id
+  if (!isAdminOrManager && !isCreator) {
     const membership = await prisma.roomParticipant.findUnique({
       where: { room_id_user_id: { room_id: roomId, user_id: session.user.id } },
       select: { user_id: true },
