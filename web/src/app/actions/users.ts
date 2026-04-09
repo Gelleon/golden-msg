@@ -1,24 +1,20 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { hash } from "bcryptjs"
 import prisma from "@/lib/db"
 import { getSession } from "./auth"
+import { ensureSchemaFixed } from "@/lib/schema-fix"
 
 export async function getUsers() {
   const session = await getSession()
   if (!session?.user) return []
 
-  // Check if user is admin
-  const currentUser = await prisma.user.findUnique({
-    where: { id: session.user.id },
-  })
-
-  if (currentUser?.role !== "admin") {
+  if (session.user.role !== "admin") {
     return []
   }
 
   try {
+    await ensureSchemaFixed()
     const users = await prisma.user.findMany({
       orderBy: { created_at: "desc" },
       select: {
@@ -48,12 +44,7 @@ export async function updateUserRole(userId: string, newRole: string) {
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
 
-  // Check if user is admin
-  const currentUser = await prisma.user.findUnique({
-    where: { id: session.user.id },
-  })
-
-  if (currentUser?.role !== "admin") {
+  if (session.user.role !== "admin") {
     return { error: "Permission denied" }
   }
 
@@ -63,12 +54,14 @@ export async function updateUserRole(userId: string, newRole: string) {
   }
 
   try {
+    await ensureSchemaFixed()
     await prisma.user.update({
       where: { id: userId },
       data: { role: newRole },
     })
 
     revalidatePath("/dashboard/users")
+    revalidatePath("/dashboard/settings")
     return { success: true }
   } catch (error) {
     console.error("Update user role error:", error)
@@ -102,10 +95,12 @@ export async function updateProfile(formData: FormData) {
   if (pushNotifications !== null) data.push_notifications_enabled = pushNotifications === "true"
   if (password) {
     if (password.length < 6) return { error: "Password must be at least 6 characters" }
+    const { hash } = await import("bcryptjs")
     data.password_hash = await hash(password, 10)
   }
 
   try {
+    await ensureSchemaFixed()
     await prisma.user.update({
       where: { id: session.user.id },
       data,
