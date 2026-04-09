@@ -290,7 +290,7 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
                     onClick={() => handleRemoveUser(participant.id)}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    {t("roomInfo.removeParticipant") || "Удалить участника"}
+                    {t("roomInfo.removeUser") || "Удалить участника"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
