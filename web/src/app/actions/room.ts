@@ -674,13 +674,8 @@ export async function getRoomDetails(roomId: string) {
     })
     if (!room) return null
 
-    const currentUser = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { id: true, role: true }
-    })
-    if (!currentUser) return null
-
-    const isAdminOrManager = ["admin", "manager"].includes(currentUser.role || "")
+    const currentUser = { id: session.user.id, role: session.user.role }
+    const isAdminOrManager = ["admin", "manager"].includes(session.user.role || "")
     const isCreator = room.created_by === session.user.id
     if (!isAdminOrManager && !isCreator) {
       const membership = await prisma.roomParticipant.findUnique({
@@ -886,13 +881,7 @@ export async function getRoomParticipants(roomId: string) {
     })
     if (!room) return []
 
-    const currentUser = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true },
-    })
-    if (!currentUser) return []
-
-    const isAdminOrManager = ["admin", "manager"].includes(currentUser.role || "")
+    const isAdminOrManager = ["admin", "manager"].includes(session.user.role || "")
     const isCreator = room.created_by === session.user.id
     if (!isAdminOrManager && !isCreator) {
       const membership = await prisma.roomParticipant.findUnique({

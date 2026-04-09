@@ -27,15 +27,7 @@ export async function GET(req: NextRequest) {
     return new Response("Room not found", { status: 404 })
   }
 
-  const currentUser = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { role: true },
-  })
-  if (!currentUser) {
-    return new Response("Unauthorized", { status: 401 })
-  }
-
-  const isAdminOrManager = ["admin", "manager"].includes(currentUser.role || "")
+  const isAdminOrManager = ["admin", "manager"].includes(session.user.role || "")
   const isCreator = room.created_by === session.user.id
   if (!isAdminOrManager && !isCreator) {
     const membership = await prisma.roomParticipant.findUnique({
