@@ -1,4 +1,6 @@
 import { NextRequest } from "next/server";
+import prisma from "@/lib/db";
+import { getSession } from "@/app/actions/auth";
 import { sseEmitter } from "@/lib/sse";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +12,38 @@ export async function GET(req: NextRequest) {
 
   if (!roomId) {
     return new Response("Missing roomId", { status: 400 });
+  }
+
+  const session = await getSession()
+  if (!session?.user) {
+    return new Response("Unauthorized", { status: 401 })
+  }
+
+  const room = await prisma.room.findUnique({
+    where: { id: roomId },
+    select: { id: true },
+  })
+  if (!room) {
+    return new Response("Room not found", { status: 404 })
+  }
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  })
+  if (!currentUser) {
+    return new Response("Unauthorized", { status: 401 })
+  }
+
+  const isAdminOrManager = ["admin", "manager"].includes(currentUser.role || "")
+  if (!isAdminOrManager) {
+    const membership = await prisma.roomParticipant.findUnique({
+      where: { room_id_user_id: { room_id: roomId, user_id: session.user.id } },
+      select: { user_id: true },
+    })
+    if (!membership) {
+      return new Response("Forbidden", { status: 403 })
+    }
   }
 
   let isClosed = false;

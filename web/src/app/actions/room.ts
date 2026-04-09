@@ -672,11 +672,22 @@ export async function getRoomDetails(roomId: string) {
       where: { id: roomId },
       select: { created_by: true, type: true }
     })
+    if (!room) return null
 
     const currentUser = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { id: true, role: true }
     })
+    if (!currentUser) return null
+
+    const isAdminOrManager = ["admin", "manager"].includes(currentUser.role || "")
+    if (!isAdminOrManager) {
+      const membership = await prisma.roomParticipant.findUnique({
+        where: { room_id_user_id: { room_id: roomId, user_id: session.user.id } },
+        select: { user_id: true },
+      })
+      if (!membership) return null
+    }
 
     const participants = await prisma.roomParticipant.findMany({
       where: { room_id: roomId },
@@ -867,6 +878,22 @@ export async function getRoomParticipants(roomId: string) {
   if (!session?.user) return []
 
   try {
+    await ensureSchemaFixed()
+    const currentUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true },
+    })
+    if (!currentUser) return []
+
+    const isAdminOrManager = ["admin", "manager"].includes(currentUser.role || "")
+    if (!isAdminOrManager) {
+      const membership = await prisma.roomParticipant.findUnique({
+        where: { room_id_user_id: { room_id: roomId, user_id: session.user.id } },
+        select: { user_id: true },
+      })
+      if (!membership) return []
+    }
+
     const participants = await prisma.roomParticipant.findMany({
       where: { room_id: roomId },
       include: {
@@ -913,10 +940,11 @@ export async function addParticipant(roomId: string, userId: string) {
   if (!room) return { error: "Room not found" }
 
   const isAdminOrManager = ["admin", "manager"].includes(currentUser?.role || "")
+  const isCreator = room?.created_by === session.user.id
+  const canManage = isAdminOrManager || isCreator
+  if (!canManage) return { error: "Permission denied" }
 
   if (room.type === "private") {
-    if (!isAdminOrManager) return { error: "Permission denied" }
-
     const targetUser = await prisma.user.findUnique({
       where: { id: userId },
       select: { role: true },
@@ -926,10 +954,6 @@ export async function addParticipant(roomId: string, userId: string) {
       return { error: "Cannot add client to private chat" }
     }
   }
-
-  const isCreator = room?.created_by === session.user.id
-  const canManage = isAdminOrManager || isCreator
-  if (!canManage) return { error: "Permission denied" }
 
   // If Manager (and not creator), check if they are inviting only Client or Partner
   if (room.type !== "private" && currentUser?.role === "manager" && !isCreator) {
@@ -1006,7 +1030,6 @@ export async function addParticipants(roomId: string, userIds: string[]) {
   if (!canManage) return { error: "Permission denied" }
 
   if (room.type === "private") {
-    if (!isAdminOrManager) return { error: "Permission denied" }
     const targetUsers = await prisma.user.findMany({
       where: { id: { in: targetUserIds } },
       select: { id: true, role: true },

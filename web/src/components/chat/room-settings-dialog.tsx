@@ -8,7 +8,7 @@ import {
   getRoomParticipants, 
   addParticipant, 
   removeParticipant, 
-  searchUsersForRoom 
+  searchUsersForRoomPaginated 
 } from "@/app/actions/room"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -71,12 +71,8 @@ export function RoomSettingsDialog({
         const data = await getRoomParticipants(roomId)
         setParticipants(data)
         
-        // Fetch users after participants are loaded to filter correctly
-        const users = await searchUsersForRoom("")
-        if (users) {
-          const existingIds = new Set(data.map((p: any) => p.id))
-          setSearchResults(users.filter((u: any) => !existingIds.has(u.id)))
-        }
+        const result = await searchUsersForRoomPaginated(roomId, "", 1, 50)
+        setSearchResults(result?.users || [])
       }
       init()
     }
@@ -96,13 +92,8 @@ export function RoomSettingsDialog({
   const handleSearch = async (queryOverride?: string) => {
     const query = typeof queryOverride === 'string' ? queryOverride : searchQuery
     setIsLoading(true)
-    const data = await searchUsersForRoom(query)
-    
-    if (data) {
-      // Filter out existing participants
-      const existingIds = new Set(participants.map((p) => p.id))
-      setSearchResults(data.filter((p) => !existingIds.has(p.id)))
-    }
+    const result = await searchUsersForRoomPaginated(roomId, query, 1, 50)
+    setSearchResults(result?.users || [])
     setIsLoading(false)
   }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { getRoomDetails, searchUsersForRoom, addParticipant, removeParticipant } from "@/app/actions/room";
+import { getRoomDetails, searchUsersForRoomPaginated, addParticipant, removeParticipant } from "@/app/actions/room";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -27,11 +27,11 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
   const { t } = useTranslation();
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [roomCreator, setRoomCreator] = useState<string | null>(null);
-  const [roomType, setRoomType] = useState<string>("group");
   const [currentUser, setCurrentUser] = useState<{id: string, role: string} | null>(null);
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [eligibleUsers, setEligibleUsers] = useState<Participant[]>([]);
+  const [eligibleUsersTotal, setEligibleUsersTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +46,6 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
       if (data) {
         setParticipants(data.participants);
         setRoomCreator(data.room?.created_by || null);
-        setRoomType(data.room?.type || "group");
         setCurrentUser(data.currentUser);
       } else {
         setParticipants([]);
@@ -96,13 +95,9 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
       if (!isAddUserDialogOpen) return;
       setIsLoading(true);
       try {
-        const result = await searchUsersForRoom(searchQuery);
-        if (result && Array.isArray(result)) {
-          const participantIds = new Set(participants.map(p => p.id));
-          setEligibleUsers(result.filter(u => !participantIds.has(u.id)));
-        } else {
-          setEligibleUsers([]);
-        }
+        const result = await searchUsersForRoomPaginated(roomId, searchQuery, currentPage, PAGE_SIZE);
+        setEligibleUsers(result?.users || []);
+        setEligibleUsersTotal(result?.total || 0);
       } catch {
         setError("Error searching users");
       } finally {
@@ -112,14 +107,11 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
 
     const timeoutId = setTimeout(fetchEligibleUsers, 300);
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, isAddUserDialogOpen, participants]);
+  }, [roomId, searchQuery, currentPage, isAddUserDialogOpen]);
 
   // Pagination logic
-  const totalPages = Math.max(1, Math.ceil(eligibleUsers.length / PAGE_SIZE));
-  const paginatedUsers = eligibleUsers.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
+  const totalPages = Math.max(1, Math.ceil(eligibleUsersTotal / PAGE_SIZE));
+  const paginatedUsers = eligibleUsers;
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -213,7 +205,7 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
     <div className="p-4 h-full flex flex-col space-y-4">
       <header className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-white">{t("roomInfo.participantsTitle") || "Участники комнаты"}</h3>
-        {canManageRoom && roomType !== "private" && (
+        {canManageRoom && (
           <Button
             variant="ghost"
             size="sm"
@@ -279,7 +271,7 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
               </div>
             </div>
             
-            {canManageRoom && !isParticipantCreator && roomType !== "private" && (
+            {canManageRoom && !isParticipantCreator && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
@@ -309,6 +301,9 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
       {/* Add User Dialog */}
       <Dialog open={isAddUserDialogOpen} onOpenChange={(open) => {
         setIsAddUserDialogOpen(open);
+        if (open) {
+          setCurrentPage(1);
+        }
         if (!open) {
           setSearchQuery("");
           setCurrentPage(1);
