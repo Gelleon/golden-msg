@@ -45,6 +45,15 @@ export async function ensureLegacyDataMigrated() {
   const hasLegacyParticipants = roomParticipantsExists
   const hasLegacyMessages = messagesExists
 
+  console.log("[LEGACY MIGRATE] current counts", { userCount, roomCount, participantCount, messageCount })
+  console.log("[LEGACY MIGRATE] legacy tables", {
+    profilesExists,
+    usersExists,
+    roomsExists,
+    roomParticipantsExists,
+    messagesExists,
+  })
+
   if (!hasLegacyUsers && !hasLegacyRooms && !hasLegacyParticipants && !hasLegacyMessages) return
   if (userCount > 0 || roomCount > 0 || participantCount > 0 || messageCount > 0) return
 
@@ -57,6 +66,13 @@ export async function ensureLegacyDataMigrated() {
   const legacyRooms = roomsExists ? await prisma.$queryRawUnsafe<SqlRow[]>(`SELECT * FROM "rooms"`) : []
   const legacyParticipants = roomParticipantsExists ? await prisma.$queryRawUnsafe<SqlRow[]>(`SELECT * FROM "room_participants"`) : []
   const legacyMessages = messagesExists ? await prisma.$queryRawUnsafe<SqlRow[]>(`SELECT * FROM "messages"`) : []
+
+  console.log("[LEGACY MIGRATE] migrating rows", {
+    users: legacyUsers.length,
+    rooms: legacyRooms.length,
+    participants: legacyParticipants.length,
+    messages: legacyMessages.length,
+  })
 
   await prisma.$transaction(async (tx) => {
     await tx.user.createMany({
@@ -131,4 +147,6 @@ export async function ensureLegacyDataMigrated() {
       })),
     })
   })
+
+  console.log("[LEGACY MIGRATE] done")
 }
