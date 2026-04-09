@@ -20,6 +20,7 @@ export async function markAsRead(roomId: string) {
   if (!session?.user) return { error: "Unauthorized" }
 
   try {
+    await ensureSchemaFixed()
     await prisma.roomParticipant.update({
       where: {
         room_id_user_id: {
@@ -31,6 +32,11 @@ export async function markAsRead(roomId: string) {
         last_read_at: new Date(),
         last_active_at: new Date()
       }
+    })
+
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { last_active_at: new Date() },
     })
 
     // Clear user from email notification queue when they read messages
@@ -62,6 +68,11 @@ export async function pingRoomActivity(roomId: string) {
       data: {
         last_active_at: new Date()
       }
+    })
+
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { last_active_at: new Date() },
     })
 
     return { success: true }
@@ -371,18 +382,25 @@ export async function updateTypingStatus(roomId: string) {
   if (!session?.user) return { error: "Unauthorized" }
 
   try {
-    await prisma.roomParticipant.update({
-      where: {
-        room_id_user_id: {
-          room_id: roomId,
-          user_id: session.user.id,
+    await ensureSchemaFixed()
+    await Promise.all([
+      prisma.roomParticipant.update({
+        where: {
+          room_id_user_id: {
+            room_id: roomId,
+            user_id: session.user.id,
+          },
         },
-      },
-      data: {
-        typing_at: new Date(),
-        last_active_at: new Date(),
-      },
-    })
+        data: {
+          typing_at: new Date(),
+          last_active_at: new Date(),
+        },
+      }),
+      prisma.user.update({
+        where: { id: session.user.id },
+        data: { last_active_at: new Date() },
+      }),
+    ])
     return { success: true }
   } catch (error) {
     console.error("Update typing status error:", error)
@@ -781,7 +799,7 @@ export async function sendMessageAction(rawData: {
   }
 
   const roleMentionLimit = mentionRoleLimits[user.role] || 3
-  const maxMentionsAllowed = roomWithParticipants.type === "private"
+  const maxMentionsAllowed = (roomWithParticipants.type === "private" && roomWithParticipants.participants.length <= 2)
     ? Math.min(roleMentionLimit, 2)
     : roleMentionLimit
 
@@ -1086,18 +1104,24 @@ export async function sendMessageAction(rawData: {
     revalidatePath(`/dashboard/rooms/${roomId}`)
     
     // Update last_active_at for the sender
-    await prisma.roomParticipant.update({
-      where: {
-        room_id_user_id: {
-          room_id: roomId,
-          user_id: user.id,
+    await Promise.all([
+      prisma.roomParticipant.update({
+        where: {
+          room_id_user_id: {
+            room_id: roomId,
+            user_id: user.id,
+          },
         },
-      },
-      data: {
-        last_active_at: new Date(),
-        last_read_at: new Date(),
-      },
-    })
+        data: {
+          last_active_at: new Date(),
+          last_read_at: new Date(),
+        },
+      }),
+      prisma.user.update({
+        where: { id: user.id },
+        data: { last_active_at: new Date() },
+      }),
+    ])
 
     return { 
       success: true, 

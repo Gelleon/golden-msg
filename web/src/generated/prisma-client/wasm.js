@@ -128,6 +128,7 @@ exports.Prisma.UserScalarFieldEnum = {
   preferred_language: 'preferred_language',
   password_hash: 'password_hash',
   created_at: 'created_at',
+  last_active_at: 'last_active_at',
   email_notifications_enabled: 'email_notifications_enabled',
   push_notifications_enabled: 'push_notifications_enabled',
   last_email_notification_at: 'last_email_notification_at',

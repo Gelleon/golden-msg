@@ -17,6 +17,7 @@ model User {
   preferred_language          String               @default("ru")
   password_hash               String               @default("")
   created_at                  DateTime             @default(now())
+  last_active_at              DateTime             @default(now())
   email_notifications_enabled Boolean              @default(true)
   push_notifications_enabled  Boolean              @default(true)
   last_email_notification_at  DateTime?

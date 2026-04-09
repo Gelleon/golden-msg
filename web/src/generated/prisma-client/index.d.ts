@@ -1723,6 +1723,7 @@ export namespace Prisma {
     preferred_language: string | null
     password_hash: string | null
     created_at: Date | null
+    last_active_at: Date | null
     email_notifications_enabled: boolean | null
     push_notifications_enabled: boolean | null
     last_email_notification_at: Date | null
@@ -1739,6 +1740,7 @@ export namespace Prisma {
     preferred_language: string | null
     password_hash: string | null
     created_at: Date | null
+    last_active_at: Date | null
     email_notifications_enabled: boolean | null
     push_notifications_enabled: boolean | null
     last_email_notification_at: Date | null
@@ -1755,6 +1757,7 @@ export namespace Prisma {
     preferred_language: number
     password_hash: number
     created_at: number
+    last_active_at: number
     email_notifications_enabled: number
     push_notifications_enabled: number
     last_email_notification_at: number
@@ -1773,6 +1776,7 @@ export namespace Prisma {
     preferred_language?: true
     password_hash?: true
     created_at?: true
+    last_active_at?: true
     email_notifications_enabled?: true
     push_notifications_enabled?: true
     last_email_notification_at?: true
@@ -1789,6 +1793,7 @@ export namespace Prisma {
     preferred_language?: true
     password_hash?: true
     created_at?: true
+    last_active_at?: true
     email_notifications_enabled?: true
     push_notifications_enabled?: true
     last_email_notification_at?: true
@@ -1805,6 +1810,7 @@ export namespace Prisma {
     preferred_language?: true
     password_hash?: true
     created_at?: true
+    last_active_at?: true
     email_notifications_enabled?: true
     push_notifications_enabled?: true
     last_email_notification_at?: true
@@ -1894,6 +1900,7 @@ export namespace Prisma {
     preferred_language: string
     password_hash: string
     created_at: Date
+    last_active_at: Date
     email_notifications_enabled: boolean
     push_notifications_enabled: boolean
     last_email_notification_at: Date | null
@@ -1927,6 +1934,7 @@ export namespace Prisma {
     preferred_language?: boolean
     password_hash?: boolean
     created_at?: boolean
+    last_active_at?: boolean
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: boolean
@@ -1952,6 +1960,7 @@ export namespace Prisma {
     preferred_language?: boolean
     password_hash?: boolean
     created_at?: boolean
+    last_active_at?: boolean
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: boolean
@@ -1968,6 +1977,7 @@ export namespace Prisma {
     preferred_language?: boolean
     password_hash?: boolean
     created_at?: boolean
+    last_active_at?: boolean
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: boolean
@@ -2009,6 +2019,7 @@ export namespace Prisma {
       preferred_language: string
       password_hash: string
       created_at: Date
+      last_active_at: Date
       email_notifications_enabled: boolean
       push_notifications_enabled: boolean
       last_email_notification_at: Date | null
@@ -2423,6 +2434,7 @@ export namespace Prisma {
     readonly preferred_language: FieldRef<"User", 'String'>
     readonly password_hash: FieldRef<"User", 'String'>
     readonly created_at: FieldRef<"User", 'DateTime'>
+    readonly last_active_at: FieldRef<"User", 'DateTime'>
     readonly email_notifications_enabled: FieldRef<"User", 'Boolean'>
     readonly push_notifications_enabled: FieldRef<"User", 'Boolean'>
     readonly last_email_notification_at: FieldRef<"User", 'DateTime'>
@@ -10959,6 +10971,7 @@ export namespace Prisma {
     preferred_language: 'preferred_language',
     password_hash: 'password_hash',
     created_at: 'created_at',
+    last_active_at: 'last_active_at',
     email_notifications_enabled: 'email_notifications_enabled',
     push_notifications_enabled: 'push_notifications_enabled',
     last_email_notification_at: 'last_email_notification_at',
@@ -11156,6 +11169,7 @@ export namespace Prisma {
     preferred_language?: StringFilter<"User"> | string
     password_hash?: StringFilter<"User"> | string
     created_at?: DateTimeFilter<"User"> | Date | string
+    last_active_at?: DateTimeFilter<"User"> | Date | string
     email_notifications_enabled?: BoolFilter<"User"> | boolean
     push_notifications_enabled?: BoolFilter<"User"> | boolean
     last_email_notification_at?: DateTimeNullableFilter<"User"> | Date | string | null
@@ -11180,6 +11194,7 @@ export namespace Prisma {
     preferred_language?: SortOrder
     password_hash?: SortOrder
     created_at?: SortOrder
+    last_active_at?: SortOrder
     email_notifications_enabled?: SortOrder
     push_notifications_enabled?: SortOrder
     last_email_notification_at?: SortOrderInput | SortOrder
@@ -11207,6 +11222,7 @@ export namespace Prisma {
     preferred_language?: StringFilter<"User"> | string
     password_hash?: StringFilter<"User"> | string
     created_at?: DateTimeFilter<"User"> | Date | string
+    last_active_at?: DateTimeFilter<"User"> | Date | string
     email_notifications_enabled?: BoolFilter<"User"> | boolean
     push_notifications_enabled?: BoolFilter<"User"> | boolean
     last_email_notification_at?: DateTimeNullableFilter<"User"> | Date | string | null
@@ -11231,6 +11247,7 @@ export namespace Prisma {
     preferred_language?: SortOrder
     password_hash?: SortOrder
     created_at?: SortOrder
+    last_active_at?: SortOrder
     email_notifications_enabled?: SortOrder
     push_notifications_enabled?: SortOrder
     last_email_notification_at?: SortOrderInput | SortOrder
@@ -11253,6 +11270,7 @@ export namespace Prisma {
     preferred_language?: StringWithAggregatesFilter<"User"> | string
     password_hash?: StringWithAggregatesFilter<"User"> | string
     created_at?: DateTimeWithAggregatesFilter<"User"> | Date | string
+    last_active_at?: DateTimeWithAggregatesFilter<"User"> | Date | string
     email_notifications_enabled?: BoolWithAggregatesFilter<"User"> | boolean
     push_notifications_enabled?: BoolWithAggregatesFilter<"User"> | boolean
     last_email_notification_at?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
@@ -11878,6 +11896,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -11902,6 +11921,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -11926,6 +11946,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11950,6 +11971,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -11974,6 +11996,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -11990,6 +12013,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -12006,6 +12030,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -12810,6 +12835,7 @@ export namespace Prisma {
     preferred_language?: SortOrder
     password_hash?: SortOrder
     created_at?: SortOrder
+    last_active_at?: SortOrder
     email_notifications_enabled?: SortOrder
     push_notifications_enabled?: SortOrder
     last_email_notification_at?: SortOrder
@@ -12826,6 +12852,7 @@ export namespace Prisma {
     preferred_language?: SortOrder
     password_hash?: SortOrder
     created_at?: SortOrder
+    last_active_at?: SortOrder
     email_notifications_enabled?: SortOrder
     push_notifications_enabled?: SortOrder
     last_email_notification_at?: SortOrder
@@ -12842,6 +12869,7 @@ export namespace Prisma {
     preferred_language?: SortOrder
     password_hash?: SortOrder
     created_at?: SortOrder
+    last_active_at?: SortOrder
     email_notifications_enabled?: SortOrder
     push_notifications_enabled?: SortOrder
     last_email_notification_at?: SortOrder
@@ -14738,6 +14766,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -14761,6 +14790,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -14800,6 +14830,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14823,6 +14854,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14846,6 +14878,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -14869,6 +14902,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -14908,6 +14942,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14931,6 +14966,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -14954,6 +14990,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -14977,6 +15014,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -15016,6 +15054,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15039,6 +15078,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15109,6 +15149,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -15132,6 +15173,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -15247,6 +15289,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15270,6 +15313,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15325,6 +15369,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -15348,6 +15393,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -15422,6 +15468,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15445,6 +15492,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15599,6 +15647,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -15622,6 +15671,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -15761,6 +15811,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15784,6 +15835,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15848,6 +15900,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -15871,6 +15924,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -15945,6 +15999,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -15968,6 +16023,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -16032,6 +16088,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -16055,6 +16112,7 @@ export namespace Prisma {
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
+    last_active_at?: Date | string
     email_notifications_enabled?: boolean
     push_notifications_enabled?: boolean
     last_email_notification_at?: Date | string | null
@@ -16094,6 +16152,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -16117,6 +16176,7 @@ export namespace Prisma {
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    last_active_at?: DateTimeFieldUpdateOperationsInput | Date | string
     email_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     push_notifications_enabled?: BoolFieldUpdateOperationsInput | boolean
     last_email_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null

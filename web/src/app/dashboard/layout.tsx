@@ -3,6 +3,7 @@ import { getSession } from "@/app/actions/auth"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { MobileNav } from "@/components/dashboard/mobile-nav"
 import { PageTransition } from "@/components/dashboard/page-transition"
+import { PresenceHeartbeat } from "@/components/presence/presence-heartbeat"
 
 import { MobileNavProvider } from "@/lib/mobile-nav-context"
 import { LanguageProvider } from "@/lib/language-context"
@@ -26,6 +27,7 @@ export default async function DashboardLayout({
   return (
     <LanguageProvider initialLanguage={initialLanguage}>
       <MobileNavProvider>
+        <PresenceHeartbeat />
         <div className="flex h-screen bg-[#0F172A] flex-col md:flex-row overflow-hidden">
           <div className="hidden md:flex h-full">
             <Sidebar user={user} profile={profile} />

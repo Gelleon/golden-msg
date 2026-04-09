@@ -73,28 +73,32 @@ export default async function RoomPage({ params }: RoomPageProps) {
     let sharedRoomNames: string[] = []
 
     if (room.type === 'private') {
-      const otherParticipant = room.participants.find(p => p.user_id !== user.id)
-      if (otherParticipant) {
-        displayName = otherParticipant.user.full_name || translations.room.interlocutor
-        displayAvatar = otherParticipant.user.avatar_url
-        
-        // Fetch shared rooms
-        try {
-          const sharedRooms = await prisma.room.findMany({
-            where: {
-              type: 'group',
-              AND: [
-                { participants: { some: { user_id: user.id } } },
-                { participants: { some: { user_id: otherParticipant.user_id } } }
-              ]
-            },
-            select: { name: true },
-            take: 3
-          })
-          sharedRoomNames = sharedRooms.map(r => r.name).filter(Boolean) as string[]
-        } catch (error) {
-          console.error("Failed to fetch shared rooms:", error)
+      if (room.participants.length === 2) {
+        const otherParticipant = room.participants.find(p => p.user_id !== user.id)
+        if (otherParticipant) {
+          displayName = otherParticipant.user.full_name || translations.room.interlocutor
+          displayAvatar = otherParticipant.user.avatar_url
+          
+          try {
+            const sharedRooms = await prisma.room.findMany({
+              where: {
+                type: 'group',
+                AND: [
+                  { participants: { some: { user_id: user.id } } },
+                  { participants: { some: { user_id: otherParticipant.user_id } } }
+                ]
+              },
+              select: { name: true },
+              take: 3
+            })
+            sharedRoomNames = sharedRooms.map(r => r.name).filter(Boolean) as string[]
+          } catch (error) {
+            console.error("Failed to fetch shared rooms:", error)
+          }
         }
+      } else {
+        displayName = (room.name && room.name !== "DM") ? room.name : translations.room.group
+        displayAvatar = null
       }
     }
 
@@ -123,7 +127,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
                   {displayName?.charAt(0).toUpperCase()}
                 </div>
               )}
-              {room.type === 'private' && <PrivateRoomOnlineDot roomId={roomId} />}
+              {room.type === 'private' && room.participants.length === 2 && <PrivateRoomOnlineDot roomId={roomId} />}
             </div>
             <div className="flex flex-col min-w-0">
                 <h2 className="font-bold text-slate-900 text-sm md:text-lg leading-tight tracking-tight truncate pr-2">{displayName}</h2>
@@ -138,7 +142,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
                       <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
                       <span className="truncate">
                         {room.type === 'private' 
-                          ? <PrivateRoomSubtitle roomId={roomId} sharedRoomNames={sharedRoomNames} />
+                          ? (room.participants.length === 2 ? <PrivateRoomSubtitle roomId={roomId} sharedRoomNames={sharedRoomNames} /> : `${room.participants.length} ${translations.room.participantsCount}`)
                           : `${room.participants.length} ${translations.room.participantsCount}`}
                       </span>
                     </span>
@@ -147,7 +151,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
         </div>
         <div className="flex items-center gap-1 md:gap-3 flex-shrink-0">
           <div className="h-6 md:h-8 w-[1px] bg-slate-200 mx-0.5 md:mx-1 hidden sm:block" />
-          {room.type !== 'private' && (
+          {(room.type !== 'private' || room.participants.length > 2) && (
             <RoomSettingsDialog 
               roomId={roomId} 
               currentUserRole={user.role} 

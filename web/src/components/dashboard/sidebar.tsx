@@ -7,7 +7,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { LogOut, Plus, Settings, User, MessageSquare, Users, Search, Building2, ChevronRight, ChevronDown, Hash, Edit, Trash2, Info, UserPlus } from "lucide-react"
 import { logout } from "@/app/actions/auth"
-import { getRooms, createRoom, getDMs, searchUsers, startDM, deleteRoom, addParticipant } from "@/app/actions/room"
+import { getRooms, createRoom, getDMs, searchUsers, startDM, deleteRoom, addParticipant, addParticipants, searchUsersForRoomPaginated } from "@/app/actions/room"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -66,6 +66,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   const [dmSearchResults, setDmSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [selectedDMUserIds, setSelectedDMUserIds] = useState<string[]>([])
   const [editingRoom, setEditingRoom] = useState<any>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -140,17 +141,22 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   }
 
   const performSearch = async (query: string) => {
-    setIsSearching(true);
+    setIsSearching(true)
     try {
-      const users = await searchUsers(query);
-      setDmSearchResults(users || []);
+      if (isAddUserToDMDialogOpen && targetDMId) {
+        const result = await searchUsersForRoomPaginated(targetDMId, query, 1, 50)
+        setDmSearchResults(result?.users || [])
+      } else {
+        const users = await searchUsers(query)
+        setDmSearchResults(users || [])
+      }
     } catch (error) {
-      console.error("Error searching users:", error);
-      setDmSearchResults([]);
+      console.error("Error searching users:", error)
+      setDmSearchResults([])
     } finally {
-      setIsSearching(false);
+      setIsSearching(false)
     }
-  };
+  }
 
   const handleManualSearch = () => {
     performSearch(dmSearchQuery);
@@ -161,6 +167,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
       setDmSearchQuery("");
       setDmSearchResults([]);
       setHasSearched(false);
+      setSelectedDMUserIds([])
       return;
     }
 
@@ -175,9 +182,19 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
       if (!isMounted) return;
       setIsSearching(true);
       try {
-        const users = await searchUsers(dmSearchQuery);
+        if (isAddUserToDMDialogOpen && targetDMId) {
+          const result = await searchUsersForRoomPaginated(targetDMId, dmSearchQuery, 1, 50)
+          if (isMounted) {
+            setDmSearchResults(result?.users || [])
+          }
+        } else {
+          const users = await searchUsers(dmSearchQuery)
+          if (isMounted) {
+            setDmSearchResults(users || [])
+          }
+        }
         if (isMounted) {
-          setDmSearchResults(users || []);
+          setHasSearched(true)
         }
       } catch (error) {
         if (isMounted) {
@@ -187,7 +204,6 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
       } finally {
         if (isMounted) {
           setIsSearching(false);
-          setHasSearched(true);
         }
       }
     }, 300);
@@ -197,7 +213,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
       clearTimeout(timeoutId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDMDialogOpen, isAddUserToDMDialogOpen, dmSearchQuery]);
+  }, [isDMDialogOpen, isAddUserToDMDialogOpen, dmSearchQuery, targetDMId]);
 
   const handleStartDM = async (otherUserId: string) => {
     if (!selectedRoomId) {
@@ -223,23 +239,29 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     }
   }
 
-  const handleAddUserToDM = async (userId: string) => {
+  const toggleSelectedDMUserId = (userId: string) => {
+    setSelectedDMUserIds((prev) => prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId])
+  }
+
+  const handleAddUsersToDM = async () => {
     if (!targetDMId) return
+    if (selectedDMUserIds.length === 0) return
 
     try {
-      const result = await addParticipant(targetDMId, userId)
+      const result = await addParticipants(targetDMId, selectedDMUserIds)
       
       if (result.success) {
         setIsAddUserToDMDialogOpen(false)
         setTargetDMId(null)
+        setSelectedDMUserIds([])
         fetchRoomsAndDMs()
-        alert("Пользователь успешно добавлен")
+        alert("Пользователи успешно добавлены")
       } else {
-        alert(result.error || "Ошибка при добавлении пользователя")
+        alert(result.error || "Ошибка при добавлении пользователей")
       }
     } catch (error) {
-      console.error("Error adding user to DM:", error)
-      alert("Ошибка при добавлении пользователя")
+      console.error("Error adding users to DM:", error)
+      alert("Ошибка при добавлении пользователей")
     }
   }
 
@@ -691,7 +713,11 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                             {dmSearchResults.map((u) => (
                               <div
                                 key={u.id}
-                                className="flex items-center justify-between p-2 rounded-lg hover:bg-white/10 transition-colors"
+                                className={cn(
+                                  "flex items-center justify-between p-2 rounded-lg transition-colors cursor-pointer",
+                                  selectedDMUserIds.includes(u.id) ? "bg-white/10" : "hover:bg-white/10"
+                                )}
+                                onClick={() => toggleSelectedDMUserId(u.id)}
                               >
                                 <div className="flex items-center gap-3 min-w-0">
                                   <Avatar className="h-8 w-8 ring-1 ring-white/10">
@@ -715,16 +741,13 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                                     </span>
                                   </div>
                                 </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleAddUserToDM(u.id)}
-                                  className="text-amber-500 hover:text-amber-400 hover:bg-amber-500/10 h-8 px-2 gap-2"
-                                  title={t('sidebar.addUser')}
-                                >
-                                  <span className="text-xs font-medium">{t('sidebar.add')}</span>
-                                  <Plus className="h-4 w-4" />
-                                </Button>
+                                <input
+                                  type="checkbox"
+                                  checked={selectedDMUserIds.includes(u.id)}
+                                  onChange={() => toggleSelectedDMUserId(u.id)}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="h-4 w-4 accent-amber-500"
+                                />
                               </div>
                             ))}
                           </div>
@@ -734,6 +757,13 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                           </div>
                         ) : null}
                       </ScrollArea>
+                      <Button
+                        onClick={handleAddUsersToDM}
+                        disabled={selectedDMUserIds.length === 0}
+                        className="w-full h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold disabled:opacity-50 disabled:hover:bg-amber-500"
+                      >
+                        {t('sidebar.addUser') || "Добавить пользователя"}{selectedDMUserIds.length > 0 ? ` (${selectedDMUserIds.length})` : ""}
+                      </Button>
                     </div>
                   </DialogContent>
                 </Dialog>
@@ -770,29 +800,45 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                                   "h-8 w-8 mr-3 transition-all duration-300",
                                   pathname === `/dashboard/rooms/${dm.id}` ? "ring-2 ring-amber-500/50 shadow-lg shadow-amber-500/10" : "ring-1 ring-white/10 group-hover:ring-white/20"
                                 )}>
-                                  <AvatarImage src={dm.otherUser?.avatar_url} />
+                                  <AvatarImage src={dm.participantCount > 2 ? undefined : dm.otherUser?.avatar_url} />
                                   <AvatarFallback className="bg-slate-800 text-xs text-slate-400 font-bold">
-                                    {dm.otherUser?.full_name?.charAt(0) || "?"}
+                                    {(dm.displayName || (dm.participantCount > 2 ? t('room.group') : (dm.otherUser?.full_name || t('common.unknown'))))?.charAt(0) || "?"}
                                   </AvatarFallback>
                                 </Avatar>
-                                {isUserOnline(dm.otherUserLastActiveAt) && (
+                                {(dm.participantCount > 2 ? dm.onlineCount > 0 : isUserOnline(dm.otherUserLastActiveAt)) && (
                                   <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#0F172A] rounded-full" />
                                 )}
                               </div>
                               <div className="flex flex-col items-start min-w-0 flex-1">
-                                <span className="truncate w-full text-left">{dm.otherUser?.full_name || t('common.unknown')}</span>
+                                <span className="truncate w-full text-left">
+                                  {dm.displayName || (dm.participantCount > 2 ? t('room.group') : (dm.otherUser?.full_name || t('common.unknown')))}
+                                </span>
                                 <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mt-1 flex items-center gap-1 w-full">
-                                  <span>{roleLabels[dm.otherUser?.role] || dm.otherUser?.role}</span>
-                                  {dm.parentRoomName && (
+                                  {dm.participantCount > 2 ? (
                                     <>
-                                      <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
-                                      <span className="truncate normal-case font-medium text-slate-400">{dm.parentRoomName}</span>
+                                      <span className="normal-case font-medium text-slate-400">{dm.participantCount} {t('room.participantsCount')}</span>
+                                      {dm.parentRoomName && (
+                                        <>
+                                          <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
+                                          <span className="truncate normal-case font-medium text-slate-400">{dm.parentRoomName}</span>
+                                        </>
+                                      )}
                                     </>
-                                  )}
-                                  {!dm.parentRoomName && dm.sharedRoomName && (
+                                  ) : (
                                     <>
-                                      <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
-                                      <span className="truncate normal-case font-medium text-slate-400">{t('room.sharedRooms')}: {dm.sharedRoomName}</span>
+                                      <span>{roleLabels[dm.otherUser?.role] || dm.otherUser?.role}</span>
+                                      {dm.parentRoomName && (
+                                        <>
+                                          <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
+                                          <span className="truncate normal-case font-medium text-slate-400">{dm.parentRoomName}</span>
+                                        </>
+                                      )}
+                                      {!dm.parentRoomName && dm.sharedRoomName && (
+                                        <>
+                                          <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
+                                          <span className="truncate normal-case font-medium text-slate-400">{t('room.sharedRooms')}: {dm.sharedRoomName}</span>
+                                        </>
+                                      )}
                                     </>
                                   )}
                                 </span>
@@ -822,10 +868,20 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                           </ContextMenuItem>
                           {(profile?.role === "admin" || profile?.role === "manager") && (
                             <>
+                              {dm.participantCount > 2 && (
+                                <ContextMenuItem
+                                  onClick={() => handleEditRoom(dm)}
+                                  className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+                                >
+                                  <Edit className="mr-2 h-4 w-4 text-slate-300" />
+                                  <span>{t('common.edit') || "Изменить"}</span>
+                                </ContextMenuItem>
+                              )}
                               <ContextMenuItem 
                                 onClick={() => {
                                   setTargetDMId(dm.id)
                                   setIsAddUserToDMDialogOpen(true)
+                                  setSelectedDMUserIds([])
                                 }}
                                 className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
                               >

@@ -286,6 +286,7 @@ export async function getDMs() {
   if (!session?.user) return []
 
   try {
+    await ensureSchemaFixed()
     const dms = await prisma.room.findMany({
       where: {
         type: "private",
@@ -308,6 +309,7 @@ export async function getDMs() {
                 created_at: true,
                 // @ts-ignore
                 preferred_language: true, 
+                last_active_at: true,
               }
             },
           },
@@ -346,6 +348,7 @@ export async function getDMs() {
 
     // Fetch shared rooms for each DM
     const sharedRoomsPromises = dms.map(async (dm) => {
+      if (dm.participants.length > 2) return { dmId: dm.id, sharedRoomName: null }
       const otherParticipant = dm.participants.find(p => p.user_id !== session.user.id);
       if (!otherParticipant) return { dmId: dm.id, sharedRoomName: null };
       
@@ -389,30 +392,46 @@ export async function getDMs() {
     }
 
     const processedDMs = dms.map(dm => {
-      const otherParticipant = dm.participants.find(
-        (p) => p.user_id !== session.user.id
-      )
+      const otherParticipants = dm.participants.filter((p) => p.user_id !== session.user.id)
+      const otherParticipant = otherParticipants[0]
       const currentParticipant = dm.participants.find(
         (p) => p.user_id === session.user.id
       )
       
       const lastReadAt = currentParticipant?.last_read_at || new Date(0)
       const unreadCount = unreadCounts[dm.id] || 0
+      const participantCount = dm.participants.length
+      const isGroupPrivate = participantCount > 2
+
+      const onlineCount = otherParticipants.reduce((acc, p) => {
+        const lastActiveAt = p.user?.last_active_at
+        if (!lastActiveAt) return acc
+        return (Date.now() - lastActiveAt.getTime() <= 2 * 60 * 1000) ? acc + 1 : acc
+      }, 0)
+
+      const displayName = isGroupPrivate
+        ? ((dm.name && dm.name !== "DM") ? dm.name : null)
+        : (otherParticipant?.user?.full_name ?? null)
 
       return {
         id: dm.id,
         room_id: dm.room_id ?? null,
         name: dm.name ?? null,
+        displayName,
+        participantCount,
+        onlineCount,
         type: dm.type,
         description: dm.description ?? null,
+        capacity: (dm as any).capacity ?? null,
+        equipment: (dm as any).equipment ?? null,
         created_by: dm.created_by ?? null,
         created_at: dm.created_at.toISOString(),
         unreadCount,
-        sharedRoomName: sharedRoomsMap[dm.id] ?? null,
+        sharedRoomName: isGroupPrivate ? null : (sharedRoomsMap[dm.id] ?? null),
         parentRoomName: dm.room_id ? (parentRoomsMap[dm.room_id] ?? null) : null,
         lastReadAt: lastReadAt.toISOString(),
-        otherUserLastActiveAt: otherParticipant?.last_active_at ? otherParticipant.last_active_at.toISOString() : null,
-        otherUser: otherParticipant?.user ? {
+        otherUserLastActiveAt: (!isGroupPrivate && otherParticipant?.user?.last_active_at) ? otherParticipant.user.last_active_at.toISOString() : null,
+        otherUser: (!isGroupPrivate && otherParticipant?.user) ? {
           id: otherParticipant.user.id,
           email: otherParticipant.user.email ?? null,
           full_name: otherParticipant.user.full_name ?? null,
@@ -420,7 +439,8 @@ export async function getDMs() {
           role: otherParticipant.user.role,
           // @ts-ignore
           preferred_language: otherParticipant.user.preferred_language ?? "ru",
-          created_at: otherParticipant.user.created_at.toISOString()
+          created_at: otherParticipant.user.created_at.toISOString(),
+          last_active_at: otherParticipant.user.last_active_at ? otherParticipant.user.last_active_at.toISOString() : otherParticipant.user.created_at.toISOString()
         } : null,
       }
     })
@@ -466,6 +486,7 @@ export async function searchUsers(query: string = "") {
         role: true,
         created_at: true,
         preferred_language: true,
+        last_active_at: true,
       }
     })
     
@@ -494,24 +515,12 @@ export async function searchUsers(query: string = "") {
         },
         select: { name: true }
       });
-      const lastActive = await prisma.roomParticipant.findFirst({
-        where: {
-          user_id: user.id,
-          room: {
-            participants: {
-              some: { user_id: session.user.id }
-            }
-          }
-        },
-        orderBy: { last_active_at: 'desc' },
-        select: { last_active_at: true }
-      })
       return {
         ...user,
         preferred_language: user.preferred_language || "ru",
         created_at: user.created_at.toISOString(),
         sharedRoomName: sharedRooms.map(r => r.name).filter(Boolean).join(', ') || null,
-        lastActiveAt: lastActive?.last_active_at ? lastActive.last_active_at.toISOString() : null
+        lastActiveAt: user.last_active_at ? user.last_active_at.toISOString() : null
       };
     }));
 
@@ -567,8 +576,18 @@ export async function startDM(otherUserId: string, roomId?: string | null) {
       ...(roomId && { room_id: roomId }),
     }
 
-    const existingDM = await prisma.room.findFirst({
+    const candidates = await prisma.room.findMany({
       where: existingDMCondition,
+      include: {
+        participants: {
+          select: { user_id: true }
+        }
+      }
+    })
+
+    const existingDM = candidates.find((dm) => {
+      const ids = dm.participants.map((p) => p.user_id)
+      return ids.length === 2 && ids.includes(session.user.id) && ids.includes(otherUserId)
     })
 
     if (existingDM) {
@@ -616,6 +635,7 @@ export async function getRoomDetails(roomId: string) {
   if (!session?.user) return null
 
   try {
+    await ensureSchemaFixed()
     const room = await prisma.room.findUnique({
       where: { id: roomId },
       select: { created_by: true, type: true }
@@ -636,6 +656,7 @@ export async function getRoomDetails(roomId: string) {
             full_name: true,
             avatar_url: true,
             role: true,
+            last_active_at: true,
           },
         },
       },
@@ -648,8 +669,8 @@ export async function getRoomDetails(roomId: string) {
       ...p.user,
       room_role: p.role, // "owner", "admin", "member"
       joined_at: p.joined_at.toISOString(),
-      last_active_at: p.last_active_at.toISOString(),
-      last_read_at: p.last_read_at.toISOString(),
+      last_active_at: (p as any).user?.last_active_at ? (p as any).user.last_active_at.toISOString() : ((p as any).last_active_at ? (p as any).last_active_at.toISOString() : p.joined_at.toISOString()),
+      last_read_at: (p as any).last_read_at ? (p as any).last_read_at.toISOString() : p.joined_at.toISOString(),
     }))
 
     return {
@@ -891,6 +912,7 @@ export async function addParticipant(roomId: string, userId: string) {
   }
 
   try {
+    await ensureSchemaFixed()
     const newParticipant = await prisma.roomParticipant.create({
       data: {
         room_id: roomId,
@@ -924,6 +946,106 @@ export async function addParticipant(roomId: string, userId: string) {
   } catch (error) {
     console.error("Add participant error:", error)
     return { error: "Failed to add participant" }
+  }
+}
+
+export async function addParticipants(roomId: string, userIds: string[]) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  const targetUserIds = Array.from(new Set((userIds || []).filter(Boolean)))
+  if (targetUserIds.length === 0) return { error: "No users selected" }
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  })
+
+  const room = await prisma.room.findUnique({
+    where: { id: roomId },
+    select: { created_by: true, type: true },
+  })
+
+  if (!room) return { error: "Room not found" }
+
+  const isAdminOrManager = ["admin", "manager"].includes(currentUser?.role || "")
+  const isCreator = room?.created_by === session.user.id
+  const canManage = isAdminOrManager || isCreator
+  if (!canManage) return { error: "Permission denied" }
+
+  if (room.type === "private") {
+    if (!isAdminOrManager) return { error: "Permission denied" }
+    const targetUsers = await prisma.user.findMany({
+      where: { id: { in: targetUserIds } },
+      select: { id: true, role: true },
+    })
+    if (targetUsers.some((u) => u.role === "client")) {
+      return { error: "Cannot add client to private chat" }
+    }
+  }
+
+  if (room.type !== "private" && currentUser?.role === "manager" && !isCreator) {
+    const targetUsers = await prisma.user.findMany({
+      where: { id: { in: targetUserIds } },
+      select: { role: true },
+    })
+    if (targetUsers.some((u) => !["client", "partner"].includes(u.role || ""))) {
+      return { error: "Managers can only invite Clients and Partners" }
+    }
+  }
+
+  try {
+    await ensureSchemaFixed()
+    const existing = await prisma.roomParticipant.findMany({
+      where: {
+        room_id: roomId,
+        user_id: { in: targetUserIds },
+      },
+      select: { user_id: true },
+    })
+
+    const existingIds = new Set(existing.map((p) => p.user_id))
+    const idsToCreate = targetUserIds.filter((id) => !existingIds.has(id))
+
+    if (idsToCreate.length > 0) {
+      await prisma.roomParticipant.createMany({
+        data: idsToCreate.map((id) => ({ room_id: roomId, user_id: id })),
+      })
+    }
+
+    const newParticipants = await prisma.roomParticipant.findMany({
+      where: {
+        room_id: roomId,
+        user_id: { in: idsToCreate },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            full_name: true,
+            avatar_url: true,
+            role: true,
+          },
+        },
+      },
+    })
+
+    for (const p of newParticipants) {
+      sendSSEUpdate(roomId, {
+        type: "participant_added",
+        participant: {
+          ...p.user,
+          joined_at: p.joined_at.toISOString(),
+        },
+      })
+    }
+
+    revalidatePath("/dashboard")
+    revalidatePath(`/dashboard/rooms/${roomId}`)
+    return { success: true, addedCount: newParticipants.length }
+  } catch (error) {
+    console.error("Add participants error:", error)
+    return { error: "Failed to add participants" }
   }
 }
 

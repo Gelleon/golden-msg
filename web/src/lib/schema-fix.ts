@@ -52,9 +52,15 @@ export async function ensureSchemaFixed() {
       if (isUserTable) {
         await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "preferred_language" TEXT DEFAULT 'ru';`).catch(() => {});
         await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "preferred_language" TEXT DEFAULT 'ru';`).catch(() => {});
+
+        await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "last_active_at" DATETIME DEFAULT CURRENT_TIMESTAMP;`).catch(() => {});
+        await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "last_active_at" DATETIME DEFAULT CURRENT_TIMESTAMP;`).catch(() => {});
       }
 
       if (isRoomParticipantTable) {
+        await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "last_read_at" DATETIME DEFAULT CURRENT_TIMESTAMP;`).catch(() => {});
+        await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "last_read_at" DATETIME DEFAULT CURRENT_TIMESTAMP;`).catch(() => {});
+
         await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "last_active_at" DATETIME DEFAULT CURRENT_TIMESTAMP;`).catch(() => {});
         await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "last_active_at" DATETIME DEFAULT CURRENT_TIMESTAMP;`).catch(() => {});
         
