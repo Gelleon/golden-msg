@@ -17,14 +17,10 @@ function quoteIdent(name: string) {
 }
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization")
-  const cronSecret = process.env.CRON_SECRET
-
   const session = await getSession()
   const isAdmin = session?.user?.role === "admin"
-  const hasBearer = cronSecret && authHeader === `Bearer ${cronSecret}`
 
-  if (!isAdmin && !hasBearer) {
+  if (!isAdmin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -63,4 +59,3 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
-
