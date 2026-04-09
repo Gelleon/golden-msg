@@ -494,10 +494,7 @@ export async function searchUsers(query: string = "") {
     return []
   }
 
-  const currentUser = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { role: true },
-  })
+  await ensureSchemaFixed()
 
   // We want to be able to find users to add them to a room/DM.
   // Allow fetching any active user other than self, depending on use-case we can filter later, 
@@ -569,6 +566,7 @@ export async function startDM(otherUserId: string, roomId?: string | null) {
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
 
+  await ensureSchemaFixed()
   const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { role: true },

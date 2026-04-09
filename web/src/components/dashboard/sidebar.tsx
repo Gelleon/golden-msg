@@ -147,8 +147,12 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
         const result = await searchUsersForRoomPaginated(targetDMId, query, 1, 50)
         setDmSearchResults(result?.users || [])
       } else {
-        const users = await searchUsers(query)
-        setDmSearchResults(users || [])
+        if (!selectedRoomId) {
+          setDmSearchResults([])
+          return
+        }
+        const result = await searchUsersForRoomPaginated(selectedRoomId, query, 1, 50)
+        setDmSearchResults(result?.users || [])
       }
     } catch (error) {
       console.error("Error searching users:", error)
@@ -188,9 +192,16 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
             setDmSearchResults(result?.users || [])
           }
         } else {
-          const users = await searchUsers(dmSearchQuery)
-          if (isMounted) {
-            setDmSearchResults(users || [])
+          if (!selectedRoomId) {
+            if (isMounted) {
+              setDmSearchResults([])
+              setHasSearched(true)
+            }
+          } else {
+            const result = await searchUsersForRoomPaginated(selectedRoomId, dmSearchQuery, 1, 50)
+            if (isMounted) {
+              setDmSearchResults(result?.users || [])
+            }
           }
         }
         if (isMounted) {
@@ -608,6 +619,11 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
                         </div>
                       </div>
+                      {!selectedRoomId && (
+                        <div className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
+                          {t('sidebar.selectRoomForDM') || "Пожалуйста, выберите комнату"}
+                        </div>
+                      )}
                       <div className="flex gap-2">
                         <div className="relative flex-1">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
@@ -617,11 +633,12 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                             onChange={(e) => setDmSearchQuery(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
                             className="pl-10 bg-white/5 border-white/10 focus:border-amber-500 focus:ring-amber-500/20 text-white h-11 rounded-xl"
+                            disabled={!selectedRoomId}
                           />
                         </div>
                         <Button 
                           onClick={handleManualSearch} 
-                          disabled={isSearching}
+                          disabled={isSearching || !selectedRoomId}
                           className="h-11 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white border-white/10"
                         >
                           {isSearching ? <span className="animate-spin mr-2">◌</span> : <Search className="h-4 w-4" />}
