@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { notifyUsersOfUnreadMessages } from '@/lib/notification-service';
+import { getSession } from '@/app/actions/auth';
 
 /**
  * API route to trigger the unread messages notification scan.
@@ -10,8 +11,11 @@ export async function GET(req: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
   const isVercelCron = req.headers.get('x-vercel-cron') === '1';
 
-  // Basic security: check for a secret token OR vercel cron header
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}` && !isVercelCron) {
+  const session = await getSession()
+  const isAdmin = session?.user?.role === 'admin'
+  const isCronSecretValid = Boolean(cronSecret && authHeader === `Bearer ${cronSecret}`)
+
+  if (!isVercelCron && !isCronSecretValid && !isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
