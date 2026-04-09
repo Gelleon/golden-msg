@@ -1,4 +1,5 @@
 import prisma from "./db";
+import { ensureLegacyDataMigrated } from "./legacy-data-migrate"
 
 /**
  * Automatically fixes the database schema if columns are missing.
@@ -73,6 +74,7 @@ export async function ensureSchemaFixed() {
         await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "room_id" TEXT;`).catch(() => {});
       }
     }
+    await ensureLegacyDataMigrated()
     // console.log("[DB FIX] Schema check/fix completed");
   } catch (e) {
     // Silent catch - we don't want to crash the app if this fails
