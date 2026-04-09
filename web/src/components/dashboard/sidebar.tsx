@@ -810,7 +810,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                             <Info className="mr-2 h-4 w-4 text-blue-400" />
                             <span>{t('roomInfo.title') || "Информация о комнате"}</span>
                           </ContextMenuItem>
-                          {(profile?.role === "admin" || profile?.role === "manager" || dm.created_by === user.id) && (
+                          {(profile?.role === "admin" || profile?.role === "manager") && (
                             <>
                               <ContextMenuItem 
                                 onClick={() => {
