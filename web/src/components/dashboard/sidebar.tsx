@@ -224,7 +224,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
       clearTimeout(timeoutId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDMDialogOpen, isAddUserToDMDialogOpen, dmSearchQuery, targetDMId]);
+  }, [isDMDialogOpen, isAddUserToDMDialogOpen, dmSearchQuery, targetDMId, selectedRoomId]);
 
   const handleStartDM = async (otherUserId: string) => {
     if (!selectedRoomId) {
