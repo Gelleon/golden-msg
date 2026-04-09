@@ -104,7 +104,7 @@ const isAudio = (url: string | null) => {
 }
 
 export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelete, showSenderName, showAvatar = true, currentUserRole, participants = [] }: MessageBubbleProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -119,6 +119,7 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
   
   const canDelete = isCurrentUser || isCurrentUserAdmin
   const canEdit = isCurrentUser
+  const timeLocale = language === "cn" ? "zh-CN" : "ru-RU"
 
   useEffect(() => {
     if (mounted && isCurrentUserAdmin) {
@@ -616,7 +617,7 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
                     <span className="text-[9px] italic font-medium">{t("chat.edited")}</span>
                   )}
                   <span className="text-[10px] font-medium">
-                    {new Date(message.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                    {new Date(message.created_at).toLocaleTimeString(timeLocale, { hour: '2-digit', minute: '2-digit', hour12: false })}
                   </span>
                   {isCurrentUser && (
                     <Check className="h-3 w-3" />

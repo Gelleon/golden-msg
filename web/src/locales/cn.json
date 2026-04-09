@@ -118,6 +118,8 @@
   "chat": {
     "typing": "正在输入...",
     "typing_multiple": "正在输入...",
+    "dateToday": "今天",
+    "dateYesterday": "昨天",
     "messageUpdated": "消息已修改",
     "updateError": "更新失败",
     "messageDeleted": "消息已删除",
@@ -251,6 +253,7 @@
     "private": "私聊",
     "group": "群组",
     "online": "在线",
+    "lastSeen": "最后上线",
     "participantsCount": "人",
     "sharedRooms": "共同房间",
     "descriptionTitle": "房间描述",

@@ -118,6 +118,8 @@
   "chat": {
     "typing": "печатает...",
     "typing_multiple": "печатают...",
+    "dateToday": "Сегодня",
+    "dateYesterday": "Вчера",
     "messageUpdated": "Сообщение изменено",
     "updateError": "Ошибка обновления",
     "messageDeleted": "Сообщение удалено",
@@ -251,6 +253,7 @@
     "private": "Личный",
     "group": "Группа",
     "online": "В сети",
+    "lastSeen": "Был(а)",
     "participantsCount": "уч.",
     "sharedRooms": "Общие комнаты",
     "descriptionTitle": "Описание комнаты",

@@ -117,7 +117,7 @@ export function ResetPasswordForm({ initialError, isValid }: { initialError?: st
           <p className="text-slate-500 font-light text-sm">{t("welcome.recovery.resetDesc")}</p>
         </div>
 
-        {(!token || !isValid) ? (
+        {(!token || isValid === false) ? (
           <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-center">
             {error || t("welcome.recovery.errorTokenInvalid")}
           </div>

@@ -19,6 +19,8 @@ interface Participant {
   room_role?: string; // "owner", "admin", "member"
   avatar_url?: string | null;
   avatarUrl?: string | null;
+  last_active_at?: string;
+  last_read_at?: string;
 }
 
 export const RoomInfo = ({ roomId }: { roomId: string }) => {
@@ -33,9 +35,7 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // We'll implement a basic online status logic if useOnlineStatus is not available.
-  const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+  const [now, setNow] = useState(() => Date.now());
   
   const PAGE_SIZE = 5;
 
@@ -80,26 +80,15 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
       console.error("[SSE Room Info] Error:", e);
     };
 
-    // WebSocket for online status updates (fallback/example as per summary)
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || `ws://${window.location.host}`;
-    let ws: WebSocket;
-    try {
-      ws = new WebSocket(`${wsUrl}/online-status`);
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === "onlineUsersUpdate") {
-          setOnlineUsers(data.users);
-        }
-      };
-    } catch {
-      console.error("Failed to connect to WebSocket for online status");
-    }
-
     return () => {
       sse.close();
-      if (ws) ws.close();
     };
   }, [roomId, fetchParticipants]);
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, []);
 
   // Search eligible users (exclude existing participants)
   useEffect(() => {
@@ -242,6 +231,9 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
       {participants.map((participant) => {
         const isParticipantCreator = participant.id === roomCreator;
         const isParticipantAdmin = participant.room_role === "admin";
+        const isOnline = participant.last_active_at
+          ? (now - new Date(participant.last_active_at).getTime() <= 2 * 60 * 1000)
+          : false;
         
         return (
           <div key={participant.id} className="flex items-center justify-between p-2 hover:bg-white/5 rounded-lg transition-colors group">
@@ -253,7 +245,7 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
                     {(participant.name || participant.full_name)?.charAt(0)?.toUpperCase() || <User className="h-4 w-4" />}
                   </AvatarFallback>
                 </Avatar>
-                {onlineUsers.includes(participant.id) && (
+                {isOnline && (
                   <div className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-[#0F172A]" />
                 )}
               </div>

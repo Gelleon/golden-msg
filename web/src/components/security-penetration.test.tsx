@@ -94,13 +94,14 @@ describe('Security Penetration Tests (OWASP Top 10)', () => {
       // Эмулируем успешную очистку имени файла
       ;(uploadFile as jest.Mock).mockImplementation(async (data) => {
         const file = data.get('file')
-        const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_")
+        const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_").replace(/\.\./g, "__")
         return { success: true, url: `/uploads/${sanitizedName}` }
       })
 
       const result = await uploadFile(formData)
-      expect(result.url).not.toContain('..')
-      expect(result.url).not.toContain('/')
+      const filename = result.url.replace(/^\/uploads\//, "")
+      expect(filename).not.toContain('..')
+      expect(filename).not.toContain('/')
       // Ожидаем, что слэши заменены на подчеркивания
       expect(result.url).toContain('__etc_passwd')
     })

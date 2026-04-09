@@ -85,6 +85,11 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     client: t('roles.client'),
   }
 
+  const isUserOnline = (lastActiveAt?: string | null) => {
+    if (!lastActiveAt) return false
+    return (Date.now() - new Date(lastActiveAt).getTime() <= 2 * 60 * 1000)
+  }
+
   const fetchRoomsAndDMs = async () => {
     try {
       const [fetchedRooms, fetchedDMs] = await Promise.all([
@@ -623,7 +628,9 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                                           {u.full_name?.charAt(0) || u.email?.charAt(0) || "?"}
                                         </AvatarFallback>
                                       </Avatar>
-                                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#1E293B] rounded-full" />
+                                      {isUserOnline(u.lastActiveAt) && (
+                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#1E293B] rounded-full" />
+                                      )}
                                     </div>
                                     <div className="flex flex-col items-start text-sm overflow-hidden">
                                       <span className="font-semibold text-slate-200 group-hover:text-white transition-colors truncate w-full text-left">{u.full_name || u.email || "Unknown User"}</span>
@@ -768,6 +775,9 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                                     {dm.otherUser?.full_name?.charAt(0) || "?"}
                                   </AvatarFallback>
                                 </Avatar>
+                                {isUserOnline(dm.otherUserLastActiveAt) && (
+                                  <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#0F172A] rounded-full" />
+                                )}
                               </div>
                               <div className="flex flex-col items-start min-w-0 flex-1">
                                 <span className="truncate w-full text-left">{dm.otherUser?.full_name || t('common.unknown')}</span>

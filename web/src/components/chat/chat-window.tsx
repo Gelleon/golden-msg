@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useRef, useState, useLayoutEffect } from "react"
-import { getMessages, markAsRead } from "@/app/actions/chat"
+import { getMessages, markAsRead, pingRoomActivity } from "@/app/actions/chat"
 import { useTranslation } from "@/lib/language-context"
 import { cn } from "@/lib/utils"
+import { formatChatDayLabel, isSameDay } from "@/lib/chat-date"
 
 import { MessageBubble } from "@/components/chat/message-bubble"
 import { PinnedMessagesBar } from "@/components/chat/pinned-messages-bar"
@@ -31,7 +32,7 @@ export function ChatWindow({
   initialUnreadCount = 0,
   anchorId = null,
 }: ChatWindowProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const [messages, setMessages] = useState<any[]>(initialMessages)
   const [isTyping, setIsTyping] = useState(false)
   const [typingUserNames, setTypingUserNames] = useState<string[]>([])
@@ -58,6 +59,31 @@ export function ChatWindow({
   useEffect(() => {
     messagesRef.current = messages
   }, [messages])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const ping = async () => {
+      if (cancelled) return
+      await pingRoomActivity(roomId)
+    }
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") ping()
+    }
+
+    ping()
+    const interval = setInterval(ping, 30000)
+    window.addEventListener("focus", ping)
+    document.addEventListener("visibilitychange", onVisibility)
+
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+      window.removeEventListener("focus", ping)
+      document.removeEventListener("visibilitychange", onVisibility)
+    }
+  }, [roomId])
 
   useEffect(() => {
     isMountedRef.current = true
@@ -393,6 +419,7 @@ export function ChatWindow({
               
               // Telegram style: show name if it's the first message from this sender in a row
               const prevMessage = index > 0 ? messages[index - 1] : null
+              const showDateSeparator = !prevMessage || !isSameDay(new Date(message.created_at), new Date(prevMessage.created_at))
               const isSameSenderAsPrev = prevMessage?.sender.id === message.sender.id
               const timeDiff = prevMessage 
                 ? (new Date(message.created_at).getTime() - new Date(prevMessage.created_at).getTime()) / (1000 * 60)
@@ -412,6 +439,15 @@ export function ChatWindow({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ duration: 0.2 }}
                 >
+                  {showDateSeparator && (
+                    <div className="flex items-center gap-4 my-5">
+                      <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-slate-200 to-slate-200/70" />
+                      <span className="text-[10px] font-bold text-slate-500 tracking-[0.18em] bg-white/90 px-3 py-1 rounded-full border border-slate-200/70 shadow-sm whitespace-nowrap">
+                        {formatChatDayLabel(new Date(message.created_at), language, t)}
+                      </span>
+                      <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-slate-200 to-slate-200/70" />
+                    </div>
+                  )}
                   <AnimatePresence mode="wait">
                     {isFirstUnread && showUnreadSeparator && (
                       <motion.div

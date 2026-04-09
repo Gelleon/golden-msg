@@ -411,6 +411,7 @@ export async function getDMs() {
         sharedRoomName: sharedRoomsMap[dm.id] ?? null,
         parentRoomName: dm.room_id ? (parentRoomsMap[dm.room_id] ?? null) : null,
         lastReadAt: lastReadAt.toISOString(),
+        otherUserLastActiveAt: otherParticipant?.last_active_at ? otherParticipant.last_active_at.toISOString() : null,
         otherUser: otherParticipant?.user ? {
           id: otherParticipant.user.id,
           email: otherParticipant.user.email ?? null,
@@ -493,11 +494,24 @@ export async function searchUsers(query: string = "") {
         },
         select: { name: true }
       });
+      const lastActive = await prisma.roomParticipant.findFirst({
+        where: {
+          user_id: user.id,
+          room: {
+            participants: {
+              some: { user_id: session.user.id }
+            }
+          }
+        },
+        orderBy: { last_active_at: 'desc' },
+        select: { last_active_at: true }
+      })
       return {
         ...user,
         preferred_language: user.preferred_language || "ru",
         created_at: user.created_at.toISOString(),
-        sharedRoomName: sharedRooms.map(r => r.name).filter(Boolean).join(', ') || null
+        sharedRoomName: sharedRooms.map(r => r.name).filter(Boolean).join(', ') || null,
+        lastActiveAt: lastActive?.last_active_at ? lastActive.last_active_at.toISOString() : null
       };
     }));
 
@@ -634,6 +648,8 @@ export async function getRoomDetails(roomId: string) {
       ...p.user,
       room_role: p.role, // "owner", "admin", "member"
       joined_at: p.joined_at.toISOString(),
+      last_active_at: p.last_active_at.toISOString(),
+      last_read_at: p.last_read_at.toISOString(),
     }))
 
     return {

@@ -46,6 +46,31 @@ export async function markAsRead(roomId: string) {
   }
 }
 
+export async function pingRoomActivity(roomId: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  try {
+    await ensureSchemaFixed()
+    await prisma.roomParticipant.update({
+      where: {
+        room_id_user_id: {
+          user_id: session.user.id,
+          room_id: roomId
+        }
+      },
+      data: {
+        last_active_at: new Date()
+      }
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error pinging room activity:", error)
+    return { error: "Failed to ping activity" }
+  }
+}
+
 const sendMessageSchema = z.object({
   roomId: z.string().uuid(),
   content: z.string().min(1).max(5000),

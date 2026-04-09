@@ -33,6 +33,7 @@ jest.mock('next/navigation', () => ({
 jest.mock('@/app/actions/chat', () => ({
   getMessages: jest.fn().mockResolvedValue({ messages: [] }),
   markAsRead: jest.fn(),
+  pingRoomActivity: jest.fn().mockResolvedValue({ success: true }),
   deleteMessage: jest.fn(),
 }))
 

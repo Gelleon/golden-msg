@@ -4,6 +4,7 @@ import prisma from "@/lib/db"
 import { getSession } from "@/app/actions/auth"
 import { ChatWindow } from "@/components/chat/chat-window"
 import { RoomSettingsDialog } from "@/components/chat/room-settings-dialog"
+import { PrivateRoomOnlineDot, PrivateRoomSubtitle } from "@/components/chat/private-room-presence"
 import { ChevronLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import ru from "@/locales/ru.json"
@@ -55,7 +56,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
   if (!user) redirect("/")
   if (!room) notFound()
 
-  const lang = "ru" // Default to "ru" temporarily
+  const lang = session.user.preferred_language === "cn" ? "cn" : "ru"
   const translations = lang === "ru" ? ru : cnTrans
 
   // Fetch participation
@@ -122,9 +123,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
                   {displayName?.charAt(0).toUpperCase()}
                 </div>
               )}
-              {room.type === 'private' && (
-                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 md:w-4 md:h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
-              )}
+              {room.type === 'private' && <PrivateRoomOnlineDot roomId={roomId} />}
             </div>
             <div className="flex flex-col min-w-0">
                 <h2 className="font-bold text-slate-900 text-sm md:text-lg leading-tight tracking-tight truncate pr-2">{displayName}</h2>
@@ -139,7 +138,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
                       <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
                       <span className="truncate">
                         {room.type === 'private' 
-                          ? (sharedRoomNames.length > 0 ? `${translations.room.sharedRooms}: ${sharedRoomNames.join(', ')}` : translations.room.online)
+                          ? <PrivateRoomSubtitle roomId={roomId} sharedRoomNames={sharedRoomNames} />
                           : `${room.participants.length} ${translations.room.participantsCount}`}
                       </span>
                     </span>

@@ -76,6 +76,7 @@ describe("Auth Actions - Password Recovery", () => {
         email: "user@example.com",
         preferred_language: "ru",
       });
+      (prisma.passwordResetToken.create as jest.Mock).mockResolvedValue({ id: "token-1" });
       
       const result = await forgotPassword(formData);
       
