@@ -163,14 +163,17 @@ export async function getRooms() {
   if (!session?.user) return []
 
   try {
+    const isAdmin = session.user.role === "admin"
     const rooms = await prisma.room.findMany({
       where: {
         type: "group",
-        participants: {
-          some: {
-            user_id: session.user.id,
+        ...(!isAdmin ? {
+          participants: {
+            some: {
+              user_id: session.user.id,
+            },
           },
-        },
+        } : {}),
       },
       include: {
         participants: {
@@ -196,23 +199,31 @@ export async function getRooms() {
     let unreadCounts: Record<string, number> = {}
 
     if (roomIds.length > 0) {
-      const minLastReadAt = new Date(Math.min(...rooms.map(r => (r.participants[0]?.last_read_at || new Date(0)).getTime())))
+      const roomsWithParticipation = rooms.filter((r) => r.participants[0]?.last_read_at)
+      const participatingRoomIds = roomsWithParticipation.map((r) => r.id)
+      const minLastReadAt = roomsWithParticipation.length > 0
+        ? new Date(Math.min(...roomsWithParticipation.map(r => r.participants[0].last_read_at.getTime())))
+        : null
       
-      const unreadMessages = await prisma.message.findMany({
-        where: {
-          room_id: { in: roomIds },
-          sender_id: { not: session.user.id },
-          created_at: { gt: minLastReadAt }
-        },
-        select: {
-          room_id: true,
-          created_at: true
-        }
-      })
+      const unreadMessages = (minLastReadAt && participatingRoomIds.length > 0)
+        ? await prisma.message.findMany({
+            where: {
+              room_id: { in: participatingRoomIds },
+              sender_id: { not: session.user.id },
+              created_at: { gt: minLastReadAt }
+            },
+            select: {
+              room_id: true,
+              created_at: true
+            }
+          })
+        : []
 
       unreadCounts = rooms.reduce((acc, room) => {
         const lastReadAt = room.participants[0]?.last_read_at || new Date(0)
-        acc[room.id] = unreadMessages.filter(m => m.room_id === room.id && m.created_at > lastReadAt).length
+        acc[room.id] = room.participants[0]?.last_read_at
+          ? unreadMessages.filter(m => m.room_id === room.id && m.created_at > lastReadAt).length
+          : 0
         return acc
       }, {} as Record<string, number>)
     }
@@ -287,14 +298,17 @@ export async function getDMs() {
 
   try {
     await ensureSchemaFixed()
+    const isAdmin = session.user.role === "admin"
     const dms = await prisma.room.findMany({
       where: {
         type: "private",
-        participants: {
-          some: {
-            user_id: session.user.id,
+        ...(!isAdmin ? {
+          participants: {
+            some: {
+              user_id: session.user.id,
+            },
           },
-        },
+        } : {}),
       },
       include: {
         participants: {
@@ -323,25 +337,35 @@ export async function getDMs() {
     let unreadCounts: Record<string, number> = {}
 
     if (dmIds.length > 0) {
-      const currentParticipants = dms.map(dm => dm.participants.find(p => p.user_id === session.user.id))
-      const minLastReadAt = new Date(Math.min(...currentParticipants.map(p => (p?.last_read_at || new Date(0)).getTime())))
+      const currentParticipants = dms
+        .map(dm => ({ dmId: dm.id, p: dm.participants.find(p => p.user_id === session.user.id) }))
+        .filter(({ p }) => Boolean(p?.last_read_at))
 
-      const unreadMessages = await prisma.message.findMany({
-        where: {
-          room_id: { in: dmIds },
-          sender_id: { not: session.user.id },
-          created_at: { gt: minLastReadAt }
-        },
-        select: {
-          room_id: true,
-          created_at: true
-        }
-      })
+      const participatingDmIds = currentParticipants.map(({ dmId }) => dmId)
+      const minLastReadAt = currentParticipants.length > 0
+        ? new Date(Math.min(...currentParticipants.map(({ p }) => (p as any).last_read_at.getTime())))
+        : null
+
+      const unreadMessages = (minLastReadAt && participatingDmIds.length > 0)
+        ? await prisma.message.findMany({
+            where: {
+              room_id: { in: participatingDmIds },
+              sender_id: { not: session.user.id },
+              created_at: { gt: minLastReadAt }
+            },
+            select: {
+              room_id: true,
+              created_at: true
+            }
+          })
+        : []
 
       unreadCounts = dms.reduce((acc, dm) => {
         const currentParticipant = dm.participants.find(p => p.user_id === session.user.id)
         const lastReadAt = currentParticipant?.last_read_at || new Date(0)
-        acc[dm.id] = unreadMessages.filter(m => m.room_id === dm.id && m.created_at > lastReadAt).length
+        acc[dm.id] = currentParticipant?.last_read_at
+          ? unreadMessages.filter(m => m.room_id === dm.id && m.created_at > lastReadAt).length
+          : 0
         return acc
       }, {} as Record<string, number>)
     }
@@ -349,6 +373,8 @@ export async function getDMs() {
     // Fetch shared rooms for each DM
     const sharedRoomsPromises = dms.map(async (dm) => {
       if (dm.participants.length > 2) return { dmId: dm.id, sharedRoomName: null }
+      const isMember = dm.participants.some((p) => p.user_id === session.user.id)
+      if (!isMember) return { dmId: dm.id, sharedRoomName: null }
       const otherParticipant = dm.participants.find(p => p.user_id !== session.user.id);
       if (!otherParticipant) return { dmId: dm.id, sharedRoomName: null };
       
@@ -401,7 +427,15 @@ export async function getDMs() {
       const lastReadAt = currentParticipant?.last_read_at || new Date(0)
       const unreadCount = unreadCounts[dm.id] || 0
       const participantCount = dm.participants.length
-      const isGroupPrivate = participantCount > 2
+      const isMember = Boolean(currentParticipant)
+      const isGroupPrivate = participantCount > 2 || !isMember
+
+      const candidateNames = (isMember ? otherParticipants : dm.participants)
+        .map((p) => p.user?.full_name || p.user?.email || "")
+        .filter(Boolean)
+      const generatedName = candidateNames.length > 2
+        ? `${candidateNames.slice(0, 2).join(", ")}, +${candidateNames.length - 2}`
+        : candidateNames.join(", ")
 
       const onlineCount = otherParticipants.reduce((acc, p) => {
         const lastActiveAt = p.user?.last_active_at
@@ -410,7 +444,7 @@ export async function getDMs() {
       }, 0)
 
       const displayName = isGroupPrivate
-        ? ((dm.name && dm.name !== "DM") ? dm.name : null)
+        ? ((dm.name && dm.name !== "DM") ? dm.name : (generatedName || null))
         : (otherParticipant?.user?.full_name ?? null)
 
       return {
@@ -430,8 +464,8 @@ export async function getDMs() {
         sharedRoomName: isGroupPrivate ? null : (sharedRoomsMap[dm.id] ?? null),
         parentRoomName: dm.room_id ? (parentRoomsMap[dm.room_id] ?? null) : null,
         lastReadAt: lastReadAt.toISOString(),
-        otherUserLastActiveAt: (!isGroupPrivate && otherParticipant?.user?.last_active_at) ? otherParticipant.user.last_active_at.toISOString() : null,
-        otherUser: (!isGroupPrivate && otherParticipant?.user) ? {
+        otherUserLastActiveAt: (!isGroupPrivate && isMember && otherParticipant?.user?.last_active_at) ? otherParticipant.user.last_active_at.toISOString() : null,
+        otherUser: (!isGroupPrivate && isMember && otherParticipant?.user) ? {
           id: otherParticipant.user.id,
           email: otherParticipant.user.email ?? null,
           full_name: otherParticipant.user.full_name ?? null,

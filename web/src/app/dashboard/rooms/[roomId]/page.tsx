@@ -61,11 +61,11 @@ export default async function RoomPage({ params }: RoomPageProps) {
 
   // Fetch participation
   const participation = room.participants.find(p => p.user_id === user.id)
-  if (!participation) {
+  if (!participation && user.role !== "admin") {
     redirect("/dashboard")
   }
 
-  const lastReadAt = participation.last_read_at
+  const lastReadAt = participation?.last_read_at ?? null
 
   // Determine display name for the room
     let displayName = room.name

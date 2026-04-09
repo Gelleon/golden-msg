@@ -21,18 +21,35 @@ export async function markAsRead(roomId: string) {
 
   try {
     await ensureSchemaFixed()
-    await prisma.roomParticipant.update({
+    const isAdmin = session.user.role === "admin"
+    const participation = await prisma.roomParticipant.findUnique({
       where: {
         room_id_user_id: {
           user_id: session.user.id,
           room_id: roomId
         }
       },
-      data: {
-        last_read_at: new Date(),
-        last_active_at: new Date()
-      }
+      select: { id: true }
     })
+
+    if (!participation && !isAdmin) {
+      return { error: "You are not a member of this room" }
+    }
+
+    if (participation) {
+      await prisma.roomParticipant.update({
+        where: {
+          room_id_user_id: {
+            user_id: session.user.id,
+            room_id: roomId
+          }
+        },
+        data: {
+          last_read_at: new Date(),
+          last_active_at: new Date()
+        }
+      })
+    }
 
     await prisma.user.update({
       where: { id: session.user.id },
@@ -58,17 +75,34 @@ export async function pingRoomActivity(roomId: string) {
 
   try {
     await ensureSchemaFixed()
-    await prisma.roomParticipant.update({
+    const isAdmin = session.user.role === "admin"
+    const participation = await prisma.roomParticipant.findUnique({
       where: {
         room_id_user_id: {
           user_id: session.user.id,
           room_id: roomId
         }
       },
-      data: {
-        last_active_at: new Date()
-      }
+      select: { id: true }
     })
+
+    if (!participation && !isAdmin) {
+      return { error: "You are not a member of this room" }
+    }
+
+    if (participation) {
+      await prisma.roomParticipant.update({
+        where: {
+          room_id_user_id: {
+            user_id: session.user.id,
+            room_id: roomId
+          }
+        },
+        data: {
+          last_active_at: new Date()
+        }
+      })
+    }
 
     await prisma.user.update({
       where: { id: session.user.id },
@@ -383,19 +417,36 @@ export async function updateTypingStatus(roomId: string) {
 
   try {
     await ensureSchemaFixed()
+    const isAdmin = session.user.role === "admin"
+    const participation = await prisma.roomParticipant.findUnique({
+      where: {
+        room_id_user_id: {
+          room_id: roomId,
+          user_id: session.user.id,
+        },
+      },
+      select: { id: true },
+    })
+
+    if (!participation && !isAdmin) {
+      return { error: "You are not a member of this room" }
+    }
+
     await Promise.all([
-      prisma.roomParticipant.update({
-        where: {
-          room_id_user_id: {
-            room_id: roomId,
-            user_id: session.user.id,
-          },
-        },
-        data: {
-          typing_at: new Date(),
-          last_active_at: new Date(),
-        },
-      }),
+      participation
+        ? prisma.roomParticipant.update({
+            where: {
+              room_id_user_id: {
+                room_id: roomId,
+                user_id: session.user.id,
+              },
+            },
+            data: {
+              typing_at: new Date(),
+              last_active_at: new Date(),
+            },
+          })
+        : Promise.resolve(),
       prisma.user.update({
         where: { id: session.user.id },
         data: { last_active_at: new Date() },
@@ -431,7 +482,7 @@ export async function getMessages(
       },
     })
 
-    if (!participation) {
+    if (!participation && session.user.role !== "admin") {
       return { error: "You are not a member of this room" }
     }
 
@@ -744,7 +795,7 @@ export async function sendMessageAction(rawData: {
     },
   })
 
-  if (!participation) {
+  if (!participation && session.user.role !== "admin") {
     return { error: "You are not a member of this room" }
   }
 
@@ -1105,18 +1156,20 @@ export async function sendMessageAction(rawData: {
     
     // Update last_active_at for the sender
     await Promise.all([
-      prisma.roomParticipant.update({
-        where: {
-          room_id_user_id: {
-            room_id: roomId,
-            user_id: user.id,
-          },
-        },
-        data: {
-          last_active_at: new Date(),
-          last_read_at: new Date(),
-        },
-      }),
+      participation
+        ? prisma.roomParticipant.update({
+            where: {
+              room_id_user_id: {
+                room_id: roomId,
+                user_id: user.id,
+              },
+            },
+            data: {
+              last_active_at: new Date(),
+              last_read_at: new Date(),
+            },
+          })
+        : Promise.resolve(),
       prisma.user.update({
         where: { id: user.id },
         data: { last_active_at: new Date() },
