@@ -23,7 +23,26 @@ export function ResetPasswordForm({ initialError, isValid }: { initialError?: st
   
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
-  const [error, setError] = useState<string | null>(initialError ? t(initialError as any) : null)
+  const translateError = (raw: string) => {
+    const normalized = raw === "recover_passwordComplexity"
+      ? "welcome.recovery.passwordComplexity"
+      : raw === "recovery.passwordComplexity"
+        ? "welcome.recovery.passwordComplexity"
+        : raw
+
+    const direct = t(normalized as any)
+    if (direct !== normalized) return direct
+
+    if (!normalized.startsWith("welcome.")) {
+      const prefixed = `welcome.${normalized}`
+      const prefixedTranslated = t(prefixed as any)
+      if (prefixedTranslated !== prefixed) return prefixedTranslated
+    }
+
+    return raw
+  }
+
+  const [error, setError] = useState<string | null>(initialError ? translateError(initialError) : null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
@@ -63,7 +82,7 @@ export function ResetPasswordForm({ initialError, isValid }: { initialError?: st
     try {
       const result = await resetPassword(formData)
       if (result.error) {
-        setError(t(result.error as any))
+        setError(translateError(result.error))
       } else {
         setIsSuccess(true)
         setTimeout(() => router.push("/"), 3000)

@@ -22,6 +22,24 @@ export function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const translateError = (raw: string) => {
+    const normalized = raw === "recover_passwordComplexity"
+      ? "welcome.recovery.passwordComplexity"
+      : raw === "recovery.passwordComplexity"
+        ? "welcome.recovery.passwordComplexity"
+        : raw
+
+    const direct = t(normalized as any)
+    if (direct !== normalized) return direct
+
+    if (!normalized.startsWith("welcome.")) {
+      const prefixed = `welcome.${normalized}`
+      const prefixedTranslated = t(prefixed as any)
+      if (prefixedTranslated !== prefixed) return prefixedTranslated
+    }
+
+    return raw
+  }
 
   const schema = z.object({
     email: z.string().email(t("welcome.emailError")),
@@ -69,7 +87,7 @@ export function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) {
     try {
       const result = await forgotPassword(formData)
       if (result.error) {
-        setError(t(result.error as any))
+        setError(translateError(result.error))
       } else {
         setIsSuccess(true)
       }

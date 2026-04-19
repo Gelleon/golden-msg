@@ -10,6 +10,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "cron": "tsx scripts/cron-worker.ts",
+    "cron:daemon": "tsx scripts/cron-daemon.ts",
+    "cron:trigger": "node scripts/cron-trigger.mjs",
     "security-scan": "node scripts/security-scan.js"
   },
   "dependencies": {

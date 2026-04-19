@@ -16,7 +16,7 @@ jest.mock('@/app/actions/auth', () => ({
 
 jest.mock('@/lib/language-context', () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    t: (key: string) => key === 'welcome.recovery.passwordComplexity' ? 'PASSWORD_COMPLEXITY_MESSAGE' : key,
     language: 'ru',
   }),
 }))
@@ -102,6 +102,25 @@ describe('ResetPasswordForm', () => {
     await waitFor(() => {
       expect(resetPassword).toHaveBeenCalled()
       expect(screen.getByText('welcome.recovery.resetSuccess')).toBeInTheDocument()
+    })
+  })
+
+  it('maps password complexity error key to translated message', async () => {
+    ;(useSearchParams as jest.Mock).mockReturnValue({
+      get: () => 'valid-token',
+    })
+    ;(resetPassword as jest.Mock).mockResolvedValue({ error: 'recovery.passwordComplexity' })
+
+    const user = userEvent.setup()
+    render(<ResetPasswordForm isValid={true} />)
+
+    await user.type(screen.getByLabelText('welcome.recovery.newPassword'), 'weakpass')
+    await user.type(screen.getByLabelText('welcome.recovery.confirmPassword'), 'weakpass')
+
+    fireEvent.click(screen.getByText('welcome.recovery.resetSubmit'))
+
+    await waitFor(() => {
+      expect(screen.getByText('PASSWORD_COMPLEXITY_MESSAGE')).toBeInTheDocument()
     })
   })
 })

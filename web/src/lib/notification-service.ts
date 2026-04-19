@@ -355,7 +355,9 @@ async function sendNotificationEmail(user: User, rooms: { roomName: string; unre
 
   const secret = process.env.CRON_SECRET || 'fallback_secret';
   const h = crypto.createHmac('sha256', secret).update(`unsubscribe-${user.id}`).digest('hex');
-  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/notifications/unsubscribe?token=${user.id}&h=${h}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+  const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  const unsubscribeUrl = `${cleanBaseUrl}/api/notifications/unsubscribe?token=${user.id}&h=${h}`;
 
   const html = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
@@ -366,7 +368,7 @@ async function sendNotificationEmail(user: User, rooms: { roomName: string; unre
         ${roomListHtml}
       </ul>
       <div style="margin-top: 30px;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" style="background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">${t.goToMessages}</a>
+        <a href="${cleanBaseUrl}/dashboard" style="background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">${t.goToMessages}</a>
       </div>
       <hr style="margin-top: 40px; border: 0; border-top: 1px solid #e2e8f0;">
       <p style="font-size: 12px; color: #64748b; margin-top: 20px;">
