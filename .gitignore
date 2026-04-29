@@ -47,5 +47,8 @@ src/generated/prisma
 #tasks
 prd-golden-russia.md
 
+# trae
+.trae/
+
 #Sound
 *.webm
