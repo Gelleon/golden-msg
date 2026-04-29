@@ -114,10 +114,10 @@ export function WelcomeScreen() {
       } else {
         if (inviteRoomId && inviteToken) {
           const inviteResult = await acceptRoomInvite(inviteRoomId, inviteToken)
-          if (inviteResult.success) {
+          if ("success" in inviteResult && inviteResult.success) {
             router.push(`/dashboard/rooms/${inviteRoomId}`)
           } else {
-            setError(inviteResult.error || "Invalid invite link")
+            setError(("error" in inviteResult ? inviteResult.error : null) || "Invalid invite link")
           }
         } else {
           router.push("/dashboard")
