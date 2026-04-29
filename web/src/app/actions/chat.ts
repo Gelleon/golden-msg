@@ -323,8 +323,9 @@ export async function updateMessage(messageId: string, content: string) {
       where: { id: messageId },
       data: {
         content: content,
-        content_translated: null, // Clear old translation to show loading state
-        translation_status: "pending",
+        content_translated: null,
+        translation_status: "none",
+        translation_error: null,
         language_original: finalLangOriginal,
         is_edited: true,
       },
@@ -388,7 +389,89 @@ export async function updateMessage(messageId: string, content: string) {
       },
     }
 
-    // Trigger Async Translation (Fire and Forget via Queue)
+    revalidatePath(`/dashboard/rooms/${message.room_id}`)
+    return { success: true, message: formattedUpdatedMessage }
+  } catch (error) {
+    console.error("Update message error:", error)
+    return { error: "Failed to update message" }
+  }
+}
+
+export async function translateMessageAction(messageId: string) {
+  await ensureSchemaFixed()
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  try {
+    const isAdmin = session.user.role === "admin"
+
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+      select: {
+        id: true,
+        room_id: true,
+        message_type: true,
+        content: true,
+        content_translated: true,
+        translation_status: true,
+        translation_error: true,
+        language_original: true,
+      },
+    })
+
+    if (!message) return { error: "Message not found" }
+
+    const participation = await prisma.roomParticipant.findUnique({
+      where: {
+        room_id_user_id: {
+          room_id: message.room_id,
+          user_id: session.user.id,
+        },
+      },
+      select: { id: true },
+    })
+
+    if (!participation && !isAdmin) {
+      return { error: "You are not a member of this room" }
+    }
+
+    if (message.message_type !== "text") {
+      return { error: "Only text messages can be translated" }
+    }
+
+    const content = message.content ?? ""
+    if (!content.trim()) {
+      return { error: "No content to translate" }
+    }
+
+    if (message.translation_status === "pending") {
+      return { success: true }
+    }
+
+    if (message.content_translated && message.translation_status === "completed") {
+      return { success: true }
+    }
+
+    const fromLang: "Russian" | "Chinese" = message.language_original === "cn" ? "Chinese" : "Russian"
+    const toLang: "Russian" | "Chinese" = fromLang === "Russian" ? "Chinese" : "Russian"
+
+    await prisma.message.update({
+      where: { id: messageId },
+      data: {
+        translation_status: "pending",
+        translation_error: null,
+      },
+    })
+
+    sendSSEUpdate(message.room_id, {
+      type: "message_update",
+      messageId,
+      payload: {
+        translation_status: "pending",
+        translation_error: null,
+      },
+    })
+
     after(async () => {
       await translationQueue.add(async () => {
         await processAsyncMessage(
@@ -396,18 +479,18 @@ export async function updateMessage(messageId: string, content: string) {
           message.room_id,
           content,
           "text",
-          undefined,
-          languageOriginal,
-          targetLanguage
-        );
-      });
-    });
+          null,
+          fromLang,
+          toLang
+        )
+      })
+    })
 
     revalidatePath(`/dashboard/rooms/${message.room_id}`)
-    return { success: true, message: formattedUpdatedMessage }
+    return { success: true }
   } catch (error) {
-    console.error("Update message error:", error)
-    return { error: "Failed to update message" }
+    console.error("Translate message error:", error)
+    return { error: "Failed to translate message" }
   }
 }
 
@@ -1028,7 +1111,7 @@ export async function sendMessageAction(rawData: {
   // We do NOT wait for translation here. We set status to pending and return immediately.
   const contentTranslated = null;
   const voiceTranscription = null;
-  const translationStatus = messageType === "text" ? "pending" : "completed";
+  const translationStatus = messageType === "text" ? "none" : "completed";
 
   console.log(`[DB] Creating message with translation_status: "${translationStatus}"`);
 
@@ -1086,23 +1169,6 @@ export async function sendMessageAction(rawData: {
         },
       });
       console.log(`[DB] Message created successfully with ID: ${message.id}`);
-
-    // Trigger Async Processing (via Queue) for text messages
-    if (messageType === "text") {
-      after(async () => {
-        await translationQueue.add(async () => {
-          await processAsyncMessage(
-            message.id,
-            roomId,
-            content,
-            messageType,
-            fileUrl,
-            languageOriginal,
-            targetLanguage
-          );
-        });
-      });
-    }
 
     // Send push notification asynchronously
     const notificationContent = messageType === 'voice' 

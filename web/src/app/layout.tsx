@@ -47,8 +47,9 @@ export default async function RootLayout({
   const initialLanguage = (session?.user?.preferred_language as "ru" | "cn") || "ru";
 
   return (
-    <html lang={initialLanguage}>
+    <html lang={initialLanguage} suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <LanguageProvider initialLanguage={initialLanguage}>

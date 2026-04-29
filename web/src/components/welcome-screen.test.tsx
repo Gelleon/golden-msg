@@ -8,12 +8,19 @@ import { useRouter } from 'next/navigation'
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
+  useSearchParams: jest.fn(() => ({
+    get: jest.fn(() => null),
+  })),
 }))
 
 // Mock server actions
 jest.mock('@/app/actions/auth', () => ({
   login: jest.fn(),
   register: jest.fn(),
+}))
+
+jest.mock('@/app/actions/room', () => ({
+  acceptRoomInvite: jest.fn(),
 }))
 
 // Mock ChinaRussiaBackground to avoid issues with framer-motion hooks

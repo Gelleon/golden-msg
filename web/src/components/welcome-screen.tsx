@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { motion, AnimatePresence } from "framer-motion"
 import { Loader2, Globe, Building2, MessageSquare, ArrowRight, ShieldCheck, Languages } from "lucide-react"
 import { login, register } from "@/app/actions/auth"
+import { acceptRoomInvite } from "@/app/actions/room"
 import { useTranslation } from "@/lib/language-context"
 
 import { Button } from "@/components/ui/button"
@@ -25,10 +26,19 @@ export function WelcomeScreen() {
   const [error, setError] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const inviteRoomId = searchParams.get("inviteRoomId")
+  const inviteToken = searchParams.get("inviteToken")
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    const mode = searchParams.get("mode")
+    if (mode === "register") setIsLogin(false)
+    if (mode === "login") setIsLogin(true)
+  }, [searchParams])
 
   const authSchema = z.object({
     email: z.string().email(t("welcome.emailError")),
@@ -102,7 +112,16 @@ export function WelcomeScreen() {
         const translatedError = t(errorKey as any)
         setError(translatedError === errorKey ? result.error : translatedError)
       } else {
-        router.push("/dashboard")
+        if (inviteRoomId && inviteToken) {
+          const inviteResult = await acceptRoomInvite(inviteRoomId, inviteToken)
+          if (inviteResult.success) {
+            router.push(`/dashboard/rooms/${inviteRoomId}`)
+          } else {
+            setError(inviteResult.error || "Invalid invite link")
+          }
+        } else {
+          router.push("/dashboard")
+        }
       }
     } catch (err: any) {
       console.error("Auth error:", err)

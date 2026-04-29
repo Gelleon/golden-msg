@@ -10,6 +10,9 @@ import { headers } from "next/headers"
 import { ensureSchemaFixed } from "@/lib/schema-fix"
 import { sendSSEUpdate } from "@/lib/sse"
 
+export type RoomInviteValidationResult = { success: true; roomId: string } | { error: string }
+export type RoomInviteAcceptResult = { success: true; roomId: string } | { error: string }
+
 export async function createRoomInvite(roomId: string, role: "client" | "partner", maxUses: number = 1) {
   await ensureSchemaFixed()
   console.log(`[SERVER] Creating invite for room ${roomId}, role ${role}`)
@@ -75,77 +78,158 @@ export async function createRoomInvite(roomId: string, role: "client" | "partner
   }
 }
 
+export async function validateRoomInvite(roomId: string, token: string): Promise<RoomInviteValidationResult> {
+  ensureSchemaFixed().catch(console.error)
+
+  const invite = await prisma.roomInvite.findUnique({
+    where: { token },
+    include: { room: true },
+  })
+
+  if (!invite) {
+    const room = await prisma.room.findUnique({ where: { id: roomId }, select: { id: true } })
+    if (!room) return { error: "Room not found" }
+    return { error: "Invalid invite link" }
+  }
+
+  if (invite.room_id !== roomId) {
+    return { error: "Invalid invite link" }
+  }
+
+  if (new Date() > invite.expires_at) {
+    return { error: "Invite link has expired" }
+  }
+
+  if (invite.uses >= invite.max_uses) {
+    return { error: "Invite link has reached maximum uses" }
+  }
+
+  const capacity = invite.room?.capacity ?? 0
+  if (capacity > 0) {
+    const participantsCount = await prisma.roomParticipant.count({ where: { room_id: roomId } })
+    if (participantsCount >= capacity) {
+      return { error: "Room is full" }
+    }
+  }
+
+  return { success: true, roomId }
+}
+
+export async function acceptRoomInviteForUser(
+  input: { userId: string; roomId: string; token: string }
+): Promise<RoomInviteAcceptResult> {
+  ensureSchemaFixed().catch(console.error)
+  const { userId, roomId, token } = input
+
+  const invite = await prisma.roomInvite.findUnique({
+    where: { token },
+    include: { room: true },
+  })
+
+  if (!invite) {
+    const room = await prisma.room.findUnique({ where: { id: roomId }, select: { id: true } })
+    if (!room) return { error: "Room not found" }
+    return { error: "Invalid invite link" }
+  }
+
+  if (invite.room_id !== roomId) {
+    return { error: "Invalid invite link" }
+  }
+
+  const existingParticipant = await prisma.roomParticipant.findUnique({
+    where: {
+      room_id_user_id: {
+        room_id: roomId,
+        user_id: userId,
+      },
+    },
+  })
+
+  if (existingParticipant) {
+    return { success: true, roomId }
+  }
+
+  try {
+    const now = new Date()
+    type TxResult = { success: true; roomId: string; inviteRole: string } | { error: string }
+
+    const result: TxResult = await prisma.$transaction(async (tx): Promise<TxResult> => {
+      const freshInvite = await tx.roomInvite.findUnique({
+        where: { token },
+        include: { room: true },
+      })
+
+      if (!freshInvite || freshInvite.room_id !== roomId) return { error: "Invalid invite link" }
+
+      if (now > freshInvite.expires_at) return { error: "Invite link has expired" }
+      if (freshInvite.uses >= freshInvite.max_uses) return { error: "Invite link has reached maximum uses" }
+
+      const capacity = freshInvite.room?.capacity ?? 0
+      if (capacity > 0) {
+        const participantsCount = await tx.roomParticipant.count({ where: { room_id: roomId } })
+        if (participantsCount >= capacity) return { error: "Room is full" }
+      }
+
+      await tx.roomInvite.update({
+        where: { id: freshInvite.id },
+        data: { uses: { increment: 1 } },
+      })
+
+      await tx.roomParticipant.create({
+        data: {
+          room_id: roomId,
+          user_id: userId,
+          role: "member",
+        },
+      })
+
+      const currentUser = await tx.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      })
+
+      if (freshInvite.role === "partner" && currentUser?.role === "client") {
+        await tx.user.update({
+          where: { id: userId },
+          data: { role: "partner" },
+        })
+      } else if (freshInvite.role === "client" && !currentUser?.role) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { role: "client" },
+        })
+      }
+
+      return { success: true, roomId, inviteRole: freshInvite.role }
+    })
+
+    if ("error" in result) return result
+    return { success: true, roomId }
+  } catch (error) {
+    const existing = await prisma.roomParticipant.findUnique({
+      where: {
+        room_id_user_id: {
+          room_id: roomId,
+          user_id: userId,
+        },
+      },
+    })
+    if (existing) return { success: true, roomId }
+
+    console.error("Accept room invite error:", error)
+    return { error: "Failed to accept invite" }
+  }
+}
+
 export async function acceptRoomInvite(roomId: string, token: string) {
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
 
   try {
-    const invite = await prisma.roomInvite.findUnique({
-      where: { token },
-      include: { room: true },
-    })
+    const result = await acceptRoomInviteForUser({ userId: session.user.id, roomId, token })
+    if ("error" in result) return result
 
-    if (!invite || invite.room_id !== roomId) {
-      return { error: "Invalid invite link" }
-    }
-
-    if (new Date() > invite.expires_at) {
-      return { error: "Invite link has expired" }
-    }
-
-    if (invite.uses >= invite.max_uses) {
-      return { error: "Invite link has reached maximum uses" }
-    }
-
-    // Update invite uses
-    await prisma.roomInvite.update({
-      where: { id: invite.id },
-      data: { uses: { increment: 1 } },
-    })
-
-    // Add user to room
-    const existingParticipant = await prisma.roomParticipant.findUnique({
-      where: {
-        room_id_user_id: {
-          room_id: roomId,
-          user_id: session.user.id,
-        },
-      },
-    })
-
-    if (!existingParticipant) {
-      await prisma.roomParticipant.create({
-        data: {
-          room_id: roomId,
-          user_id: session.user.id,
-          role: "member",
-        },
-      })
-    }
-
-    // Update user role if it's currently lower than the invite role
-    const currentUser = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { role: true },
-    })
-
-    // Role hierarchy logic (optional, but requested: "role for the invited user")
-    // If the invite is for 'partner' and current user is 'client', upgrade to 'partner'
-    if (invite.role === "partner" && currentUser?.role === "client") {
-      await prisma.user.update({
-        where: { id: session.user.id },
-        data: { role: "partner" },
-      })
-    } else if (invite.role === "client" && !currentUser?.role) {
-       // If user has no role, set to client
-       await prisma.user.update({
-        where: { id: session.user.id },
-        data: { role: "client" },
-      })
-    }
-
-    // Log the action
-    console.log(`[LOG] User ${session.user.id} accepted invite ${token} for room ${roomId}. Role assigned: ${invite.role}`)
+    console.log(`[LOG] User ${session.user.id} accepted invite ${token} for room ${roomId}.`)
 
     revalidatePath("/dashboard")
     revalidatePath(`/dashboard/rooms/${roomId}`)

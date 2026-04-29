@@ -9,7 +9,7 @@ import { useTranslation } from "@/lib/language-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { deleteMessage, updateMessage, pinMessage, unpinMessage } from "@/app/actions/chat"
+import { deleteMessage, updateMessage, pinMessage, unpinMessage, translateMessageAction } from "@/app/actions/chat"
 import {
   Dialog,
   DialogContent,
@@ -110,6 +110,8 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(message.content_original)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [viewMode, setViewMode] = useState<"original" | "translated">("original")
+  const [isRequestingTranslation, setIsRequestingTranslation] = useState(false)
   const [mounted, setMounted] = useState(false)
   const isMountedRef = useRef(false)
   
@@ -198,6 +200,12 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
     setEditContent(message.content_original)
   }, [message.content_original])
 
+  useEffect(() => {
+    if (message.translation_status !== "pending") {
+      setIsRequestingTranslation(false)
+    }
+  }, [message.translation_status])
+
   const handleDelete = async () => {
     setIsDeleting(true)
     const result = await deleteMessage(message.id)
@@ -223,7 +231,7 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
 
     return (
       <div className={cn(
-        "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider mb-2 w-fit",
+        "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider w-fit",
         isCurrentUser 
           ? "bg-white/10 text-blue-100" 
           : "bg-slate-100 text-slate-500"
@@ -280,6 +288,13 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
   const renderContent = () => {
     switch (message.message_type) {
       case "text":
+        const hasTranslation = !!message.content_translated && message.translation_status === "completed"
+        const canTranslate = !isEditing
+        const showTranslateButton = canTranslate && !hasTranslation && message.translation_status !== "pending"
+        const showRetryButton = canTranslate && message.translation_status === "failed"
+        const showPending = canTranslate && message.translation_status === "pending"
+        const showTranslationBlock = canTranslate && viewMode === "translated" && hasTranslation
+
         return (
           <div className="space-y-0 w-full">
             {renderReplyPreview()}
@@ -342,7 +357,55 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
                   "p-3.5 md:p-4 text-sm md:text-[15px] leading-relaxed transition-all duration-300",
                   isCurrentUser ? "text-white" : "text-slate-900"
                 )}>
-                  {renderLanguageIndicator(!!message.content_translated)}
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    {renderLanguageIndicator(showTranslationBlock)}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {hasTranslation && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className={cn(
+                            "h-7 px-2 rounded-lg text-[11px] font-bold",
+                            isCurrentUser ? "text-white/80 hover:bg-white/10 hover:text-white" : "text-slate-600 hover:bg-slate-100"
+                          )}
+                          onClick={() => setViewMode(viewMode === "translated" ? "original" : "translated")}
+                        >
+                          {viewMode === "translated" ? t("chat.showOriginal") : t("chat.showTranslation")}
+                        </Button>
+                      )}
+
+                      {(showTranslateButton || showRetryButton) && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label={showRetryButton ? t("chat.retryTranslate") : t("chat.translate")}
+                          title={showRetryButton ? t("chat.retryTranslate") : t("chat.translate")}
+                          className={cn(
+                            "h-7 w-7 rounded-lg",
+                            isCurrentUser ? "text-white/80 hover:bg-white/10 hover:text-white" : "text-slate-600 hover:bg-slate-100"
+                          )}
+                          onClick={async () => {
+                            if (isRequestingTranslation || message.translation_status === "pending") return
+                            setIsRequestingTranslation(true)
+                            setViewMode("translated")
+                            const res = await translateMessageAction(message.id)
+                            if (!isMountedRef.current) return
+                            if (res?.error) {
+                              toast({
+                                title: t("settings_status.error") || "Error",
+                                description: res.error,
+                                variant: "destructive",
+                              } as any)
+                              setIsRequestingTranslation(false)
+                            }
+                          }}
+                          disabled={isRequestingTranslation}
+                        >
+                          <Languages className={cn("h-4 w-4", showRetryButton ? (isCurrentUser ? "text-red-200" : "text-red-600") : null)} />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                   <p className="whitespace-pre-wrap break-words overflow-wrap-anywhere font-medium">
                     {mentionSegments.map((segment, index) =>
                       segment.type === "mention" && segment.userId ? (
@@ -361,10 +424,29 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
                       )
                     )}
                   </p>
+
+                  {showPending && (
+                    <div className={cn(
+                      "mt-2 text-[11px] font-semibold flex items-center gap-2",
+                      isCurrentUser ? "text-white/60" : "text-slate-500"
+                    )}>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+                      <span className="truncate">{t("chat.translating")}</span>
+                    </div>
+                  )}
+                  {message.translation_status === "failed" && (
+                    <div className={cn(
+                      "mt-2 text-[11px] font-semibold flex items-center gap-2",
+                      isCurrentUser ? "text-red-200" : "text-red-600"
+                    )}>
+                      <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">{t("chat.translationFailed")}</span>
+                    </div>
+                  )}
                 </div>
-                
+
                 <AnimatePresence>
-                  {message.content_translated && (
+                  {showTranslationBlock && (
                     <motion.div 
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
@@ -388,32 +470,6 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
                     </motion.div>
                   )}
                 </AnimatePresence>
-                
-                {!message.content_translated && message.translation_status !== "failed" && (
-                  <div className={cn(
-                    "px-4 py-2 border-t text-[10px] font-bold uppercase tracking-wider flex flex-col gap-1",
-                    isCurrentUser ? "bg-black/10 border-white/10 text-white/50" : "bg-slate-50 border-slate-100 text-slate-400"
-                  )}>
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      <span>{t("chat.aiTranslation")}</span>
-                    </div>
-                    <div className="text-[8px] opacity-30">
-                      ID: {message.id.substring(0, 8)} | Lang: {message.language_original}
-                    </div>
-                  </div>
-                )}
-                {message.translation_status === "failed" && (
-                  <div className={cn(
-                    "px-4 py-2 border-t text-[10px] font-bold uppercase tracking-wider flex flex-col gap-1",
-                    isCurrentUser ? "bg-red-500/20 border-white/10 text-red-200" : "bg-red-50 border-red-100 text-red-500"
-                  )}>
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-3 w-3" />
-                      <span>{t("chat.translationFailed") || "Translation failed"}</span>
-                    </div>
-                  </div>
-                )}
               </>
             )}
           </div>

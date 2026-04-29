@@ -40,6 +40,9 @@ jest.mock('@/components/ui/use-toast', () => ({
 jest.mock('@/app/actions/chat', () => ({
   deleteMessage: jest.fn(),
   updateMessage: jest.fn(),
+  translateMessageAction: jest.fn(),
+  pinMessage: jest.fn(),
+  unpinMessage: jest.fn(),
 }))
 
 // Mock Radix primitives if needed or just let them render.
@@ -164,5 +167,92 @@ describe('MessageBubble Deletion', () => {
 
     // Check if onDelete was NOT called
     expect(handleDelete).not.toHaveBeenCalled()
+  })
+})
+
+describe('MessageBubble Manual Translation UI', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('shows Translate button and does not show auto-translation loader by default', () => {
+    const msg = {
+      id: 'msg-2',
+      content_original: 'Привет',
+      content_translated: null,
+      language_original: 'ru',
+      message_type: 'text',
+      file_url: null,
+      voice_transcription: null,
+      created_at: new Date().toISOString(),
+      translation_status: 'none',
+      sender: {
+        id: 'user-1',
+        full_name: 'Test User',
+        avatar_url: null,
+        role: 'user',
+      },
+    }
+
+    render(<MessageBubble message={msg as any} isCurrentUser={false} />)
+
+    expect(screen.getByLabelText('chat.translate')).toBeInTheDocument()
+    expect(screen.queryByText('chat.aiTranslation')).not.toBeInTheDocument()
+  })
+
+  it('shows translating indicator when translation_status is pending', () => {
+    const msg = {
+      id: 'msg-3',
+      content_original: 'Привет',
+      content_translated: null,
+      language_original: 'ru',
+      message_type: 'text',
+      file_url: null,
+      voice_transcription: null,
+      created_at: new Date().toISOString(),
+      translation_status: 'pending',
+      sender: {
+        id: 'user-1',
+        full_name: 'Test User',
+        avatar_url: null,
+        role: 'user',
+      },
+    }
+
+    render(<MessageBubble message={msg as any} isCurrentUser={false} />)
+
+    expect(screen.getByText('chat.translating')).toBeInTheDocument()
+  })
+
+  it('toggles original/translated view when translation exists', async () => {
+    const msg = {
+      id: 'msg-4',
+      content_original: 'Привет',
+      content_translated: '你好',
+      language_original: 'ru',
+      message_type: 'text',
+      file_url: null,
+      voice_transcription: null,
+      created_at: new Date().toISOString(),
+      translation_status: 'completed',
+      sender: {
+        id: 'user-1',
+        full_name: 'Test User',
+        avatar_url: null,
+        role: 'user',
+      },
+    }
+
+    render(<MessageBubble message={msg as any} isCurrentUser={false} />)
+
+    expect(screen.queryByText('你好')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByText('chat.showTranslation'))
+    await waitFor(() => {
+      expect(screen.getByText('你好')).toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText('chat.showOriginal'))
+    await waitFor(() => {
+      expect(screen.queryByText('你好')).not.toBeInTheDocument()
+    })
   })
 })

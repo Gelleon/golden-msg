@@ -11,6 +11,19 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  const host = request.headers.get('host') || request.nextUrl.host
+  const isLocalhost =
+    host.includes('localhost') ||
+    host.startsWith('127.0.0.1') ||
+    host.startsWith('0.0.0.0')
+
+  const forwardedProto = request.headers.get('x-forwarded-proto')
+  if (!isLocalhost && forwardedProto && forwardedProto !== 'https') {
+    const url = request.nextUrl.clone()
+    url.protocol = 'https:'
+    return NextResponse.redirect(url)
+  }
+
   const session = request.cookies.get('session_user_id')
 
   // Protect dashboard routes
