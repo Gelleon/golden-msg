@@ -5,7 +5,8 @@ import crypto from 'crypto';
 import ruTranslations from '@/locales/ru.json';
 import cnTranslations from '@/locales/cn.json';
 
-const INACTIVITY_MINUTES = 5;
+const OFFLINE_MINUTES = 2;
+const UNREAD_GRACE_MINUTES = 10;
 const EMAIL_COOLDOWN_MINUTES = 10;
 
 interface TranslationSet {
@@ -63,7 +64,8 @@ export async function queueNotificationIfOffline(userId: string, roomId: string,
         user: {
           select: {
             email_notifications_enabled: true,
-            last_email_notification_at: true
+            last_email_notification_at: true,
+            last_active_at: true,
           }
         }
       }
@@ -84,7 +86,7 @@ export async function queueNotificationIfOffline(userId: string, roomId: string,
     if (alreadyQueued) return;
 
     // 3. Add to queue
-    const scheduledAt = new Date(now.getTime() + INACTIVITY_MINUTES * 60 * 1000);
+    const scheduledAt = new Date(now.getTime() + UNREAD_GRACE_MINUTES * 60 * 1000);
     notificationQueue.push({
       userId,
       roomId,
@@ -167,15 +169,20 @@ async function processQueue() {
 
           if (!participation) return;
 
-          // If user became active or read messages, skip
-          if (participation.last_active_at > subMinutes(now, INACTIVITY_MINUTES)) return;
+          const offlineThreshold = subMinutes(now, OFFLINE_MINUTES);
+          if (participation.user.last_active_at > offlineThreshold) return;
+
+          const unreadThreshold = subMinutes(now, UNREAD_GRACE_MINUTES);
 
           // Find all unread messages
           const unreadMessages = await prisma.message.findMany({
             where: {
               room_id: item.roomId,
               sender_id: { not: item.userId },
-              created_at: { gt: participation.last_read_at }
+              created_at: {
+                gt: participation.last_read_at,
+                lte: unreadThreshold,
+              }
             },
             select: { created_at: true },
             orderBy: { created_at: 'desc' }
@@ -225,7 +232,8 @@ export async function notifyUsersOfUnreadMessages() {
   console.log('Starting unread messages notification scan...');
   
   const now = new Date();
-  const inactivityThreshold = subMinutes(now, INACTIVITY_MINUTES);
+  const offlineThreshold = subMinutes(now, OFFLINE_MINUTES);
+  const unreadThreshold = subMinutes(now, UNREAD_GRACE_MINUTES);
   const emailCooldownThreshold = new Date(now.getTime() - EMAIL_COOLDOWN_MINUTES * 60 * 1000);
 
   try {
@@ -238,6 +246,7 @@ export async function notifyUsersOfUnreadMessages() {
       const users = await prisma.user.findMany({
         where: {
           email_notifications_enabled: true,
+          last_active_at: { lt: offlineThreshold },
           OR: [
             { last_email_notification_at: null },
             { last_email_notification_at: { lt: emailCooldownThreshold } }
@@ -269,17 +278,15 @@ export async function notifyUsersOfUnreadMessages() {
 
           // Fetch unread counts for all user rooms
           await Promise.all(user.room_participations.map(async (participant) => {
-            // Check if user has been inactive for more than 5 minutes in this room
-            if (participant.last_active_at > inactivityThreshold) {
-              return;
-            }
-
             // Find all unread messages
             const unreadMessages = await prisma.message.findMany({
               where: {
                 room_id: participant.room_id,
                 sender_id: { not: user.id },
-                created_at: { gt: participant.last_read_at }
+                created_at: {
+                  gt: participant.last_read_at,
+                  lte: unreadThreshold,
+                }
               },
               select: { created_at: true },
               orderBy: { created_at: 'desc' }

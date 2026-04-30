@@ -19,8 +19,14 @@ export function middleware(request: NextRequest) {
 
   const forwardedProto = request.headers.get('x-forwarded-proto')
   if (!isLocalhost && forwardedProto && forwardedProto !== 'https') {
-    const url = request.nextUrl.clone()
+    const url = new URL(request.url)
     url.protocol = 'https:'
+    const rawHost =
+      request.headers.get('x-forwarded-host') || request.headers.get('host')
+    if (rawHost) {
+      url.hostname = rawHost.split(':')[0]
+      url.port = ''
+    }
     return NextResponse.redirect(url)
   }
 

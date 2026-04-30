@@ -91,4 +91,11 @@ else
     pm2 start npm --name "golden-msg" --cwd "$WEB_DIR" -- start
 fi
 
+echo ">>> Запуск/перезапуск cron-демона в PM2..."
+if pm2 show golden-msg-cron > /dev/null; then
+    pm2 restart golden-msg-cron --update-env
+else
+    pm2 start npm --name "golden-msg-cron" --cwd "$WEB_DIR" -- run cron:daemon
+fi
+
 echo "--- Деплой успешно завершен! ---"
