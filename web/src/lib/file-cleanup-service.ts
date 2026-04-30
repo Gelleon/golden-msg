@@ -31,6 +31,12 @@ export async function runFileCleanup(): Promise<CleanupStats> {
   const thresholdDate = subDays(new Date(), CLEANUP_DAYS);
 
   try {
+    const fileDeletionLog = (prisma as any).fileDeletionLog
+    if (!fileDeletionLog?.findMany || !fileDeletionLog?.create || !fileDeletionLog?.delete) {
+      console.warn('[FileCleanup] fileDeletionLog model is not available in Prisma client. Skipping cleanup.')
+      return stats
+    }
+
     // 1. Find messages with files older than threshold
     const oldMessages = await (prisma as any).message.findMany({
       where: {
@@ -67,7 +73,7 @@ export async function runFileCleanup(): Promise<CleanupStats> {
           stats.backedUp++;
           
           // 4. Log the deletion in database
-          await (prisma as any).fileDeletionLog.create({
+          await fileDeletionLog.create({
             data: {
               message_id: msg.id,
               room_id: msg.room_id,
@@ -105,7 +111,8 @@ export async function runFileCleanup(): Promise<CleanupStats> {
     return stats;
   } catch (error) {
     console.error('[FileCleanup] Critical error during cleanup:', error);
-    throw error;
+    stats.errors++;
+    return stats;
   }
 }
 
@@ -115,7 +122,13 @@ export async function runFileCleanup(): Promise<CleanupStats> {
 async function permanentDeleteExpiredBackups() {
   const expiredThreshold = new Date();
   
-  const expiredLogs = await (prisma as any).fileDeletionLog.findMany({
+  const fileDeletionLog = (prisma as any).fileDeletionLog
+  if (!fileDeletionLog?.findMany || !fileDeletionLog?.delete) {
+    console.warn('[FileCleanup] fileDeletionLog model is not available in Prisma client. Skipping permanent deletion.')
+    return
+  }
+
+  const expiredLogs = await fileDeletionLog.findMany({
     where: {
       expires_at: { lt: expiredThreshold }
     }
@@ -126,7 +139,7 @@ async function permanentDeleteExpiredBackups() {
       if (log.backup_path) {
         await fs.unlink(log.backup_path).catch(() => {});
       }
-      await (prisma as any).fileDeletionLog.delete({
+      await fileDeletionLog.delete({
         where: { id: log.id }
       });
     } catch (err) {
@@ -139,7 +152,12 @@ async function permanentDeleteExpiredBackups() {
  * Restores a file from backup if within recovery period.
  */
 export async function restoreFile(messageId: string) {
-  const log = await (prisma as any).fileDeletionLog.findFirst({
+  const fileDeletionLog = (prisma as any).fileDeletionLog
+  if (!fileDeletionLog?.findFirst || !fileDeletionLog?.delete) {
+    throw new Error("Модель fileDeletionLog недоступна")
+  }
+
+  const log = await fileDeletionLog.findFirst({
     where: { message_id: messageId }
   });
 
@@ -154,7 +172,7 @@ export async function restoreFile(messageId: string) {
     data: { file_url: log.file_url }
   });
 
-  await (prisma as any).fileDeletionLog.delete({
+  await fileDeletionLog.delete({
     where: { id: log.id }
   });
 

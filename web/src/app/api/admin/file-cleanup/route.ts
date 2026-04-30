@@ -14,7 +14,12 @@ export async function GET() {
   }
 
   try {
-    const logs = await (prisma as any).fileDeletionLog.findMany({
+    const fileDeletionLog = (prisma as any).fileDeletionLog
+    if (!fileDeletionLog?.findMany) {
+      return NextResponse.json({ logs: [], warning: 'fileDeletionLog model is not available' });
+    }
+
+    const logs = await fileDeletionLog.findMany({
       take: 50,
       orderBy: { deleted_at: 'desc' },
       include: { message: true }
