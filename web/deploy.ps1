@@ -4,9 +4,21 @@
 
 $SERVER_IP = "217.26.27.86"
 $SERVER_USER = "root"
+$SERVER_PORT = 22
 $COMMIT_MSG = "deploy-$(Get-Date -Format 'yyyy-MM-dd-HH-mm')"
 $SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
 $REPO_ROOT = (git -C $SCRIPT_DIR rev-parse --show-toplevel).Trim()
+$SSH_KEY_PATH = $env:DEPLOY_SSH_KEY
+
+$SSH_BASE_ARGS = @(
+    "-p", "$SERVER_PORT",
+    "-o", "ServerAliveInterval=15",
+    "-o", "ServerAliveCountMax=2",
+    "-o", "StrictHostKeyChecking=accept-new"
+)
+if ($SSH_KEY_PATH) {
+    $SSH_BASE_ARGS += @("-i", "$SSH_KEY_PATH")
+}
 
 try {
     Write-Host "`n>>> STEP 1: Sync with GitHub..." -ForegroundColor Cyan
@@ -47,14 +59,14 @@ try {
     
     # 4. Копируем скрипт деплоя на сервер
     Write-Host "Copying deploy.sh to server (password may be required)..." -ForegroundColor Gray
-    scp (Join-Path $SCRIPT_DIR "deploy.sh") "${SERVER_USER}@${SERVER_IP}:/tmp/deploy.sh"
+    scp @SSH_BASE_ARGS (Join-Path $SCRIPT_DIR "deploy.sh") "${SERVER_USER}@${SERVER_IP}:/tmp/deploy.sh"
     if ($LASTEXITCODE -ne 0) {
         throw "scp failed."
     }
 
     # 5. Очищаем скрипт от Windows-переносов строк (на всякий случай) и запускаем
     Write-Host "Running deploy on server via SSH (password may be required)..." -ForegroundColor Gray
-    ssh "${SERVER_USER}@${SERVER_IP}" "sed -i 's/\r$//' /tmp/deploy.sh; bash /tmp/deploy.sh"
+    ssh @SSH_BASE_ARGS "${SERVER_USER}@${SERVER_IP}" "sed -i 's/\r$//' /tmp/deploy.sh; bash /tmp/deploy.sh"
     if ($LASTEXITCODE -ne 0) {
         throw "Remote deploy failed."
     }
