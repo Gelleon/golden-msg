@@ -1,4 +1,7 @@
 import prisma from "@/lib/db"
+import { after } from "next/server"
+import { translationQueue } from "@/lib/translation-queue"
+import { processAsyncMessage } from "@/app/actions/chat"
 
 export const messageSelect = {
   id: true,
@@ -10,6 +13,8 @@ export const messageSelect = {
   voice_transcription: true,
   created_at: true,
   is_edited: true,
+  translation_status: true,
+  translation_error: true,
   sender: {
     select: {
       id: true,
@@ -29,6 +34,14 @@ export const messageSelect = {
         }
       }
     }
+  }
+}
+
+function runAfterRequestScope(fn: () => Promise<void>) {
+  try {
+    after(fn)
+  } catch {
+    fn().catch(() => {})
   }
 }
 
@@ -98,6 +111,50 @@ export async function getInitialRoomMessages(roomId: string, userId: string, las
     rawMessages = latestMessages.reverse()
   }
 
+  const messagesNeedingAutoTranslation = rawMessages
+    .filter((msg) => msg.message_type === "text")
+    .filter((msg) => !msg.content_translated)
+    .filter((msg) => (msg.translation_status ?? "none") === "none")
+    .filter((msg) => (msg.content ?? "").trim().length > 0)
+  const autoTranslateIds = new Set(messagesNeedingAutoTranslation.map((m) => m.id))
+
+  if (messagesNeedingAutoTranslation.length > 0) {
+    runAfterRequestScope(async () => {
+      await Promise.all(
+        messagesNeedingAutoTranslation.map(async (msg) => {
+          await prisma.message.update({
+            where: { id: msg.id },
+            data: {
+              translation_status: "pending",
+              translation_error: null,
+            },
+            select: { id: true },
+          })
+        })
+      )
+
+      for (const msg of messagesNeedingAutoTranslation) {
+        const languageOriginal = msg.language_original === "cn" ? "Chinese" : "Russian"
+        const targetLanguage = languageOriginal === "Russian" ? "Chinese" : "Russian"
+        const content = msg.content ?? ""
+
+        translationQueue
+          .add(async () => {
+            await processAsyncMessage(
+              msg.id,
+              roomId,
+              content,
+              "text",
+              null,
+              languageOriginal,
+              targetLanguage
+            )
+          })
+          .catch(() => {})
+      }
+    })
+  }
+
   const messages = rawMessages.map((msg) => ({
     id: msg.id,
     content_original: msg.content,
@@ -108,6 +165,7 @@ export async function getInitialRoomMessages(roomId: string, userId: string, las
     voice_transcription: msg.voice_transcription,
     created_at: msg.created_at.toISOString(),
     is_edited: msg.is_edited,
+    translation_status: autoTranslateIds.has(msg.id) ? "pending" : msg.translation_status,
     reply_to: msg.reply_to ? {
       id: msg.reply_to.id,
       content: msg.reply_to.content,

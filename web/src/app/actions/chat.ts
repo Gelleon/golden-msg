@@ -14,6 +14,15 @@ import { after } from "next/server"
 import { parseMentions, stripMentionsForTranslation } from "@/lib/chat-mentions"
 import { queueNotificationIfOffline, clearUserFromNotificationQueue } from "@/lib/notification-service"
 import { logAuditAction } from "@/lib/security"
+import { getCachedTranslation, setCachedTranslation } from "@/lib/translation-cache"
+
+function runAfterRequestScope(fn: () => Promise<void>) {
+  try {
+    after(fn)
+  } catch {
+    fn().catch(() => {})
+  }
+}
 
 export async function markAsRead(roomId: string) {
   const session = await getSession()
@@ -280,6 +289,7 @@ export async function updateMessage(messageId: string, content: string) {
     if (!message) return { error: "Message not found" }
     if (message.sender_id !== session.user.id) return { error: "Permission denied" }
     if (message.message_type !== "text") return { error: "Only text messages can be edited" }
+    if (!content.trim()) return { error: "No content to translate" }
 
     // Re-translate if content changed
     let contentTranslated = message.content_translated
@@ -317,6 +327,7 @@ export async function updateMessage(messageId: string, content: string) {
     }
 
     const finalLangOriginal = languageOriginal === "Russian" ? "ru" : "cn";
+    const translationStatus = "pending";
 
     // Update message immediately (Optimistic UI)
     const updatedMessage = await prisma.message.update({
@@ -324,7 +335,7 @@ export async function updateMessage(messageId: string, content: string) {
       data: {
         content: content,
         content_translated: null,
-        translation_status: "none",
+        translation_status: translationStatus,
         translation_error: null,
         language_original: finalLangOriginal,
         is_edited: true,
@@ -362,6 +373,36 @@ export async function updateMessage(messageId: string, content: string) {
           }
         }
       }
+    })
+
+    sendSSEUpdate(message.room_id, {
+      type: "message_update",
+      messageId,
+      payload: {
+        content_original: updatedMessage.content,
+        content_translated: null,
+        language_original: updatedMessage.language_original || "ru",
+        is_edited: true,
+        translation_status: translationStatus,
+        translation_error: null,
+      },
+    })
+
+    const fromLang: "Russian" | "Chinese" = finalLangOriginal === "cn" ? "Chinese" : "Russian"
+    const toLang: "Russian" | "Chinese" = fromLang === "Russian" ? "Chinese" : "Russian"
+
+    runAfterRequestScope(async () => {
+      await translationQueue.add(async () => {
+        await processAsyncMessage(
+          messageId,
+          message.room_id,
+          content,
+          "text",
+          null,
+          fromLang,
+          toLang
+        )
+      })
     })
 
     const formattedUpdatedMessage = {
@@ -472,7 +513,7 @@ export async function translateMessageAction(messageId: string) {
       },
     })
 
-    after(async () => {
+    runAfterRequestScope(async () => {
       await translationQueue.add(async () => {
         await processAsyncMessage(
           messageId,
@@ -628,6 +669,13 @@ export async function getMessages(
       },
     })
 
+    const messagesNeedingAutoTranslation = messages
+      .filter((msg) => msg.message_type === "text")
+      .filter((msg) => !msg.content_translated)
+      .filter((msg) => (msg.translation_status ?? "none") === "none")
+      .filter((msg) => (msg.content ?? "").trim().length > 0)
+    const autoTranslateIds = new Set(messagesNeedingAutoTranslation.map((m) => m.id))
+
     // If we fetched older messages with desc, reverse them back to asc order for the frontend
     if (options?.direction === 'older') {
       messages.reverse()
@@ -664,7 +712,7 @@ export async function getMessages(
       voice_transcription: msg.voice_transcription ?? null,
       created_at: msg.created_at.toISOString(),
       is_edited: msg.is_edited,
-      translation_status: msg.translation_status,
+      translation_status: autoTranslateIds.has(msg.id) ? "pending" : msg.translation_status,
       reply_to_id: msg.reply_to_id ?? null,
       reply_to: msg.reply_to ? {
         id: msg.reply_to.id,
@@ -678,6 +726,52 @@ export async function getMessages(
         role: msg.sender.role,
       },
     }))
+
+    if (messagesNeedingAutoTranslation.length > 0) {
+      runAfterRequestScope(async () => {
+        await Promise.all(
+          messagesNeedingAutoTranslation.map(async (msg) => {
+            await prisma.message.update({
+              where: { id: msg.id },
+              data: {
+                translation_status: "pending",
+                translation_error: null,
+              },
+              select: { id: true },
+            })
+
+            sendSSEUpdate(roomId, {
+              type: "message_update",
+              messageId: msg.id,
+              payload: {
+                translation_status: "pending",
+                translation_error: null,
+              },
+            })
+          })
+        )
+
+        for (const msg of messagesNeedingAutoTranslation) {
+          const languageOriginal = msg.language_original === "cn" ? "Chinese" : "Russian"
+          const targetLanguage = languageOriginal === "Russian" ? "Chinese" : "Russian"
+          const content = msg.content ?? ""
+
+          translationQueue
+            .add(async () => {
+              await processAsyncMessage(
+                msg.id,
+                roomId,
+                content,
+                "text",
+                null,
+                languageOriginal,
+                targetLanguage
+              )
+            })
+            .catch(() => {})
+        }
+      })
+    }
 
     return { 
       messages: formattedMessages,
@@ -756,11 +850,16 @@ export async function processAsyncMessage(
     if (textToTranslate) {
       // Check Cache First
       const finalLangOriginal = languageOriginal === "Russian" ? "ru" : "cn";
-      const cachedTranslation = await findCachedTranslation(textToTranslate, finalLangOriginal);
+      const inMemoryCached = getCachedTranslation(textToTranslate, finalLangOriginal);
+      const cachedTranslation =
+        inMemoryCached ?? (await findCachedTranslation(textToTranslate, finalLangOriginal));
       
       if (cachedTranslation) {
         console.log(`[ASYNC] Cache hit for: "${textToTranslate.substring(0, 30)}..."`);
         contentTranslated = cachedTranslation;
+        if (!inMemoryCached) {
+          setCachedTranslation(textToTranslate, finalLangOriginal, cachedTranslation)
+        }
       } else {
         console.log(`[ASYNC] Translating text: "${textToTranslate.substring(0, 30)}..."`);
         
@@ -772,6 +871,7 @@ export async function processAsyncMessage(
 
         if (dewiarTranslation) {
           contentTranslated = dewiarTranslation;
+          setCachedTranslation(textToTranslate, finalLangOriginal, dewiarTranslation)
           console.log(`[ASYNC] Translation successful: "${contentTranslated.substring(0, 30)}..."`);
         } else {
           console.warn("[ASYNC] Translation failed: No content returned");
@@ -1111,7 +1211,7 @@ export async function sendMessageAction(rawData: {
   // We do NOT wait for translation here. We set status to pending and return immediately.
   const contentTranslated = null;
   const voiceTranscription = null;
-  const translationStatus = messageType === "text" ? "none" : "completed";
+  const translationStatus = messageType === "text" ? "pending" : "completed";
 
   console.log(`[DB] Creating message with translation_status: "${translationStatus}"`);
 
@@ -1169,6 +1269,25 @@ export async function sendMessageAction(rawData: {
         },
       });
       console.log(`[DB] Message created successfully with ID: ${message.id}`);
+
+    if (messageType === "text") {
+      const fromLang: "Russian" | "Chinese" = finalLangOriginal === "cn" ? "Chinese" : "Russian"
+      const toLang: "Russian" | "Chinese" = fromLang === "Russian" ? "Chinese" : "Russian"
+
+      runAfterRequestScope(async () => {
+        await translationQueue.add(async () => {
+          await processAsyncMessage(
+            message.id,
+            roomId,
+            content,
+            "text",
+            null,
+            fromLang,
+            toLang
+          )
+        })
+      })
+    }
 
     // Send push notification asynchronously
     const notificationContent = messageType === 'voice' 

@@ -175,7 +175,7 @@ describe('MessageBubble Manual Translation UI', () => {
     jest.clearAllMocks()
   })
 
-  it('shows Translate button and does not show auto-translation loader by default', () => {
+  it('does not show Translate button by default', () => {
     const msg = {
       id: 'msg-2',
       content_original: 'Привет',
@@ -196,8 +196,9 @@ describe('MessageBubble Manual Translation UI', () => {
 
     render(<MessageBubble message={msg as any} isCurrentUser={false} />)
 
-    expect(screen.getByLabelText('chat.translate')).toBeInTheDocument()
-    expect(screen.queryByText('chat.aiTranslation')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('chat.translate')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('chat.retryTranslate')).not.toBeInTheDocument()
+    expect(screen.queryByText('chat.translating')).not.toBeInTheDocument()
   })
 
   it('shows translating indicator when translation_status is pending', () => {
@@ -245,14 +246,14 @@ describe('MessageBubble Manual Translation UI', () => {
 
     render(<MessageBubble message={msg as any} isCurrentUser={false} />)
 
-    expect(screen.queryByText('你好')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByText('chat.showTranslation'))
-    await waitFor(() => {
-      expect(screen.getByText('你好')).toBeInTheDocument()
-    })
+    expect(screen.getByText('你好')).toBeInTheDocument()
     fireEvent.click(screen.getByText('chat.showOriginal'))
     await waitFor(() => {
       expect(screen.queryByText('你好')).not.toBeInTheDocument()
+    })
+    fireEvent.click(screen.getByText('chat.showTranslation'))
+    await waitFor(() => {
+      expect(screen.getByText('你好')).toBeInTheDocument()
     })
   })
 })

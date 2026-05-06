@@ -47,6 +47,20 @@ const DEWIAR_ERROR_SIGNATURES = [
   "invalid_api_key",
   "unauthorized",
 ]
+const DEFAULT_DEWIAR_TIMEOUT_MS = 15000
+const DEFAULT_DEWIAR_MAX_INPUT_CHARS = 4500
+
+function getDewiarTimeoutMs() {
+  const raw = process.env.DEWIAR_TIMEOUT_MS
+  const parsed = raw ? Number(raw) : NaN
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_DEWIAR_TIMEOUT_MS
+}
+
+function getDewiarMaxInputChars() {
+  const raw = process.env.DEWIAR_MAX_INPUT_CHARS
+  const parsed = raw ? Number(raw) : NaN
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_DEWIAR_MAX_INPUT_CHARS
+}
 
 /**
  * Universal function to call Dewiar API (New format: dew_ai/api)
@@ -60,6 +74,7 @@ export async function callDewiar(message: string): Promise<unknown | null> {
   }
 
   try {
+    const timeoutMs = getDewiarTimeoutMs()
     const body = {
       data: {
         message: message,
@@ -71,17 +86,21 @@ export async function callDewiar(message: string): Promise<unknown | null> {
     };
 
     const url = `${DEWIAR_ENDPOINT}?key=${token}`;
-    console.log(`[DEWIAR] Calling API for: "${message.substring(0, 50)}..."`);
-    console.log(`[DEWIAR] Request body:`, JSON.stringify(body));
-    
+    console.log(`[DEWIAR] Calling API: chars=${message.length}, preview="${message.substring(0, 50)}..."`);
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Accept": "application/json"
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -90,17 +109,7 @@ export async function callDewiar(message: string): Promise<unknown | null> {
     }
 
     const rawText = await response.text();
-    console.log(`[DEWIAR] Raw response from API:`, rawText);
-    
-    // Add custom handling for common error indicators in the text
-    const rawLower = rawText.toLowerCase()
-    if (
-      (rawLower.includes("error") && rawText.length < 200) ||
-      DEWIAR_ERROR_SIGNATURES.some((signature) => rawLower.includes(signature))
-    ) {
-      console.warn("[DEWIAR] API returned text containing 'error'");
-      throw new Error(`API returned error: ${rawText}`);
-    }
+    console.log(`[DEWIAR] Response received: chars=${rawText.length}`);
 
     let parsed: unknown = null;
     try {
@@ -112,8 +121,11 @@ export async function callDewiar(message: string): Promise<unknown | null> {
     console.log("[DEWIAR] Response received from API");
     return parsed;
   } catch (error) {
+    if (error && typeof error === "object" && "name" in error && (error as { name?: string }).name === "AbortError") {
+      throw new Error("Translation request timed out")
+    }
     console.error("[DEWIAR] Network exception:", error);
-    return null;
+    throw error
   }
 }
 
@@ -125,14 +137,20 @@ export async function translateText(
   fromLang: string, 
   toLang: string
 ): Promise<string | null> {
+  const trimmedInput = text.trim()
+  if (!trimmedInput) return null
+
+  const maxChars = getDewiarMaxInputChars()
+  if (trimmedInput.length > maxChars) {
+    throw new Error(`Text is too long to translate (max ${maxChars} chars)`)
+  }
+
   // Use more specific language names for better AI understanding
   const sourceLang = fromLang === "Chinese" ? "Simplified Chinese" : (fromLang === "Russian" ? "Russian language" : fromLang);
   const targetLang = toLang === "Chinese" ? "Simplified Chinese" : (toLang === "Russian" ? "Russian language" : toLang);
 
   console.log(`[DEWIAR] translateText called with: fromLang="${fromLang}" (${sourceLang}), toLang="${toLang}" (${targetLang})`);
-  const prompt = `Task: Translate the following text from ${sourceLang} to ${targetLang}.
-Instruction: Provide ONLY the translated text in ${targetLang}. Do not include any explanations, prefixes, quotes, or original text.
-Text to translate: ${text}`;
+  const prompt = `Translate ${sourceLang} -> ${targetLang}. Output ONLY the translation:\n${trimmedInput}`;
 
   console.log(`[DEWIAR] Translating from ${sourceLang} to ${targetLang}`);
   const response = await callDewiar(prompt);

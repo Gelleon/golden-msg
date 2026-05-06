@@ -114,6 +114,7 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
   const [isRequestingTranslation, setIsRequestingTranslation] = useState(false)
   const [mounted, setMounted] = useState(false)
   const isMountedRef = useRef(false)
+  const userOverrideViewModeRef = useRef(false)
   
   // To identify if the CURRENT user is an admin, we check the prop or fallback to localStorage
   const isCurrentUserAdmin = currentUserRole === "admin" || 
@@ -199,6 +200,35 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
   useEffect(() => {
     setEditContent(message.content_original)
   }, [message.content_original])
+
+  useEffect(() => {
+    userOverrideViewModeRef.current = false
+
+    if (message.translation_status === "pending") {
+      setViewMode("translated")
+      return
+    }
+
+    if (message.translation_status === "completed" && message.content_translated) {
+      setViewMode("translated")
+      return
+    }
+
+    setViewMode("original")
+  }, [message.id])
+
+  useEffect(() => {
+    if (userOverrideViewModeRef.current) return
+
+    if (message.translation_status === "pending") {
+      setViewMode("translated")
+      return
+    }
+
+    if (message.translation_status === "completed" && message.content_translated) {
+      setViewMode("translated")
+    }
+  }, [message.translation_status, message.content_translated])
 
   useEffect(() => {
     if (message.translation_status !== "pending") {
@@ -290,7 +320,6 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
       case "text":
         const hasTranslation = !!message.content_translated && message.translation_status === "completed"
         const canTranslate = !isEditing
-        const showTranslateButton = canTranslate && !hasTranslation && message.translation_status !== "pending"
         const showRetryButton = canTranslate && message.translation_status === "failed"
         const showPending = canTranslate && message.translation_status === "pending"
         const showTranslationBlock = canTranslate && viewMode === "translated" && hasTranslation
@@ -368,18 +397,21 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
                             "h-7 px-2 rounded-lg text-[11px] font-bold",
                             isCurrentUser ? "text-white/80 hover:bg-white/10 hover:text-white" : "text-slate-600 hover:bg-slate-100"
                           )}
-                          onClick={() => setViewMode(viewMode === "translated" ? "original" : "translated")}
+                          onClick={() => {
+                            userOverrideViewModeRef.current = true
+                            setViewMode(viewMode === "translated" ? "original" : "translated")
+                          }}
                         >
                           {viewMode === "translated" ? t("chat.showOriginal") : t("chat.showTranslation")}
                         </Button>
                       )}
 
-                      {(showTranslateButton || showRetryButton) && (
+                      {showRetryButton && (
                         <Button
                           size="icon"
                           variant="ghost"
-                          aria-label={showRetryButton ? t("chat.retryTranslate") : t("chat.translate")}
-                          title={showRetryButton ? t("chat.retryTranslate") : t("chat.translate")}
+                          aria-label={t("chat.retryTranslate")}
+                          title={t("chat.retryTranslate")}
                           className={cn(
                             "h-7 w-7 rounded-lg",
                             isCurrentUser ? "text-white/80 hover:bg-white/10 hover:text-white" : "text-slate-600 hover:bg-slate-100"
