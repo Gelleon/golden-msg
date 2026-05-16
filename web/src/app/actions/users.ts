@@ -9,7 +9,7 @@ export async function getUsers() {
   const session = await getSession()
   if (!session?.user) return []
 
-  if (session.user.role !== "admin") {
+  if (!["admin", "manager"].includes(session.user.role || "")) {
     return []
   }
 
@@ -66,6 +66,74 @@ export async function updateUserRole(userId: string, newRole: string) {
   } catch (error) {
     console.error("Update user role error:", error)
     return { error: "Failed to update role" }
+  }
+}
+
+const normalizeUserName = (value: unknown) => (typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "")
+
+const validateUserName = (value: string) => {
+  if (!value) return { ok: false as const, error: "Name cannot be empty" }
+  if (value.length > 60) return { ok: false as const, error: "Name is too long" }
+  if (/[\u0000-\u001F\u007F]/.test(value)) return { ok: false as const, error: "Invalid characters in name" }
+  if (/[<>]/.test(value)) return { ok: false as const, error: "Invalid characters in name" }
+  return { ok: true as const }
+}
+
+export async function updateUserName(userId: string, newFullName: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  if (!["admin", "manager"].includes(session.user.role || "")) {
+    return { error: "Permission denied" }
+  }
+
+  const normalized = normalizeUserName(newFullName)
+  const validation = validateUserName(normalized)
+  if (!validation.ok) return { error: validation.error }
+
+  try {
+    await ensureSchemaFixed()
+
+    const target = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, full_name: true, email: true, role: true },
+    })
+    if (!target) return { error: "User not found" }
+
+    if ((target.full_name || "") === normalized) {
+      return { success: true, user: { id: target.id, full_name: target.full_name } }
+    }
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: userId },
+        data: { full_name: normalized },
+      }),
+      prisma.auditLog.create({
+        data: {
+          user_id: session.user.id,
+          action: "user_name_changed",
+          details: JSON.stringify({
+            actor_id: session.user.id,
+            actor_role: session.user.role,
+            target_id: target.id,
+            target_email: target.email,
+            target_role: target.role,
+            old_full_name: target.full_name,
+            new_full_name: normalized,
+          }),
+        },
+      }),
+    ])
+
+    revalidatePath("/dashboard/users")
+    revalidatePath("/dashboard/settings")
+    revalidatePath("/dashboard/rooms")
+
+    return { success: true, user: { id: target.id, full_name: normalized } }
+  } catch (error) {
+    console.error("Update user name error:", error)
+    return { error: "Failed to update name" }
   }
 }
 

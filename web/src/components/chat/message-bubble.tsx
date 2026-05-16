@@ -89,6 +89,26 @@ const getUserColor = (userId: string) => {
   return GENTLE_COLORS[Math.abs(hash) % GENTLE_COLORS.length]
 }
 
+const normalizeSenderRole = (role: unknown): "admin" | "manager" | "partner" | "client" | null => {
+  if (role === "admin" || role === "manager" || role === "partner" || role === "client") return role
+  return null
+}
+
+const getRoleNameColorClass = (role: "admin" | "manager" | "partner" | "client" | null) => {
+  switch (role) {
+    case "admin":
+      return "text-red-600"
+    case "manager":
+      return "text-blue-600"
+    case "partner":
+      return "text-amber-700"
+    case "client":
+      return "text-emerald-600"
+    default:
+      return null
+  }
+}
+
 const isImage = (url: string | null) => {
   if (!url) return false
   const cleanUrl = url.split('#')[0].split('?')[0]
@@ -140,6 +160,8 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
 
   const { toast } = useToast()
   const mentionSegments = splitTextWithMentions(message.content_original || "", participants)
+  const senderRole = normalizeSenderRole((message as any)?.sender?.role)
+  const senderNameColorClass = getRoleNameColorClass(senderRole) || getUserColor(message.sender.id)
 
   const handleCopyText = async () => {
     try {
@@ -621,7 +643,26 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
             </Avatar>
           </div>
           <div className={cn("flex flex-col gap-1.5", isCurrentUser ? "items-end" : "items-start")}>
-            <div className={cn("px-4 py-3 rounded-2xl shadow-sm border", isCurrentUser ? "bg-blue-600 text-white border-blue-500" : "bg-white text-slate-800 border-slate-100")}>
+            {showSenderName && !isCurrentUser && (
+              <div
+                data-testid="message-sender-name"
+                className={cn(
+                  "px-4 pb-1 text-[15px] md:text-[16px] leading-[16px] md:leading-[18px] font-semibold select-none truncate max-w-full",
+                  senderNameColorClass
+                )}
+              >
+                {message.sender.full_name}
+              </div>
+            )}
+            <div
+              className={cn(
+                "px-4 py-3 rounded-2xl shadow-sm overflow-hidden relative",
+                isCurrentUser 
+                  ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white" 
+                  : "bg-white text-slate-900 border border-slate-100"
+              )}
+              data-testid="message-bubble"
+            >
               <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content_original}</p>
             </div>
           </div>
@@ -670,6 +711,18 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
                 <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
               </div>
             )}
+
+            {showSenderName && !isCurrentUser && (
+              <div
+                data-testid="message-sender-name"
+                className={cn(
+                  "px-4 pb-1 text-[15px] md:text-[16px] leading-[16px] md:leading-[18px] font-semibold select-none truncate max-w-full",
+                  senderNameColorClass
+                )}
+              >
+                {message.sender.full_name}
+              </div>
+            )}
             
             <div className={cn(
               "flex items-center gap-2 group/bubble-content max-w-full",
@@ -685,15 +738,9 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
                 !isCurrentUser && showSenderName && "rounded-tl-[5px]",
                 !isCurrentUser && !showSenderName && "rounded-tl-[20px]",
                 "hover:shadow-md max-w-[320px] sm:max-w-[400px]"
-              )}>
-                {showSenderName && !isCurrentUser && (
-                  <div className={cn(
-                    "px-4 pt-2.5 pb-0 text-[13px] font-bold leading-none select-none truncate max-w-full",
-                    getUserColor(message.sender.id)
-                  )}>
-                    {message.sender.full_name}
-                  </div>
-                )}
+              )}
+              data-testid="message-bubble"
+              >
                 {renderContent()}
                 
                 {/* Message Info (Time & Status) */}
@@ -774,7 +821,7 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
             </div>
           </div>
         </ContextMenuTrigger>
-        <ContextMenuContent className="w-48 p-1.5 rounded-xl shadow-2xl border-slate-200/60 bg-white/95 backdrop-blur-sm">
+        <ContextMenuContent className="w-48 p-1.5 rounded-xl border border-slate-200/70 bg-white text-slate-900 shadow-xl shadow-black/5 ring-1 ring-black/5 backdrop-blur-sm">
           <ContextMenuItem 
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-700 focus:bg-blue-50 focus:text-blue-600 transition-colors cursor-pointer group"
             onClick={() => onReply?.(message)}

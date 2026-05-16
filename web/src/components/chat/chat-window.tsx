@@ -424,7 +424,7 @@ export function ChatWindow({
               const timeDiff = prevMessage 
                 ? (new Date(message.created_at).getTime() - new Date(prevMessage.created_at).getTime()) / (1000 * 60)
                 : 0
-              const showSenderName = (participants.length > 2) && (!isSameSenderAsPrev || timeDiff > 5)
+              const showSenderName = !isSameSenderAsPrev || timeDiff > 5
 
               // Telegram style: show avatar if it's the last message from this sender in a row
               const nextMessage = index < messages.length - 1 ? messages[index + 1] : null

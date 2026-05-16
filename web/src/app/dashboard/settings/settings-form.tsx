@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect, useCallback, useRef } from "react"
-import { getUsers, updateUserRole, updateProfile } from "@/app/actions/users"
+import { getUsers, updateUserName, updateUserRole, updateProfile } from "@/app/actions/users"
 import { uploadFile } from "@/app/actions/upload"
 import { NotificationManagementForm } from "./notification-management-form"
 import { NotificationSettingsForm } from "./notification-settings-form"
@@ -41,7 +41,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Loader2, User, Lock, Camera, Check, AlertCircle, Globe, Users, ShieldCheck, Briefcase, UserCheck, UserCog, Search, Filter, MoreHorizontal, ChevronDown, Save, Bell, BarChart3 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Loader2, User, Lock, Camera, Check, AlertCircle, Globe, Users, ShieldCheck, Briefcase, UserCheck, UserCog, Search, Filter, MoreHorizontal, ChevronDown, Save, Bell, BarChart3, Pencil } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { motion, AnimatePresence } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -82,7 +90,9 @@ export function SettingsForm({ user }: { user: any }) {
     setIsMounted(true)
     const tab = searchParams.get("tab")
     if (tab && ["profile", "security", "language", "users", "notifications", "notifications_admin"].includes(tab)) {
-      if (["users", "notifications_admin"].includes(tab) && user?.role !== "admin") {
+      const canAccessUsersTab = user?.role === "admin" || user?.role === "manager"
+      const canAccessNotificationsAdminTab = user?.role === "admin"
+      if ((tab === "users" && !canAccessUsersTab) || (tab === "notifications_admin" && !canAccessNotificationsAdminTab)) {
         setActiveTab("profile")
       } else {
         setActiveTab(tab)
@@ -176,7 +186,7 @@ export function SettingsForm({ user }: { user: any }) {
                 <Bell className="h-3.5 w-3.5" />
                 {t('tabs.notifications')}
               </TabsTrigger>
-              {user?.role === "admin" && (
+              {(user?.role === "admin" || user?.role === "manager") && (
                 <>
                   <TabsTrigger 
                     value="users" 
@@ -185,13 +195,15 @@ export function SettingsForm({ user }: { user: any }) {
                     <UserCog className="h-3.5 w-3.5" />
                     {t('tabs.users')}
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="notifications_admin" 
-                    className="flex flex-1 md:flex-none items-center justify-center gap-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white px-3 py-2 text-xs font-bold transition-all whitespace-nowrap min-w-[120px]"
-                  >
-                    <BarChart3 className="h-3.5 w-3.5" />
-                    {t('tabs.notifications_admin')}
-                  </TabsTrigger>
+                  {user?.role === "admin" && (
+                    <TabsTrigger 
+                      value="notifications_admin" 
+                      className="flex flex-1 md:flex-none items-center justify-center gap-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white px-3 py-2 text-xs font-bold transition-all whitespace-nowrap min-w-[120px]"
+                    >
+                      <BarChart3 className="h-3.5 w-3.5" />
+                      {t('tabs.notifications_admin')}
+                    </TabsTrigger>
+                  )}
                 </>
               )}
             </TabsList>
@@ -221,15 +233,15 @@ export function SettingsForm({ user }: { user: any }) {
                 <NotificationSettingsForm user={user} />
               </TabsContent>
 
+              {(user?.role === "admin" || user?.role === "manager") && (
+                <TabsContent value="users" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                  <UsersManagementForm toast={toast} roleLabels={roleLabels} roleIcons={roleIcons} roleColors={roleColors} currentUserId={user?.id} currentUserRole={user?.role} />
+                </TabsContent>
+              )}
               {user?.role === "admin" && (
-                <>
-                  <TabsContent value="users" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-                    <UsersManagementForm toast={toast} roleLabels={roleLabels} roleIcons={roleIcons} roleColors={roleColors} />
-                  </TabsContent>
-                  <TabsContent value="notifications_admin" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-                    <NotificationManagementForm />
-                  </TabsContent>
-                </>
+                <TabsContent value="notifications_admin" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+                  <NotificationManagementForm />
+                </TabsContent>
               )}
             </motion.div>
           </AnimatePresence>
@@ -239,13 +251,19 @@ export function SettingsForm({ user }: { user: any }) {
   )
 }
 
-function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors }: { toast: any, roleLabels: Record<string, string>, roleIcons: Record<string, any>, roleColors: Record<string, string> }) {
+function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, currentUserId, currentUserRole }: { toast: any, roleLabels: Record<string, string>, roleIcons: Record<string, any>, roleColors: Record<string, string>, currentUserId?: string, currentUserRole?: string }) {
   const { t } = useTranslation()
   const [users, setUsers] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [pendingChangesId, setPendingChangesId] = useState<string | null>(null)
+  const [editNameOpen, setEditNameOpen] = useState(false)
+  const [editNameUserId, setEditNameUserId] = useState<string | null>(null)
+  const [editNameUserLabel, setEditNameUserLabel] = useState<string>("")
+  const [editNameValue, setEditNameValue] = useState<string>("")
+  const [editNameError, setEditNameError] = useState<string | null>(null)
+  const [isSavingName, setIsSavingName] = useState(false)
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true)
@@ -259,6 +277,7 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors }: { toa
   }, [fetchUsers])
 
   const handleRoleSelect = async (userId: string, newRole: string) => {
+    if (currentUserRole !== "admin") return
     const user = users.find(u => u.id === userId)
     if (!user || user.role === newRole) return
 
@@ -305,7 +324,59 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors }: { toa
     }
   }
 
+  const normalizeName = (value: string) => value.trim().replace(/\s+/g, " ")
+  const validateName = (value: string) => {
+    if (!value) return t("settings.users.editNameValidationEmpty")
+    if (value.length > 60) return t("settings.users.editNameValidationTooLong")
+    if (/[\u0000-\u001F\u007F]/.test(value) || /[<>]/.test(value)) return t("settings.users.editNameValidationInvalidChars")
+    return null
+  }
 
+  const openEditName = (u: any) => {
+    const current = u.full_name || ""
+    setEditNameUserId(u.id)
+    setEditNameUserLabel(u.full_name || u.email)
+    setEditNameValue(current)
+    setEditNameError(null)
+    setEditNameOpen(true)
+  }
+
+  const handleSaveName = async () => {
+    if (!editNameUserId) return
+    const normalized = normalizeName(editNameValue)
+    const err = validateName(normalized)
+    if (err) {
+      setEditNameError(err)
+      return
+    }
+    setIsSavingName(true)
+    setEditNameError(null)
+    try {
+      const res = await updateUserName(editNameUserId, normalized)
+      if (res?.success) {
+        setUsers(prev => prev.map(u => u.id === editNameUserId ? { ...u, full_name: normalized } : u))
+        toast({
+          title: t("common.success"),
+          description: t("settings.users.editNameSuccess"),
+        })
+        setEditNameOpen(false)
+      } else {
+        toast({
+          title: t("common.error"),
+          description: res?.error || t("settings.users.editNameError"),
+          variant: "destructive",
+        })
+      }
+    } catch (e) {
+      toast({
+        title: t("common.error"),
+        description: t("settings.users.editNameError"),
+        variant: "destructive",
+      })
+    } finally {
+      setIsSavingName(false)
+    }
+  }
 
   const filteredUsers = users.filter(user => 
     user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -372,6 +443,7 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors }: { toa
                   filteredUsers.map((user) => {
                     const currentRole = user.role
                     const RoleIcon = roleIcons[currentRole] || Users
+                    const canEditThisName = !!currentUserId && user.id !== currentUserId
                     return (
                       <TableRow key={user.id} className="group hover:bg-slate-50/50 border-slate-100 transition-colors">
                         <TableCell className="pl-6 py-4">
@@ -418,49 +490,72 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors }: { toa
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-64 rounded-2xl border border-slate-200 shadow-xl p-3 bg-white/98 backdrop-blur-2xl">
-                                  <DropdownMenuLabel className="text-[9px] font-black text-slate-400 uppercase tracking-wider px-3 py-2">{t('settings.users.selectNewRole')}</DropdownMenuLabel>
-                                  <DropdownMenuSeparator className="bg-slate-100 my-1.5 h-px rounded-full" />
-                                  <div className="grid gap-1">
-                                    {Object.entries(roleLabels).map(([role, label]) => {
-                                      const Icon = roleIcons[role] || Users
-                                      const isActive = currentRole === role
-                                      const isOriginal = user.role === role
-                                      return (
-                                        <DropdownMenuItem 
-                                          key={role}
-                                          onSelect={(e) => {
-                                            e.preventDefault()
-                                            handleRoleSelect(user.id, role)
-                                          }}
-                                          className={cn(
-                                            "flex items-center gap-3 rounded-xl cursor-pointer transition-all py-2.5 px-3 text-sm font-bold",
-                                            isActive 
-                                              ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20" 
-                                              : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                                          )}
-                                        >
-                                          <div className={cn(
-                                            "p-1.5 rounded-lg border transition-colors",
-                                            isActive ? "bg-white/10 border-white/20" : "bg-slate-50 border-slate-100"
-                                          )}>
-                                            <Icon className={cn("h-4 w-4", isActive ? "text-white" : "text-slate-400")} />
-                                          </div>
-                                          <div className="flex flex-col">
-                                            <div className="flex items-center gap-2">
-                                              <span>{label}</span>
-                                              {isOriginal && !isActive && (
-                                                <span className="text-[8px] bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded-md">{t('settings.users.current')}</span>
+                                  <DropdownMenuItem
+                                    disabled={!canEditThisName}
+                                    onSelect={(e) => {
+                                      e.preventDefault()
+                                      if (!canEditThisName) return
+                                      openEditName(user)
+                                    }}
+                                    className={cn(
+                                      "flex items-center gap-3 rounded-xl transition-all py-2.5 px-3 text-sm font-bold",
+                                      canEditThisName ? "text-slate-700 hover:bg-slate-50 hover:text-slate-900 cursor-pointer" : "opacity-50 cursor-not-allowed"
+                                    )}
+                                  >
+                                    <div className="p-1.5 rounded-lg border bg-slate-50 border-slate-100">
+                                      <Pencil className="h-4 w-4 text-slate-400" />
+                                    </div>
+                                    <span>{t("settings.users.editName")}</span>
+                                  </DropdownMenuItem>
+
+                                  {currentUserRole === "admin" && (
+                                    <>
+                                      <DropdownMenuSeparator className="bg-slate-100 my-1.5 h-px rounded-full" />
+                                      <DropdownMenuLabel className="text-[9px] font-black text-slate-400 uppercase tracking-wider px-3 py-2">{t('settings.users.selectNewRole')}</DropdownMenuLabel>
+                                      <DropdownMenuSeparator className="bg-slate-100 my-1.5 h-px rounded-full" />
+                                      <div className="grid gap-1">
+                                        {Object.entries(roleLabels).map(([role, label]) => {
+                                          const Icon = roleIcons[role] || Users
+                                          const isActive = currentRole === role
+                                          const isOriginal = user.role === role
+                                          return (
+                                            <DropdownMenuItem 
+                                              key={role}
+                                              onSelect={(e) => {
+                                                e.preventDefault()
+                                                handleRoleSelect(user.id, role)
+                                              }}
+                                              className={cn(
+                                                "flex items-center gap-3 rounded-xl cursor-pointer transition-all py-2.5 px-3 text-sm font-bold",
+                                                isActive 
+                                                  ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20" 
+                                                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                                               )}
-                                            </div>
-                                            <span className={cn("text-[8px] font-black uppercase tracking-wider opacity-60", isActive ? "text-white" : "text-slate-400")}>
-                                              {role === "admin" ? t('roles.permissions.full') : role === "manager" ? t('roles.permissions.management') : t('roles.permissions.view')}
-                                            </span>
-                                          </div>
-                                          {isActive && <Check className="h-4 w-4 ml-auto text-white" />}
-                                        </DropdownMenuItem>
-                                      )
-                                    })}
-                                  </div>
+                                            >
+                                              <div className={cn(
+                                                "p-1.5 rounded-lg border transition-colors",
+                                                isActive ? "bg-white/10 border-white/20" : "bg-slate-50 border-slate-100"
+                                              )}>
+                                                <Icon className={cn("h-4 w-4", isActive ? "text-white" : "text-slate-400")} />
+                                              </div>
+                                              <div className="flex flex-col">
+                                                <div className="flex items-center gap-2">
+                                                  <span>{label}</span>
+                                                  {isOriginal && !isActive && (
+                                                    <span className="text-[8px] bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded-md">{t('settings.users.current')}</span>
+                                                  )}
+                                                </div>
+                                                <span className={cn("text-[8px] font-black uppercase tracking-wider opacity-60", isActive ? "text-white" : "text-slate-400")}>
+                                                  {role === "admin" ? t('roles.permissions.full') : role === "manager" ? t('roles.permissions.management') : t('roles.permissions.view')}
+                                                </span>
+                                              </div>
+                                              {isActive && <Check className="h-4 w-4 ml-auto text-white" />}
+                                            </DropdownMenuItem>
+                                          )
+                                        })}
+                                      </div>
+                                    </>
+                                  )}
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             )}
@@ -474,6 +569,62 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors }: { toa
           </div>
         )}
       </CardContent>
+      <Dialog
+        open={editNameOpen}
+        onOpenChange={(open) => {
+          setEditNameOpen(open)
+          if (!open) {
+            setEditNameUserId(null)
+            setEditNameUserLabel("")
+            setEditNameValue("")
+            setEditNameError(null)
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-black/10 ring-1 ring-black/5">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-slate-900">{t("settings.users.editNameTitle")}</DialogTitle>
+            <DialogDescription className="text-sm font-medium text-slate-600">
+              {t("settings.users.editNameDesc")} {editNameUserLabel ? `(${editNameUserLabel})` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label className="text-xs font-black text-slate-700 uppercase tracking-wider">{t("settings.users.editNameLabel")}</Label>
+            <Input
+              value={editNameValue}
+              onChange={(e) => {
+                setEditNameValue(e.target.value)
+                if (editNameError) setEditNameError(null)
+              }}
+              placeholder={t("settings.users.editNamePlaceholder")}
+              className="h-11 bg-white border-2 border-slate-200 focus:border-slate-900 focus:ring-slate-900/5 rounded-xl text-sm font-bold transition-all shadow-sm placeholder:text-slate-400 placeholder:font-medium"
+              autoFocus
+            />
+            {editNameError && (
+              <div className="text-xs font-bold text-red-600">{editNameError}</div>
+            )}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-10 rounded-xl font-black text-slate-600 hover:bg-slate-100"
+              onClick={() => setEditNameOpen(false)}
+              disabled={isSavingName}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="button"
+              className="h-10 rounded-xl font-black bg-slate-900 text-white hover:bg-slate-800"
+              onClick={handleSaveName}
+              disabled={isSavingName}
+            >
+              {isSavingName ? <Loader2 className="h-4 w-4 animate-spin" /> : t("common.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

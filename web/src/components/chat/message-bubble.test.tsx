@@ -86,7 +86,7 @@ describe('MessageBubble Deletion', () => {
       id: 'user-1',
       full_name: 'Test User',
       avatar_url: null,
-      role: 'user'
+      role: 'client'
     }
   }
 
@@ -190,7 +190,7 @@ describe('MessageBubble Manual Translation UI', () => {
         id: 'user-1',
         full_name: 'Test User',
         avatar_url: null,
-        role: 'user',
+        role: 'client',
       },
     }
 
@@ -216,7 +216,7 @@ describe('MessageBubble Manual Translation UI', () => {
         id: 'user-1',
         full_name: 'Test User',
         avatar_url: null,
-        role: 'user',
+        role: 'client',
       },
     }
 
@@ -255,5 +255,69 @@ describe('MessageBubble Manual Translation UI', () => {
     await waitFor(() => {
       expect(screen.getByText('你好')).toBeInTheDocument()
     })
+  })
+})
+
+describe('MessageBubble sender name and role coloring', () => {
+  const baseMsg = {
+    id: 'msg-role',
+    content_original: 'Role test',
+    content_translated: null,
+    language_original: 'ru',
+    message_type: 'text',
+    file_url: null,
+    voice_transcription: null,
+    created_at: new Date().toISOString(),
+    translation_status: 'none',
+    sender: {
+      id: 'user-x',
+      full_name: 'Anna Sorokina',
+      avatar_url: null,
+      role: 'client',
+    },
+  }
+
+  it('renders sender name above the bubble when showSenderName=true for non-current user', () => {
+    render(<MessageBubble message={baseMsg as any} isCurrentUser={false} showSenderName={true} />)
+    expect(screen.getByTestId('message-sender-name')).toHaveTextContent('Anna Sorokina')
+  })
+
+  it.each([
+    ['admin', 'text-red-600'],
+    ['manager', 'text-blue-600'],
+    ['partner', 'text-amber-700'],
+    ['client', 'text-emerald-600'],
+  ])('applies role color to sender name role=%s', (role, textClass) => {
+    const msg = { ...baseMsg, sender: { ...baseMsg.sender, role } }
+    render(<MessageBubble message={msg as any} isCurrentUser={false} showSenderName={true} />)
+    const name = screen.getByTestId('message-sender-name')
+    expect(name.className).toContain(textClass as string)
+  })
+
+  it.each([
+    ['admin'],
+    ['manager'],
+    ['partner'],
+    ['client'],
+  ])('keeps original bubble color for outgoing message role=%s', (role) => {
+    const msg = { ...baseMsg, sender: { ...baseMsg.sender, role } }
+    render(<MessageBubble message={msg as any} isCurrentUser={true} />)
+    const bubble = screen.getByTestId('message-bubble')
+    expect(bubble.className).toContain('from-blue-600')
+    expect(bubble.className).toContain('to-blue-700')
+    expect(bubble.className).toContain('text-white')
+  })
+
+  it.each([
+    ['admin'],
+    ['manager'],
+    ['partner'],
+    ['client'],
+  ])('keeps original bubble color for incoming message role=%s', (role) => {
+    const msg = { ...baseMsg, sender: { ...baseMsg.sender, role } }
+    render(<MessageBubble message={msg as any} isCurrentUser={false} />)
+    const bubble = screen.getByTestId('message-bubble')
+    expect(bubble.className).toContain('bg-white')
+    expect(bubble.className).toContain('border-slate-100')
   })
 })

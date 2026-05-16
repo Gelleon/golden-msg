@@ -65,7 +65,7 @@ describe('ChatWindow Deletion Integration', () => {
         id: 'user-1',
         full_name: 'Test User',
         avatar_url: null,
-        role: 'user'
+        role: 'client'
       }
     }
   ]
