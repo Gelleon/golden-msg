@@ -47,7 +47,7 @@ export async function ensureSchemaFixed() {
   
           await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "is_important" BOOLEAN DEFAULT 0;`).catch(() => {});
           await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "is_important" BOOLEAN DEFAULT 0;`).catch(() => {});
-        }
+      }
         
         if (isUserTable) {
           await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "preferred_language" TEXT DEFAULT 'ru';`).catch(() => {});
@@ -108,6 +108,9 @@ export async function ensureSchemaFixed() {
         if (isRoomTable) {
           await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "room_id" TEXT;`).catch(() => {});
           await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "room_id" TEXT;`).catch(() => {});
+          
+          await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "parent_id" TEXT;`).catch(() => {});
+          await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "parent_id" TEXT;`).catch(() => {});
         }
       }
       await ensureLegacyDataMigrated()

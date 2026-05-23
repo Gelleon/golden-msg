@@ -242,7 +242,7 @@ export async function acceptRoomInvite(roomId: string, token: string) {
 }
 
 export async function getRooms() {
-  ensureSchemaFixed().catch(console.error)
+  await ensureSchemaFixed()
   const session = await getSession()
   if (!session?.user) return []
 
@@ -317,7 +317,7 @@ export async function getRooms() {
 
       return {
         id: room.id,
-        parent_id: room.parent_id ?? null,
+        parent_id: (room as any).parent_id ?? null,
         name: room.name ?? null,
         type: room.type,
         description: room.description ?? null,
