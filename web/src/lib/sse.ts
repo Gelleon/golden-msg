@@ -14,3 +14,8 @@ export function sendSSEUpdate(roomId: string, data: Record<string, unknown>) {
   console.log(`[SSE] Emitting update for room ${roomId}:`, JSON.stringify(data).substring(0, 100));
   sseEmitter.emit(`message-${roomId}`, data);
 }
+
+export function sendSSEUserUpdate(userId: string, data: Record<string, unknown>) {
+  console.log(`[SSE] Emitting global update for user ${userId}:`, JSON.stringify(data).substring(0, 100));
+  sseEmitter.emit(`user-${userId}`, data);
+}

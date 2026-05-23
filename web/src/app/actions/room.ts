@@ -317,6 +317,7 @@ export async function getRooms() {
 
       return {
         id: room.id,
+        parent_id: room.parent_id ?? null,
         name: room.name ?? null,
         type: room.type,
         description: room.description ?? null,
@@ -333,7 +334,7 @@ export async function getRooms() {
   }
 }
 
-export async function createRoom(name: string) {
+export async function createRoom(name: string, description?: string, parent_id?: string) {
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
 
@@ -352,6 +353,8 @@ export async function createRoom(name: string) {
     const room = await prisma.room.create({
       data: {
         name,
+        description,
+        parent_id,
         created_by: session.user.id,
         type: "group",
         participants: {
@@ -1383,16 +1386,36 @@ export async function deleteRoom(roomId: string) {
   }
 
   try {
+    // Рекурсивно находим все дочерние комнаты
+    const getChildrenIds = async (parentId: string): Promise<string[]> => {
+      const children = await prisma.room.findMany({ where: { parent_id: parentId }, select: { id: true } })
+      let ids = children.map(c => c.id)
+      for (const child of children) {
+        const grandChildren = await getChildrenIds(child.id)
+        ids = [...ids, ...grandChildren]
+      }
+      return ids
+    }
+
+    const allChildrenIds = await getChildrenIds(roomId)
+
+    // Удаляем все дочерние комнаты, а затем родительскую
+    if (allChildrenIds.length > 0) {
+      await prisma.room.deleteMany({
+        where: { id: { in: allChildrenIds } }
+      })
+    }
+
     await prisma.room.delete({
       where: { id: roomId },
     })
 
     // Log the action
-    console.log(`[LOG] User ${session.user.id} (${currentUser?.role}) deleted room ${roomId} (type: ${room.type})`)
+    console.log(`[LOG] User ${session.user.id} (${currentUser?.role}) deleted room ${roomId} and its ${allChildrenIds.length} children. (type: ${room.type})`)
 
     revalidatePath("/dashboard")
     
-    return { success: true }
+    return { success: true, deletedIds: [roomId, ...allChildrenIds] }
   } catch (error) {
     console.error("Delete room error:", error)
     return { error: "Failed to delete room" }

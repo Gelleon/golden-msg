@@ -73,6 +73,9 @@ model Room {
   created_at   DateTime          @default(now())
   updated_at   DateTime          @default(now()) @updatedAt
   room_id      String?
+  parent_id    String?
+  parent       Room?             @relation("RoomHierarchy", fields: [parent_id], references: [id], onDelete: Cascade)
+  children     Room[]            @relation("RoomHierarchy")
   messages     Message[]
   owner        User?             @relation(fields: [created_by], references: [id])
   invites      RoomInvite[]

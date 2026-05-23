@@ -9,39 +9,44 @@ export const maxDuration = 0; // Allow long-running SSE connections
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const roomId = searchParams.get("roomId");
-
-  if (!roomId) {
-    return new Response("Missing roomId", { status: 400 });
-  }
+  const isGlobal = searchParams.get("global") === "true";
 
   const session = await getSession()
   if (!session?.user) {
     return new Response("Unauthorized", { status: 401 })
   }
 
-  const room = await prisma.room.findUnique({
-    where: { id: roomId },
-    select: { id: true, created_by: true },
-  })
-  if (!room) {
-    return new Response("Room not found", { status: 404 })
-  }
+  let eventName = "";
 
-  const isAdminOrManager = ["admin", "manager"].includes(session.user.role || "")
-  const isCreator = room.created_by === session.user.id
-  if (!isAdminOrManager && !isCreator) {
-    const membership = await prisma.roomParticipant.findUnique({
-      where: { room_id_user_id: { room_id: roomId, user_id: session.user.id } },
-      select: { user_id: true },
+  if (isGlobal) {
+    eventName = `user-${session.user.id}`;
+  } else if (roomId) {
+    const room = await prisma.room.findUnique({
+      where: { id: roomId },
+      select: { id: true, created_by: true },
     })
-    if (!membership) {
-      return new Response("Forbidden", { status: 403 })
+    if (!room) {
+      return new Response("Room not found", { status: 404 })
     }
+
+    const isAdminOrManager = ["admin", "manager"].includes(session.user.role || "")
+    const isCreator = room.created_by === session.user.id
+    if (!isAdminOrManager && !isCreator) {
+      const membership = await prisma.roomParticipant.findUnique({
+        where: { room_id_user_id: { room_id: roomId, user_id: session.user.id } },
+        select: { user_id: true },
+      })
+      if (!membership) {
+        return new Response("Forbidden", { status: 403 })
+      }
+    }
+    eventName = `message-${roomId}`;
+  } else {
+    return new Response("Missing roomId or global flag", { status: 400 });
   }
 
   let isClosed = false;
   let interval: NodeJS.Timeout;
-  const eventName = `message-${roomId}`;
   
   // Create a placeholder for onMessage so we can reference it in cancel
   let onMessage: (data: any) => void = () => {};
@@ -66,7 +71,7 @@ export async function GET(req: NextRequest) {
 
       onMessage = (data: any) => {
         if (isClosed) return;
-        console.log(`[SSE ROUTE] Sending update to client for room ${roomId}`);
+        console.log(`[SSE ROUTE] Sending update to client for event ${eventName}`);
         send(data);
       };
 

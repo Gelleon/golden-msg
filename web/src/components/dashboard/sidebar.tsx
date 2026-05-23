@@ -58,6 +58,9 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   const [rooms, setRooms] = useState<any[]>([])
   const [dms, setDms] = useState<any[]>([])
   const [newRoomName, setNewRoomName] = useState("")
+  const [newRoomDescription, setNewRoomDescription] = useState("")
+  const [parentRoomIdForNewRoom, setParentRoomIdForNewRoom] = useState<string | null>(null)
+  const [expandedRooms, setExpandedRooms] = useState<Record<string, boolean>>({})
   const [isRoomDialogOpen, setIsRoomDialogOpen] = useState(false)
   const [isDMDialogOpen, setIsDMDialogOpen] = useState(false)
   const [isAddUserToDMDialogOpen, setIsAddUserToDMDialogOpen] = useState(false)
@@ -91,6 +94,168 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     return (Date.now() - new Date(lastActiveAt).getTime() <= 2 * 60 * 1000)
   }
 
+  const toggleRoomExpansion = (roomId: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setExpandedRooms(prev => ({ ...prev, [roomId]: !prev[roomId] }))
+  }
+
+  const handleCreateSubRoom = (roomId: string) => {
+    setParentRoomIdForNewRoom(roomId)
+    setIsRoomDialogOpen(true)
+  }
+
+  const buildTree = (roomsList: any[]) => {
+    const map = new Map<string, any>()
+    roomsList.forEach(r => map.set(r.id, { ...r, children: [] }))
+    const roots: any[] = []
+    roomsList.forEach(r => {
+      if (r.parent_id) {
+        const parent = map.get(r.parent_id)
+        if (parent) {
+          parent.children.push(map.get(r.id))
+        } else {
+          roots.push(map.get(r.id))
+        }
+      } else {
+        roots.push(map.get(r.id))
+      }
+    })
+    return roots
+  }
+
+  const rootRooms = buildTree(rooms)
+
+  const renderRoom = (room: any, depth: number = 0) => {
+    const isExpanded = expandedRooms[room.id]
+    const hasChildren = room.children && room.children.length > 0
+    const paddingLeft = depth * 16
+
+    return (
+      <div key={room.id} className="w-full">
+        <motion.div
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ContextMenu>
+            <ContextMenuTrigger asChild className="sidebar-item-trigger">
+              <Link
+                href={`/dashboard/rooms/${room.id}`}
+                className="block"
+                onClick={onClose}
+              >
+                <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
+                  <div
+                    className={cn(
+                      buttonVariants({ variant: "ghost" }),
+                      "w-full justify-start font-medium transition-all duration-300 group rounded-xl px-3 h-auto min-h-[2.5rem] py-2 relative cursor-pointer",
+                      pathname === `/dashboard/rooms/${room.id}` 
+                        ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10" 
+                        : "text-slate-400 hover:text-white hover:bg-white/5"
+                    )}
+                    style={{ paddingLeft: `${12 + paddingLeft}px` }}
+                  >
+                    <div className="flex items-center absolute left-1" style={{ marginLeft: `${paddingLeft}px` }}>
+                      {hasChildren ? (
+                        <div
+                          onClick={(e) => toggleRoomExpansion(room.id, e)}
+                          className="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded cursor-pointer text-slate-500 hover:text-white transition-colors"
+                        >
+                          {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 flex items-center justify-center">
+                          <div className={cn(
+                            "w-1.5 h-1.5 rounded-full transition-all duration-300 shrink-0",
+                            pathname === `/dashboard/rooms/${room.id}` ? "bg-amber-500 scale-125" : "bg-slate-700 group-hover:bg-slate-500"
+                          )} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1 ml-6">
+                      <div className="flex items-center">
+                        <span className={cn(
+                          "truncate flex-1 text-left transition-colors",
+                          room.unreadCount > 0 ? "font-bold text-white" : "font-medium"
+                        )}>
+                          {room.name}
+                        </span>
+                        {room.unreadCount > 0 && pathname !== `/dashboard/rooms/${room.id}` && (
+                          <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20 ml-2 animate-pulse">
+                            {room.unreadCount}
+                          </span>
+                        )}
+                        {pathname === `/dashboard/rooms/${room.id}` && (
+                          <motion.div 
+                            layoutId="activeRoomGlow"
+                            className="w-1.5 h-1.5 shrink-0 rounded-full bg-amber-500 animate-pulse ml-2" 
+                          />
+                        )}
+                      </div>
+                      {room.description && (
+                        <span className={cn(
+                          "text-[10px] mt-0.5 line-clamp-1 text-left pr-2",
+                          room.unreadCount > 0 ? "text-slate-400 font-medium" : "text-slate-500 font-normal"
+                        )}>
+                          {room.description}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              </Link>
+            </ContextMenuTrigger>
+            <ContextMenuContent className="w-56 bg-[#1E293B] border-white/10 text-slate-200">
+              <ContextMenuItem 
+                onClick={() => setRoomInfoDialogId(room.id)}
+                className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+              >
+                <Info className="mr-2 h-4 w-4 text-blue-400" />
+                <span>{t('roomInfo.title') || "Информация о комнате"}</span>
+              </ContextMenuItem>
+              {canCreateRoom && (
+                <ContextMenuItem 
+                  onClick={() => handleCreateSubRoom(room.id)}
+                  className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
+                >
+                  <Plus className="mr-2 h-4 w-4 text-green-400" />
+                  <span>{t('sidebar.createSubRoom') || "Создать подкомнату"}</span>
+                </ContextMenuItem>
+              )}
+              {canEditRoom && (
+                <>
+                  <ContextMenuItem 
+                    onClick={() => handleEditRoom(room)}
+                    className="hover:bg-amber-500 hover:text-white focus:bg-amber-500 focus:text-white cursor-pointer"
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    <span>{t('sidebar.editRoom')}</span>
+                  </ContextMenuItem>
+                  {profile?.role === "admin" && (
+                    <ContextMenuItem 
+                      onClick={() => handleDeleteRoom(room.id)}
+                      className="hover:bg-red-500 hover:text-white focus:bg-red-500 focus:text-white cursor-pointer text-red-400"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      <span>{t('sidebar.deleteRoom')}</span>
+                    </ContextMenuItem>
+                  )}
+                </>
+              )}
+            </ContextMenuContent>
+          </ContextMenu>
+        </motion.div>
+        {isExpanded && hasChildren && (
+          <div className="flex flex-col mt-1">
+            {room.children.map((child: any) => renderRoom(child, depth + 1))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   const fetchRoomsAndDMs = async () => {
     try {
       const [fetchedRooms, fetchedDMs] = await Promise.all([
@@ -111,8 +276,37 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     
     // Polling every 30 seconds instead of 5 to reduce server load
     const interval = setInterval(fetchRoomsAndDMs, 30000)
-    return () => clearInterval(interval)
+
+    // Global SSE for real-time unread updates
+    const sse = new EventSource(`/api/sse?global=true`);
+    sse.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "unread_update") {
+          fetchRoomsAndDMs();
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+    };
+
+    return () => {
+      clearInterval(interval);
+      sse.close();
+    }
   }, [user.id])
+
+  useEffect(() => {
+    if (!mounted) return;
+    const totalUnread = rooms.reduce((acc, r) => acc + (r.unreadCount || 0), 0) + 
+                        dms.reduce((acc, r) => acc + (r.unreadCount || 0), 0);
+    
+    if (totalUnread > 0) {
+      document.title = `(${totalUnread}) Dewiar Chat`;
+    } else {
+      document.title = `Dewiar Chat`;
+    }
+  }, [rooms, dms, mounted])
 
   const handleSignOut = async () => {
     await logout()
@@ -122,10 +316,12 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     if (!newRoomName.trim()) return
 
     try {
-      const result = await createRoom(newRoomName)
+      const result = await createRoom(newRoomName, newRoomDescription, parentRoomIdForNewRoom || undefined)
 
       if (result.success && result.room) {
         setNewRoomName("")
+        setNewRoomDescription("")
+        setParentRoomIdForNewRoom(null)
         setIsRoomDialogOpen(false)
         fetchRoomsAndDMs()
         router.push(`/dashboard/rooms/${result.room.id}`)
@@ -288,7 +484,8 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
 
     if (result.success) {
       fetchRoomsAndDMs()
-      if (pathname === `/dashboard/rooms/${roomId}`) {
+      const currentRoomId = pathname.split('/').pop()
+      if (result.deletedIds?.includes(currentRoomId || '') || pathname === `/dashboard/rooms/${roomId}`) {
         router.push("/dashboard")
       }
     } else {
@@ -303,7 +500,8 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
       setIsDeleteDialogOpen(false)
       setDeletingId(null)
       fetchRoomsAndDMs()
-      if (pathname === `/dashboard/rooms/${dmId}`) {
+      const currentRoomId = pathname.split('/').pop()
+      if (result.deletedIds?.includes(currentRoomId || '') || pathname === `/dashboard/rooms/${dmId}`) {
         router.push("/dashboard")
       }
     } else {
@@ -440,6 +638,18 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                           />
                         </div>
                       </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="description" className="text-sm font-semibold text-slate-300">{t('sidebar.roomDescription') || 'Описание'}</Label>
+                        <div className="relative">
+                          <Input
+                            id="description"
+                            value={newRoomDescription}
+                            onChange={(e) => setNewRoomDescription(e.target.value)}
+                            placeholder={t('sidebar.roomDescriptionPlaceholder') || 'Необязательное описание'}
+                            className="px-4 bg-white/5 border-white/10 focus:border-amber-500 focus:ring-amber-500/20 text-white h-11 rounded-xl"
+                          />
+                        </div>
+                      </div>
                     </div>
                     <DialogFooter>
                       <Button 
@@ -455,92 +665,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
             </div>
             <div className="space-y-1">
               <AnimatePresence mode="popLayout" initial={false}>
-                {rooms.map((room, index) => (
-                  <motion.div
-                    key={room.id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.2, delay: index * 0.05 }}
-                  >
-                    <ContextMenu>
-                      <ContextMenuTrigger asChild className="sidebar-item-trigger">
-                        <Link
-                          href={`/dashboard/rooms/${room.id}`}
-                          className="block"
-                          onClick={onClose}
-                        >
-                          <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
-                            <div
-                              className={cn(
-                                buttonVariants({ variant: "ghost" }),
-                                "w-full justify-start font-medium transition-all duration-300 group rounded-xl px-3 h-auto min-h-[2.5rem] py-2 relative cursor-pointer",
-                                pathname === `/dashboard/rooms/${room.id}` 
-                                  ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10" 
-                                  : "text-slate-400 hover:text-white hover:bg-white/5"
-                              )}
-                            >
-                              <div className={cn(
-                                "w-2 h-2 rounded-full mr-3 mt-1.5 transition-all duration-300 shrink-0",
-                                pathname === `/dashboard/rooms/${room.id}` ? "bg-amber-500 scale-125" : "bg-slate-700 group-hover:bg-slate-500"
-                              )} />
-                              <div className="flex flex-col min-w-0 flex-1">
-                                <div className="flex items-center">
-                                  <span className="truncate flex-1 text-left">{room.name}</span>
-                                  {room.unreadCount > 0 && pathname !== `/dashboard/rooms/${room.id}` && (
-                                    <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20 ml-2">
-                                      {room.unreadCount}
-                                    </span>
-                                  )}
-                                  {pathname === `/dashboard/rooms/${room.id}` && (
-                                    <motion.div 
-                                      layoutId="activeRoomGlow"
-                                      className="w-1.5 h-1.5 shrink-0 rounded-full bg-amber-500 animate-pulse ml-2" 
-                                    />
-                                  )}
-                                </div>
-                                {room.description && (
-                                  <span className="text-[10px] text-slate-500 mt-0.5 line-clamp-1 text-left font-normal pr-2">
-                                    {room.description}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </motion.div>
-                        </Link>
-                      </ContextMenuTrigger>
-                      <ContextMenuContent className="w-56 bg-[#1E293B] border-white/10 text-slate-200">
-                        <ContextMenuItem 
-                          onClick={() => setRoomInfoDialogId(room.id)}
-                          className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
-                        >
-                          <Info className="mr-2 h-4 w-4 text-blue-400" />
-                          <span>{t('roomInfo.title') || "Информация о комнате"}</span>
-                        </ContextMenuItem>
-                        {canEditRoom && (
-                          <>
-                            <ContextMenuItem 
-                              onClick={() => handleEditRoom(room)}
-                              className="hover:bg-amber-500 hover:text-white focus:bg-amber-500 focus:text-white cursor-pointer"
-                            >
-                              <Edit className="mr-2 h-4 w-4" />
-                              <span>{t('sidebar.editRoom')}</span>
-                            </ContextMenuItem>
-                            {profile?.role === "admin" && (
-                              <ContextMenuItem 
-                                onClick={() => handleDeleteRoom(room.id)}
-                                className="hover:bg-red-500 hover:text-white focus:bg-red-500 focus:text-white cursor-pointer text-red-400"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                <span>{t('sidebar.deleteRoom')}</span>
-                              </ContextMenuItem>
-                            )}
-                          </>
-                        )}
-                      </ContextMenuContent>
-                    </ContextMenu>
-                  </motion.div>
-                ))}
+                {rootRooms.map((room) => renderRoom(room))}
               </AnimatePresence>
               {rooms.length === 0 && (
                 <motion.div 
@@ -827,17 +952,27 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                                 )}
                               </div>
                               <div className="flex flex-col items-start min-w-0 flex-1">
-                                <span className="truncate w-full text-left">
+                                <span className={cn(
+                                  "truncate w-full text-left transition-colors",
+                                  dm.unreadCount > 0 ? "font-bold text-white" : "font-medium"
+                                )}>
                                   {dm.displayName || (dm.participantCount > 2 ? t('room.group') : (dm.otherUser?.full_name || t('common.unknown')))}
                                 </span>
-                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider leading-none mt-1 flex items-center gap-1 w-full">
+                                <span className={cn(
+                                  "text-[10px] font-bold uppercase tracking-wider leading-none mt-1 flex items-center gap-1 w-full",
+                                  dm.unreadCount > 0 ? "text-slate-400" : "text-slate-500"
+                                )}>
                                   {dm.participantCount > 2 ? (
                                     <>
-                                      <span className="normal-case font-medium text-slate-400">{dm.participantCount} {t('room.participantsCount')}</span>
+                                      <span className={cn("normal-case font-medium", dm.unreadCount > 0 ? "text-white" : "text-slate-400")}>
+                                        {dm.participantCount} {t('room.participantsCount')}
+                                      </span>
                                       {dm.parentRoomName && (
                                         <>
                                           <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
-                                          <span className="truncate normal-case font-medium text-slate-400">{dm.parentRoomName}</span>
+                                          <span className={cn("truncate normal-case font-medium", dm.unreadCount > 0 ? "text-white" : "text-slate-400")}>
+                                            {dm.parentRoomName}
+                                          </span>
                                         </>
                                       )}
                                     </>
@@ -847,13 +982,17 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                                       {dm.parentRoomName && (
                                         <>
                                           <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
-                                          <span className="truncate normal-case font-medium text-slate-400">{dm.parentRoomName}</span>
+                                          <span className={cn("truncate normal-case font-medium", dm.unreadCount > 0 ? "text-white" : "text-slate-400")}>
+                                            {dm.parentRoomName}
+                                          </span>
                                         </>
                                       )}
                                       {!dm.parentRoomName && dm.sharedRoomName && (
                                         <>
                                           <span className="w-1 h-1 rounded-full bg-slate-300 shrink-0" />
-                                          <span className="truncate normal-case font-medium text-slate-400">{t('room.sharedRooms')}: {dm.sharedRoomName}</span>
+                                          <span className={cn("truncate normal-case font-medium", dm.unreadCount > 0 ? "text-white" : "text-slate-400")}>
+                                            {t('room.sharedRooms')}: {dm.sharedRoomName}
+                                          </span>
                                         </>
                                       )}
                                     </>
@@ -861,7 +1000,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                                 </span>
                               </div>
                               {dm.unreadCount > 0 && pathname !== `/dashboard/rooms/${dm.id}` && (
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20">
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20 animate-pulse">
                                   {dm.unreadCount}
                                 </span>
                               )}

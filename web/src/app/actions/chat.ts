@@ -9,7 +9,7 @@ import path from "path"
 import { translateText } from "@/lib/dewiar"
 import { z } from "zod"
 import { ensureSchemaFixed } from "@/lib/schema-fix"
-import { sendSSEUpdate } from "@/lib/sse"
+import { sendSSEUpdate, sendSSEUserUpdate } from "@/lib/sse"
 import { after } from "next/server"
 import { parseMentions, stripMentionsForTranslation } from "@/lib/chat-mentions"
 import { queueNotificationIfOffline, clearUserFromNotificationQueue } from "@/lib/notification-service"
@@ -67,6 +67,9 @@ export async function markAsRead(roomId: string) {
 
     // Clear user from email notification queue when they read messages
     clearUserFromNotificationQueue(session.user.id)
+
+    // Notify the user globally about unread count change
+    sendSSEUserUpdate(session.user.id, { type: "unread_update" })
 
     revalidatePath("/dashboard")
     revalidatePath(`/dashboard/rooms/${roomId}`)
@@ -1360,6 +1363,13 @@ export async function sendMessageAction(rawData: {
         data: { last_active_at: new Date() },
       }),
     ])
+
+    // Send global SSE update to all participants so their unread counters update in real-time
+    roomWithParticipants.participants.forEach((p) => {
+      if (p.user_id !== session.user.id) {
+        sendSSEUserUpdate(p.user_id, { type: "unread_update" })
+      }
+    })
 
     return { 
       success: true, 

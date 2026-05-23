@@ -172,7 +172,8 @@ exports.Prisma.RoomScalarFieldEnum = {
   created_by: 'created_by',
   created_at: 'created_at',
   updated_at: 'updated_at',
-  room_id: 'room_id'
+  room_id: 'room_id',
+  parent_id: 'parent_id'
 };
 
 exports.Prisma.RoomParticipantScalarFieldEnum = {

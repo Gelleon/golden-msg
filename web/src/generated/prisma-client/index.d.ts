@@ -1625,12 +1625,14 @@ export namespace Prisma {
    */
 
   export type RoomCountOutputType = {
+    children: number
     messages: number
     invites: number
     participants: number
   }
 
   export type RoomCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    children?: boolean | RoomCountOutputTypeCountChildrenArgs
     messages?: boolean | RoomCountOutputTypeCountMessagesArgs
     invites?: boolean | RoomCountOutputTypeCountInvitesArgs
     participants?: boolean | RoomCountOutputTypeCountParticipantsArgs
@@ -1645,6 +1647,13 @@ export namespace Prisma {
      * Select specific fields to fetch from the RoomCountOutputType
      */
     select?: RoomCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * RoomCountOutputType without action
+   */
+  export type RoomCountOutputTypeCountChildrenArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RoomWhereInput
   }
 
   /**
@@ -5789,6 +5798,7 @@ export namespace Prisma {
     created_at: Date | null
     updated_at: Date | null
     room_id: string | null
+    parent_id: string | null
   }
 
   export type RoomMaxAggregateOutputType = {
@@ -5802,6 +5812,7 @@ export namespace Prisma {
     created_at: Date | null
     updated_at: Date | null
     room_id: string | null
+    parent_id: string | null
   }
 
   export type RoomCountAggregateOutputType = {
@@ -5815,6 +5826,7 @@ export namespace Prisma {
     created_at: number
     updated_at: number
     room_id: number
+    parent_id: number
     _all: number
   }
 
@@ -5838,6 +5850,7 @@ export namespace Prisma {
     created_at?: true
     updated_at?: true
     room_id?: true
+    parent_id?: true
   }
 
   export type RoomMaxAggregateInputType = {
@@ -5851,6 +5864,7 @@ export namespace Prisma {
     created_at?: true
     updated_at?: true
     room_id?: true
+    parent_id?: true
   }
 
   export type RoomCountAggregateInputType = {
@@ -5864,6 +5878,7 @@ export namespace Prisma {
     created_at?: true
     updated_at?: true
     room_id?: true
+    parent_id?: true
     _all?: true
   }
 
@@ -5964,6 +5979,7 @@ export namespace Prisma {
     created_at: Date
     updated_at: Date
     room_id: string | null
+    parent_id: string | null
     _count: RoomCountAggregateOutputType | null
     _avg: RoomAvgAggregateOutputType | null
     _sum: RoomSumAggregateOutputType | null
@@ -5996,6 +6012,9 @@ export namespace Prisma {
     created_at?: boolean
     updated_at?: boolean
     room_id?: boolean
+    parent_id?: boolean
+    parent?: boolean | Room$parentArgs<ExtArgs>
+    children?: boolean | Room$childrenArgs<ExtArgs>
     messages?: boolean | Room$messagesArgs<ExtArgs>
     owner?: boolean | Room$ownerArgs<ExtArgs>
     invites?: boolean | Room$invitesArgs<ExtArgs>
@@ -6014,6 +6033,8 @@ export namespace Prisma {
     created_at?: boolean
     updated_at?: boolean
     room_id?: boolean
+    parent_id?: boolean
+    parent?: boolean | Room$parentArgs<ExtArgs>
     owner?: boolean | Room$ownerArgs<ExtArgs>
   }, ExtArgs["result"]["room"]>
 
@@ -6028,9 +6049,12 @@ export namespace Prisma {
     created_at?: boolean
     updated_at?: boolean
     room_id?: boolean
+    parent_id?: boolean
   }
 
   export type RoomInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    parent?: boolean | Room$parentArgs<ExtArgs>
+    children?: boolean | Room$childrenArgs<ExtArgs>
     messages?: boolean | Room$messagesArgs<ExtArgs>
     owner?: boolean | Room$ownerArgs<ExtArgs>
     invites?: boolean | Room$invitesArgs<ExtArgs>
@@ -6038,12 +6062,15 @@ export namespace Prisma {
     _count?: boolean | RoomCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type RoomIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    parent?: boolean | Room$parentArgs<ExtArgs>
     owner?: boolean | Room$ownerArgs<ExtArgs>
   }
 
   export type $RoomPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Room"
     objects: {
+      parent: Prisma.$RoomPayload<ExtArgs> | null
+      children: Prisma.$RoomPayload<ExtArgs>[]
       messages: Prisma.$MessagePayload<ExtArgs>[]
       owner: Prisma.$UserPayload<ExtArgs> | null
       invites: Prisma.$RoomInvitePayload<ExtArgs>[]
@@ -6060,6 +6087,7 @@ export namespace Prisma {
       created_at: Date
       updated_at: Date
       room_id: string | null
+      parent_id: string | null
     }, ExtArgs["result"]["room"]>
     composites: {}
   }
@@ -6424,6 +6452,8 @@ export namespace Prisma {
    */
   export interface Prisma__RoomClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    parent<T extends Room$parentArgs<ExtArgs> = {}>(args?: Subset<T, Room$parentArgs<ExtArgs>>): Prisma__RoomClient<$Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    children<T extends Room$childrenArgs<ExtArgs> = {}>(args?: Subset<T, Room$childrenArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RoomPayload<ExtArgs>, T, "findMany"> | Null>
     messages<T extends Room$messagesArgs<ExtArgs> = {}>(args?: Subset<T, Room$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany"> | Null>
     owner<T extends Room$ownerArgs<ExtArgs> = {}>(args?: Subset<T, Room$ownerArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     invites<T extends Room$invitesArgs<ExtArgs> = {}>(args?: Subset<T, Room$invitesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RoomInvitePayload<ExtArgs>, T, "findMany"> | Null>
@@ -6467,6 +6497,7 @@ export namespace Prisma {
     readonly created_at: FieldRef<"Room", 'DateTime'>
     readonly updated_at: FieldRef<"Room", 'DateTime'>
     readonly room_id: FieldRef<"Room", 'String'>
+    readonly parent_id: FieldRef<"Room", 'String'>
   }
     
 
@@ -6780,6 +6811,41 @@ export namespace Prisma {
      * Filter which Rooms to delete
      */
     where?: RoomWhereInput
+  }
+
+  /**
+   * Room.parent
+   */
+  export type Room$parentArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Room
+     */
+    select?: RoomSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RoomInclude<ExtArgs> | null
+    where?: RoomWhereInput
+  }
+
+  /**
+   * Room.children
+   */
+  export type Room$childrenArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Room
+     */
+    select?: RoomSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RoomInclude<ExtArgs> | null
+    where?: RoomWhereInput
+    orderBy?: RoomOrderByWithRelationInput | RoomOrderByWithRelationInput[]
+    cursor?: RoomWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RoomScalarFieldEnum | RoomScalarFieldEnum[]
   }
 
   /**
@@ -11027,7 +11093,8 @@ export namespace Prisma {
     created_by: 'created_by',
     created_at: 'created_at',
     updated_at: 'updated_at',
-    room_id: 'room_id'
+    room_id: 'room_id',
+    parent_id: 'parent_id'
   };
 
   export type RoomScalarFieldEnum = (typeof RoomScalarFieldEnum)[keyof typeof RoomScalarFieldEnum]
@@ -11467,6 +11534,9 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"Room"> | Date | string
     updated_at?: DateTimeFilter<"Room"> | Date | string
     room_id?: StringNullableFilter<"Room"> | string | null
+    parent_id?: StringNullableFilter<"Room"> | string | null
+    parent?: XOR<RoomNullableRelationFilter, RoomWhereInput> | null
+    children?: RoomListRelationFilter
     messages?: MessageListRelationFilter
     owner?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     invites?: RoomInviteListRelationFilter
@@ -11484,6 +11554,9 @@ export namespace Prisma {
     created_at?: SortOrder
     updated_at?: SortOrder
     room_id?: SortOrderInput | SortOrder
+    parent_id?: SortOrderInput | SortOrder
+    parent?: RoomOrderByWithRelationInput
+    children?: RoomOrderByRelationAggregateInput
     messages?: MessageOrderByRelationAggregateInput
     owner?: UserOrderByWithRelationInput
     invites?: RoomInviteOrderByRelationAggregateInput
@@ -11504,6 +11577,9 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"Room"> | Date | string
     updated_at?: DateTimeFilter<"Room"> | Date | string
     room_id?: StringNullableFilter<"Room"> | string | null
+    parent_id?: StringNullableFilter<"Room"> | string | null
+    parent?: XOR<RoomNullableRelationFilter, RoomWhereInput> | null
+    children?: RoomListRelationFilter
     messages?: MessageListRelationFilter
     owner?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     invites?: RoomInviteListRelationFilter
@@ -11521,6 +11597,7 @@ export namespace Prisma {
     created_at?: SortOrder
     updated_at?: SortOrder
     room_id?: SortOrderInput | SortOrder
+    parent_id?: SortOrderInput | SortOrder
     _count?: RoomCountOrderByAggregateInput
     _avg?: RoomAvgOrderByAggregateInput
     _max?: RoomMaxOrderByAggregateInput
@@ -11542,6 +11619,7 @@ export namespace Prisma {
     created_at?: DateTimeWithAggregatesFilter<"Room"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"Room"> | Date | string
     room_id?: StringNullableWithAggregatesFilter<"Room"> | string | null
+    parent_id?: StringNullableWithAggregatesFilter<"Room"> | string | null
   }
 
   export type RoomParticipantWhereInput = {
@@ -12227,6 +12305,8 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     room_id?: string | null
+    parent?: RoomCreateNestedOneWithoutChildrenInput
+    children?: RoomCreateNestedManyWithoutParentInput
     messages?: MessageCreateNestedManyWithoutRoomInput
     owner?: UserCreateNestedOneWithoutOwned_roomsInput
     invites?: RoomInviteCreateNestedManyWithoutRoomInput
@@ -12244,6 +12324,8 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     room_id?: string | null
+    parent_id?: string | null
+    children?: RoomUncheckedCreateNestedManyWithoutParentInput
     messages?: MessageUncheckedCreateNestedManyWithoutRoomInput
     invites?: RoomInviteUncheckedCreateNestedManyWithoutRoomInput
     participants?: RoomParticipantUncheckedCreateNestedManyWithoutRoomInput
@@ -12259,6 +12341,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
+    parent?: RoomUpdateOneWithoutChildrenNestedInput
+    children?: RoomUpdateManyWithoutParentNestedInput
     messages?: MessageUpdateManyWithoutRoomNestedInput
     owner?: UserUpdateOneWithoutOwned_roomsNestedInput
     invites?: RoomInviteUpdateManyWithoutRoomNestedInput
@@ -12276,6 +12360,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
+    parent_id?: NullableStringFieldUpdateOperationsInput | string | null
+    children?: RoomUncheckedUpdateManyWithoutParentNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRoomNestedInput
     invites?: RoomInviteUncheckedUpdateManyWithoutRoomNestedInput
     participants?: RoomParticipantUncheckedUpdateManyWithoutRoomNestedInput
@@ -12292,6 +12378,7 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     room_id?: string | null
+    parent_id?: string | null
   }
 
   export type RoomUpdateManyMutationInput = {
@@ -12317,6 +12404,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
+    parent_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RoomParticipantCreateInput = {
@@ -13046,6 +13134,11 @@ export namespace Prisma {
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
+  export type RoomNullableRelationFilter = {
+    is?: RoomWhereInput | null
+    isNot?: RoomWhereInput | null
+  }
+
   export type RoomCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
@@ -13057,6 +13150,7 @@ export namespace Prisma {
     created_at?: SortOrder
     updated_at?: SortOrder
     room_id?: SortOrder
+    parent_id?: SortOrder
   }
 
   export type RoomAvgOrderByAggregateInput = {
@@ -13074,6 +13168,7 @@ export namespace Prisma {
     created_at?: SortOrder
     updated_at?: SortOrder
     room_id?: SortOrder
+    parent_id?: SortOrder
   }
 
   export type RoomMinOrderByAggregateInput = {
@@ -13087,6 +13182,7 @@ export namespace Prisma {
     created_at?: SortOrder
     updated_at?: SortOrder
     room_id?: SortOrder
+    parent_id?: SortOrder
   }
 
   export type RoomSumOrderByAggregateInput = {
@@ -13733,6 +13829,19 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutAudit_logsInput, UserUpdateWithoutAudit_logsInput>, UserUncheckedUpdateWithoutAudit_logsInput>
   }
 
+  export type RoomCreateNestedOneWithoutChildrenInput = {
+    create?: XOR<RoomCreateWithoutChildrenInput, RoomUncheckedCreateWithoutChildrenInput>
+    connectOrCreate?: RoomCreateOrConnectWithoutChildrenInput
+    connect?: RoomWhereUniqueInput
+  }
+
+  export type RoomCreateNestedManyWithoutParentInput = {
+    create?: XOR<RoomCreateWithoutParentInput, RoomUncheckedCreateWithoutParentInput> | RoomCreateWithoutParentInput[] | RoomUncheckedCreateWithoutParentInput[]
+    connectOrCreate?: RoomCreateOrConnectWithoutParentInput | RoomCreateOrConnectWithoutParentInput[]
+    createMany?: RoomCreateManyParentInputEnvelope
+    connect?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
+  }
+
   export type MessageCreateNestedManyWithoutRoomInput = {
     create?: XOR<MessageCreateWithoutRoomInput, MessageUncheckedCreateWithoutRoomInput> | MessageCreateWithoutRoomInput[] | MessageUncheckedCreateWithoutRoomInput[]
     connectOrCreate?: MessageCreateOrConnectWithoutRoomInput | MessageCreateOrConnectWithoutRoomInput[]
@@ -13758,6 +13867,13 @@ export namespace Prisma {
     connectOrCreate?: RoomParticipantCreateOrConnectWithoutRoomInput | RoomParticipantCreateOrConnectWithoutRoomInput[]
     createMany?: RoomParticipantCreateManyRoomInputEnvelope
     connect?: RoomParticipantWhereUniqueInput | RoomParticipantWhereUniqueInput[]
+  }
+
+  export type RoomUncheckedCreateNestedManyWithoutParentInput = {
+    create?: XOR<RoomCreateWithoutParentInput, RoomUncheckedCreateWithoutParentInput> | RoomCreateWithoutParentInput[] | RoomUncheckedCreateWithoutParentInput[]
+    connectOrCreate?: RoomCreateOrConnectWithoutParentInput | RoomCreateOrConnectWithoutParentInput[]
+    createMany?: RoomCreateManyParentInputEnvelope
+    connect?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
   }
 
   export type MessageUncheckedCreateNestedManyWithoutRoomInput = {
@@ -13787,6 +13903,30 @@ export namespace Prisma {
     decrement?: number
     multiply?: number
     divide?: number
+  }
+
+  export type RoomUpdateOneWithoutChildrenNestedInput = {
+    create?: XOR<RoomCreateWithoutChildrenInput, RoomUncheckedCreateWithoutChildrenInput>
+    connectOrCreate?: RoomCreateOrConnectWithoutChildrenInput
+    upsert?: RoomUpsertWithoutChildrenInput
+    disconnect?: RoomWhereInput | boolean
+    delete?: RoomWhereInput | boolean
+    connect?: RoomWhereUniqueInput
+    update?: XOR<XOR<RoomUpdateToOneWithWhereWithoutChildrenInput, RoomUpdateWithoutChildrenInput>, RoomUncheckedUpdateWithoutChildrenInput>
+  }
+
+  export type RoomUpdateManyWithoutParentNestedInput = {
+    create?: XOR<RoomCreateWithoutParentInput, RoomUncheckedCreateWithoutParentInput> | RoomCreateWithoutParentInput[] | RoomUncheckedCreateWithoutParentInput[]
+    connectOrCreate?: RoomCreateOrConnectWithoutParentInput | RoomCreateOrConnectWithoutParentInput[]
+    upsert?: RoomUpsertWithWhereUniqueWithoutParentInput | RoomUpsertWithWhereUniqueWithoutParentInput[]
+    createMany?: RoomCreateManyParentInputEnvelope
+    set?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
+    disconnect?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
+    delete?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
+    connect?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
+    update?: RoomUpdateWithWhereUniqueWithoutParentInput | RoomUpdateWithWhereUniqueWithoutParentInput[]
+    updateMany?: RoomUpdateManyWithWhereWithoutParentInput | RoomUpdateManyWithWhereWithoutParentInput[]
+    deleteMany?: RoomScalarWhereInput | RoomScalarWhereInput[]
   }
 
   export type MessageUpdateManyWithoutRoomNestedInput = {
@@ -13839,6 +13979,20 @@ export namespace Prisma {
     update?: RoomParticipantUpdateWithWhereUniqueWithoutRoomInput | RoomParticipantUpdateWithWhereUniqueWithoutRoomInput[]
     updateMany?: RoomParticipantUpdateManyWithWhereWithoutRoomInput | RoomParticipantUpdateManyWithWhereWithoutRoomInput[]
     deleteMany?: RoomParticipantScalarWhereInput | RoomParticipantScalarWhereInput[]
+  }
+
+  export type RoomUncheckedUpdateManyWithoutParentNestedInput = {
+    create?: XOR<RoomCreateWithoutParentInput, RoomUncheckedCreateWithoutParentInput> | RoomCreateWithoutParentInput[] | RoomUncheckedCreateWithoutParentInput[]
+    connectOrCreate?: RoomCreateOrConnectWithoutParentInput | RoomCreateOrConnectWithoutParentInput[]
+    upsert?: RoomUpsertWithWhereUniqueWithoutParentInput | RoomUpsertWithWhereUniqueWithoutParentInput[]
+    createMany?: RoomCreateManyParentInputEnvelope
+    set?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
+    disconnect?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
+    delete?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
+    connect?: RoomWhereUniqueInput | RoomWhereUniqueInput[]
+    update?: RoomUpdateWithWhereUniqueWithoutParentInput | RoomUpdateWithWhereUniqueWithoutParentInput[]
+    updateMany?: RoomUpdateManyWithWhereWithoutParentInput | RoomUpdateManyWithWhereWithoutParentInput[]
+    deleteMany?: RoomScalarWhereInput | RoomScalarWhereInput[]
   }
 
   export type MessageUncheckedUpdateManyWithoutRoomNestedInput = {
@@ -14424,6 +14578,8 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     room_id?: string | null
+    parent?: RoomCreateNestedOneWithoutChildrenInput
+    children?: RoomCreateNestedManyWithoutParentInput
     messages?: MessageCreateNestedManyWithoutRoomInput
     invites?: RoomInviteCreateNestedManyWithoutRoomInput
     participants?: RoomParticipantCreateNestedManyWithoutRoomInput
@@ -14439,6 +14595,8 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     room_id?: string | null
+    parent_id?: string | null
+    children?: RoomUncheckedCreateNestedManyWithoutParentInput
     messages?: MessageUncheckedCreateNestedManyWithoutRoomInput
     invites?: RoomInviteUncheckedCreateNestedManyWithoutRoomInput
     participants?: RoomParticipantUncheckedCreateNestedManyWithoutRoomInput
@@ -14694,6 +14852,7 @@ export namespace Prisma {
     created_at?: DateTimeFilter<"Room"> | Date | string
     updated_at?: DateTimeFilter<"Room"> | Date | string
     room_id?: StringNullableFilter<"Room"> | string | null
+    parent_id?: StringNullableFilter<"Room"> | string | null
   }
 
   export type RoomInviteUpsertWithWhereUniqueWithoutCreatorInput = {
@@ -15093,6 +15252,88 @@ export namespace Prisma {
     room_participations?: RoomParticipantUncheckedUpdateManyWithoutUserNestedInput
   }
 
+  export type RoomCreateWithoutChildrenInput = {
+    id?: string
+    name?: string | null
+    description?: string | null
+    capacity?: number | null
+    equipment?: string | null
+    type?: string
+    created_at?: Date | string
+    updated_at?: Date | string
+    room_id?: string | null
+    parent?: RoomCreateNestedOneWithoutChildrenInput
+    messages?: MessageCreateNestedManyWithoutRoomInput
+    owner?: UserCreateNestedOneWithoutOwned_roomsInput
+    invites?: RoomInviteCreateNestedManyWithoutRoomInput
+    participants?: RoomParticipantCreateNestedManyWithoutRoomInput
+  }
+
+  export type RoomUncheckedCreateWithoutChildrenInput = {
+    id?: string
+    name?: string | null
+    description?: string | null
+    capacity?: number | null
+    equipment?: string | null
+    type?: string
+    created_by?: string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+    room_id?: string | null
+    parent_id?: string | null
+    messages?: MessageUncheckedCreateNestedManyWithoutRoomInput
+    invites?: RoomInviteUncheckedCreateNestedManyWithoutRoomInput
+    participants?: RoomParticipantUncheckedCreateNestedManyWithoutRoomInput
+  }
+
+  export type RoomCreateOrConnectWithoutChildrenInput = {
+    where: RoomWhereUniqueInput
+    create: XOR<RoomCreateWithoutChildrenInput, RoomUncheckedCreateWithoutChildrenInput>
+  }
+
+  export type RoomCreateWithoutParentInput = {
+    id?: string
+    name?: string | null
+    description?: string | null
+    capacity?: number | null
+    equipment?: string | null
+    type?: string
+    created_at?: Date | string
+    updated_at?: Date | string
+    room_id?: string | null
+    children?: RoomCreateNestedManyWithoutParentInput
+    messages?: MessageCreateNestedManyWithoutRoomInput
+    owner?: UserCreateNestedOneWithoutOwned_roomsInput
+    invites?: RoomInviteCreateNestedManyWithoutRoomInput
+    participants?: RoomParticipantCreateNestedManyWithoutRoomInput
+  }
+
+  export type RoomUncheckedCreateWithoutParentInput = {
+    id?: string
+    name?: string | null
+    description?: string | null
+    capacity?: number | null
+    equipment?: string | null
+    type?: string
+    created_by?: string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+    room_id?: string | null
+    children?: RoomUncheckedCreateNestedManyWithoutParentInput
+    messages?: MessageUncheckedCreateNestedManyWithoutRoomInput
+    invites?: RoomInviteUncheckedCreateNestedManyWithoutRoomInput
+    participants?: RoomParticipantUncheckedCreateNestedManyWithoutRoomInput
+  }
+
+  export type RoomCreateOrConnectWithoutParentInput = {
+    where: RoomWhereUniqueInput
+    create: XOR<RoomCreateWithoutParentInput, RoomUncheckedCreateWithoutParentInput>
+  }
+
+  export type RoomCreateManyParentInputEnvelope = {
+    data: RoomCreateManyParentInput | RoomCreateManyParentInput[]
+  }
+
   export type MessageCreateWithoutRoomInput = {
     id?: string
     content?: string | null
@@ -15251,6 +15492,67 @@ export namespace Prisma {
 
   export type RoomParticipantCreateManyRoomInputEnvelope = {
     data: RoomParticipantCreateManyRoomInput | RoomParticipantCreateManyRoomInput[]
+  }
+
+  export type RoomUpsertWithoutChildrenInput = {
+    update: XOR<RoomUpdateWithoutChildrenInput, RoomUncheckedUpdateWithoutChildrenInput>
+    create: XOR<RoomCreateWithoutChildrenInput, RoomUncheckedCreateWithoutChildrenInput>
+    where?: RoomWhereInput
+  }
+
+  export type RoomUpdateToOneWithWhereWithoutChildrenInput = {
+    where?: RoomWhereInput
+    data: XOR<RoomUpdateWithoutChildrenInput, RoomUncheckedUpdateWithoutChildrenInput>
+  }
+
+  export type RoomUpdateWithoutChildrenInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    capacity?: NullableIntFieldUpdateOperationsInput | number | null
+    equipment?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    room_id?: NullableStringFieldUpdateOperationsInput | string | null
+    parent?: RoomUpdateOneWithoutChildrenNestedInput
+    messages?: MessageUpdateManyWithoutRoomNestedInput
+    owner?: UserUpdateOneWithoutOwned_roomsNestedInput
+    invites?: RoomInviteUpdateManyWithoutRoomNestedInput
+    participants?: RoomParticipantUpdateManyWithoutRoomNestedInput
+  }
+
+  export type RoomUncheckedUpdateWithoutChildrenInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    capacity?: NullableIntFieldUpdateOperationsInput | number | null
+    equipment?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
+    created_by?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    room_id?: NullableStringFieldUpdateOperationsInput | string | null
+    parent_id?: NullableStringFieldUpdateOperationsInput | string | null
+    messages?: MessageUncheckedUpdateManyWithoutRoomNestedInput
+    invites?: RoomInviteUncheckedUpdateManyWithoutRoomNestedInput
+    participants?: RoomParticipantUncheckedUpdateManyWithoutRoomNestedInput
+  }
+
+  export type RoomUpsertWithWhereUniqueWithoutParentInput = {
+    where: RoomWhereUniqueInput
+    update: XOR<RoomUpdateWithoutParentInput, RoomUncheckedUpdateWithoutParentInput>
+    create: XOR<RoomCreateWithoutParentInput, RoomUncheckedCreateWithoutParentInput>
+  }
+
+  export type RoomUpdateWithWhereUniqueWithoutParentInput = {
+    where: RoomWhereUniqueInput
+    data: XOR<RoomUpdateWithoutParentInput, RoomUncheckedUpdateWithoutParentInput>
+  }
+
+  export type RoomUpdateManyWithWhereWithoutParentInput = {
+    where: RoomScalarWhereInput
+    data: XOR<RoomUpdateManyMutationInput, RoomUncheckedUpdateManyWithoutParentInput>
   }
 
   export type MessageUpsertWithWhereUniqueWithoutRoomInput = {
@@ -15423,6 +15725,8 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     room_id?: string | null
+    parent?: RoomCreateNestedOneWithoutChildrenInput
+    children?: RoomCreateNestedManyWithoutParentInput
     messages?: MessageCreateNestedManyWithoutRoomInput
     owner?: UserCreateNestedOneWithoutOwned_roomsInput
     invites?: RoomInviteCreateNestedManyWithoutRoomInput
@@ -15439,6 +15743,8 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     room_id?: string | null
+    parent_id?: string | null
+    children?: RoomUncheckedCreateNestedManyWithoutParentInput
     messages?: MessageUncheckedCreateNestedManyWithoutRoomInput
     invites?: RoomInviteUncheckedCreateNestedManyWithoutRoomInput
   }
@@ -15528,6 +15834,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
+    parent?: RoomUpdateOneWithoutChildrenNestedInput
+    children?: RoomUpdateManyWithoutParentNestedInput
     messages?: MessageUpdateManyWithoutRoomNestedInput
     owner?: UserUpdateOneWithoutOwned_roomsNestedInput
     invites?: RoomInviteUpdateManyWithoutRoomNestedInput
@@ -15544,6 +15852,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
+    parent_id?: NullableStringFieldUpdateOperationsInput | string | null
+    children?: RoomUncheckedUpdateManyWithoutParentNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRoomNestedInput
     invites?: RoomInviteUncheckedUpdateManyWithoutRoomNestedInput
   }
@@ -15701,6 +16011,8 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     room_id?: string | null
+    parent?: RoomCreateNestedOneWithoutChildrenInput
+    children?: RoomCreateNestedManyWithoutParentInput
     owner?: UserCreateNestedOneWithoutOwned_roomsInput
     invites?: RoomInviteCreateNestedManyWithoutRoomInput
     participants?: RoomParticipantCreateNestedManyWithoutRoomInput
@@ -15717,6 +16029,8 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     room_id?: string | null
+    parent_id?: string | null
+    children?: RoomUncheckedCreateNestedManyWithoutParentInput
     invites?: RoomInviteUncheckedCreateNestedManyWithoutRoomInput
     participants?: RoomParticipantUncheckedCreateNestedManyWithoutRoomInput
   }
@@ -15871,6 +16185,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
+    parent?: RoomUpdateOneWithoutChildrenNestedInput
+    children?: RoomUpdateManyWithoutParentNestedInput
     owner?: UserUpdateOneWithoutOwned_roomsNestedInput
     invites?: RoomInviteUpdateManyWithoutRoomNestedInput
     participants?: RoomParticipantUpdateManyWithoutRoomNestedInput
@@ -15887,6 +16203,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
+    parent_id?: NullableStringFieldUpdateOperationsInput | string | null
+    children?: RoomUncheckedUpdateManyWithoutParentNestedInput
     invites?: RoomInviteUncheckedUpdateManyWithoutRoomNestedInput
     participants?: RoomParticipantUncheckedUpdateManyWithoutRoomNestedInput
   }
@@ -15954,6 +16272,8 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     room_id?: string | null
+    parent?: RoomCreateNestedOneWithoutChildrenInput
+    children?: RoomCreateNestedManyWithoutParentInput
     messages?: MessageCreateNestedManyWithoutRoomInput
     owner?: UserCreateNestedOneWithoutOwned_roomsInput
     participants?: RoomParticipantCreateNestedManyWithoutRoomInput
@@ -15970,6 +16290,8 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     room_id?: string | null
+    parent_id?: string | null
+    children?: RoomUncheckedCreateNestedManyWithoutParentInput
     messages?: MessageUncheckedCreateNestedManyWithoutRoomInput
     participants?: RoomParticipantUncheckedCreateNestedManyWithoutRoomInput
   }
@@ -16059,6 +16381,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
+    parent?: RoomUpdateOneWithoutChildrenNestedInput
+    children?: RoomUpdateManyWithoutParentNestedInput
     messages?: MessageUpdateManyWithoutRoomNestedInput
     owner?: UserUpdateOneWithoutOwned_roomsNestedInput
     participants?: RoomParticipantUpdateManyWithoutRoomNestedInput
@@ -16075,6 +16399,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
+    parent_id?: NullableStringFieldUpdateOperationsInput | string | null
+    children?: RoomUncheckedUpdateManyWithoutParentNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRoomNestedInput
     participants?: RoomParticipantUncheckedUpdateManyWithoutRoomNestedInput
   }
@@ -16252,6 +16578,7 @@ export namespace Prisma {
     created_at?: Date | string
     updated_at?: Date | string
     room_id?: string | null
+    parent_id?: string | null
   }
 
   export type RoomInviteCreateManyCreatorInput = {
@@ -16440,6 +16767,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
+    parent?: RoomUpdateOneWithoutChildrenNestedInput
+    children?: RoomUpdateManyWithoutParentNestedInput
     messages?: MessageUpdateManyWithoutRoomNestedInput
     invites?: RoomInviteUpdateManyWithoutRoomNestedInput
     participants?: RoomParticipantUpdateManyWithoutRoomNestedInput
@@ -16455,6 +16784,8 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
+    parent_id?: NullableStringFieldUpdateOperationsInput | string | null
+    children?: RoomUncheckedUpdateManyWithoutParentNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRoomNestedInput
     invites?: RoomInviteUncheckedUpdateManyWithoutRoomNestedInput
     participants?: RoomParticipantUncheckedUpdateManyWithoutRoomNestedInput
@@ -16470,6 +16801,7 @@ export namespace Prisma {
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
+    parent_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RoomInviteUpdateWithoutCreatorInput = {
@@ -16535,6 +16867,19 @@ export namespace Prisma {
     typing_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
+  export type RoomCreateManyParentInput = {
+    id?: string
+    name?: string | null
+    description?: string | null
+    capacity?: number | null
+    equipment?: string | null
+    type?: string
+    created_by?: string | null
+    created_at?: Date | string
+    updated_at?: Date | string
+    room_id?: string | null
+  }
+
   export type MessageCreateManyRoomInput = {
     id?: string
     sender_id: string
@@ -16572,6 +16917,53 @@ export namespace Prisma {
     last_read_at?: Date | string
     last_active_at?: Date | string
     typing_at?: Date | string | null
+  }
+
+  export type RoomUpdateWithoutParentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    capacity?: NullableIntFieldUpdateOperationsInput | number | null
+    equipment?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    room_id?: NullableStringFieldUpdateOperationsInput | string | null
+    children?: RoomUpdateManyWithoutParentNestedInput
+    messages?: MessageUpdateManyWithoutRoomNestedInput
+    owner?: UserUpdateOneWithoutOwned_roomsNestedInput
+    invites?: RoomInviteUpdateManyWithoutRoomNestedInput
+    participants?: RoomParticipantUpdateManyWithoutRoomNestedInput
+  }
+
+  export type RoomUncheckedUpdateWithoutParentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    capacity?: NullableIntFieldUpdateOperationsInput | number | null
+    equipment?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
+    created_by?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    room_id?: NullableStringFieldUpdateOperationsInput | string | null
+    children?: RoomUncheckedUpdateManyWithoutParentNestedInput
+    messages?: MessageUncheckedUpdateManyWithoutRoomNestedInput
+    invites?: RoomInviteUncheckedUpdateManyWithoutRoomNestedInput
+    participants?: RoomParticipantUncheckedUpdateManyWithoutRoomNestedInput
+  }
+
+  export type RoomUncheckedUpdateManyWithoutParentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    capacity?: NullableIntFieldUpdateOperationsInput | number | null
+    equipment?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: StringFieldUpdateOperationsInput | string
+    created_by?: NullableStringFieldUpdateOperationsInput | string | null
+    created_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    room_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MessageUpdateWithoutRoomInput = {
