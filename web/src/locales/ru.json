@@ -14,6 +14,7 @@
     "updating": "Обновление...",
     "saveChanges": "Сохранить изменения",
     "changesSaved": "Изменения сохранены",
+    "success": "Успешно",
     "error": "Ошибка",
     "criticalError": "Критическая ошибка",
     "partialSuccess": "Частичный успех",

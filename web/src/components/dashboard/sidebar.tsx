@@ -302,9 +302,9 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                         dms.reduce((acc, r) => acc + (r.unreadCount || 0), 0);
     
     if (totalUnread > 0) {
-      document.title = `(${totalUnread}) Dewiar Chat`;
+      document.title = `(${totalUnread}) Golden Russia`;
     } else {
-      document.title = `Dewiar Chat`;
+      document.title = `Golden Russia`;
     }
   }, [rooms, dms, mounted])
 
