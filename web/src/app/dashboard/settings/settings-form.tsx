@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/table"
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -264,6 +265,21 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
   const [editNameValue, setEditNameValue] = useState<string>("")
   const [editNameError, setEditNameError] = useState<string | null>(null)
   const [isSavingName, setIsSavingName] = useState(false)
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = sessionStorage.getItem("admin-user-roles-filter")
+        if (saved) return JSON.parse(saved)
+      } catch (e) {}
+    }
+    return []
+  })
+
+  useEffect(() => {
+    if (currentUserRole === "admin") {
+      sessionStorage.setItem("admin-user-roles-filter", JSON.stringify(selectedRoles))
+    }
+  }, [selectedRoles, currentUserRole])
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true)
@@ -378,10 +394,12 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
     }
   }
 
-  const filteredUsers = users.filter(user => 
-    user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          user.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesRole = selectedRoles.length === 0 || selectedRoles.includes(user.role)
+    return matchesSearch && matchesRole
+  })
 
   return (
     <Card className="border border-slate-200/60 shadow-lg bg-white rounded-2xl overflow-hidden ring-1 ring-black/[0.03]">
@@ -398,6 +416,61 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
             </div>
           </div>
           <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+            {currentUserRole === 'admin' && (
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="h-11 border-2 border-slate-200 focus:border-slate-900 focus:ring-slate-900/5 rounded-xl text-sm font-bold transition-all shadow-sm bg-white">
+                      <Filter className="w-4 h-4 mr-2 text-slate-500" />
+                      {t('settings.users.filterRoles') || 'Роли'}
+                      {selectedRoles.length > 0 && (
+                        <span className="ml-2 px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-900 text-xs font-black">
+                          {selectedRoles.length}
+                        </span>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 rounded-xl border border-slate-200 shadow-xl shadow-black/5 p-2">
+                    <DropdownMenuLabel className="text-xs font-black text-slate-400 uppercase tracking-wider px-2 py-1.5">
+                      {t('settings.users.filterByRole') || 'Фильтр по роли'}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-slate-100 my-1" />
+                    {Object.entries(roleLabels).map(([role, label]) => {
+                      const Icon = roleIcons[role] || Users
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={role}
+                          checked={selectedRoles.includes(role)}
+                          onCheckedChange={(checked) => {
+                            setSelectedRoles(prev => 
+                              checked ? [...prev, role] : prev.filter(r => r !== role)
+                            )
+                          }}
+                          onSelect={(e) => e.preventDefault()}
+                          className="rounded-lg cursor-pointer py-2 font-medium"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Icon className="w-4 h-4 text-slate-400" />
+                            {label}
+                          </div>
+                        </DropdownMenuCheckboxItem>
+                      )
+                    })}
+                    {selectedRoles.length > 0 && (
+                      <>
+                        <DropdownMenuSeparator className="bg-slate-100 my-1" />
+                        <DropdownMenuItem
+                          className="justify-center text-sm font-bold text-slate-500 hover:text-slate-900 rounded-lg py-2 cursor-pointer transition-colors"
+                          onClick={() => setSelectedRoles([])}
+                        >
+                          {t('settings.users.clearFilter') || 'Сбросить'}
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
             <div className="relative group w-full md:w-72">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-900 transition-colors z-10" />
               <Input

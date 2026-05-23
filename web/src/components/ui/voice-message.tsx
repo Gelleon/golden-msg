@@ -413,9 +413,10 @@ export function VoiceMessage({
     if (d === Infinity) {
       audioRef.current.currentTime = 1e101
       audioRef.current.addEventListener("timeupdate", () => {
-        audioRef.current!.currentTime = 0
+        if (!audioRef.current) return
+        audioRef.current.currentTime = 0
         if (!initialDuration) {
-          setDuration(audioRef.current!.duration)
+          setDuration(audioRef.current.duration)
         }
       }, { once: true })
     } else {
