@@ -289,27 +289,25 @@ export async function getRooms() {
         ? new Date(Math.min(...roomsWithParticipation.map(r => r.participants[0].last_read_at.getTime())))
         : null
       
-      const unreadMessages = (minLastReadAt && participatingRoomIds.length > 0)
-        ? await prisma.message.findMany({
+      if (roomsWithParticipation.length > 0) {
+        const countPromises = roomsWithParticipation.map(async (room) => {
+          const lastReadAt = room.participants[0].last_read_at;
+          const count = await prisma.message.count({
             where: {
-              room_id: { in: participatingRoomIds },
+              room_id: room.id,
               sender_id: { not: session.user.id },
-              created_at: { gt: minLastReadAt }
-            },
-            select: {
-              room_id: true,
-              created_at: true
+              created_at: { gt: lastReadAt }
             }
-          })
-        : []
+          });
+          return { id: room.id, count };
+        });
 
-      unreadCounts = rooms.reduce((acc, room) => {
-        const lastReadAt = room.participants[0]?.last_read_at || new Date(0)
-        acc[room.id] = room.participants[0]?.last_read_at
-          ? unreadMessages.filter(m => m.room_id === room.id && m.created_at > lastReadAt).length
-          : 0
-        return acc
-      }, {} as Record<string, number>)
+        const counts = await Promise.all(countPromises);
+        unreadCounts = counts.reduce((acc, { id, count }) => {
+          acc[id] = count;
+          return acc;
+        }, {} as Record<string, number>);
+      }
     }
 
     const roomsWithCounts = rooms.map(room => {
@@ -433,62 +431,65 @@ export async function getDMs() {
         ? new Date(Math.min(...currentParticipants.map(({ p }) => (p as any).last_read_at.getTime())))
         : null
 
-      const unreadMessages = (minLastReadAt && participatingDmIds.length > 0)
-        ? await prisma.message.findMany({
+      if (currentParticipants.length > 0) {
+        const countPromises = currentParticipants.map(async ({ dmId, p }) => {
+          const lastReadAt = (p as any).last_read_at;
+          const count = await prisma.message.count({
             where: {
-              room_id: { in: participatingDmIds },
+              room_id: dmId,
               sender_id: { not: session.user.id },
-              created_at: { gt: minLastReadAt }
-            },
-            select: {
-              room_id: true,
-              created_at: true
+              created_at: { gt: lastReadAt }
             }
-          })
-        : []
+          });
+          return { id: dmId, count };
+        });
 
-      unreadCounts = dms.reduce((acc, dm) => {
-        const currentParticipant = dm.participants.find(p => p.user_id === session.user.id)
-        const lastReadAt = currentParticipant?.last_read_at || new Date(0)
-        acc[dm.id] = currentParticipant?.last_read_at
-          ? unreadMessages.filter(m => m.room_id === dm.id && m.created_at > lastReadAt).length
-          : 0
-        return acc
-      }, {} as Record<string, number>)
+        const counts = await Promise.all(countPromises);
+        unreadCounts = counts.reduce((acc, { id, count }) => {
+          acc[id] = count;
+          return acc;
+        }, {} as Record<string, number>);
+      }
     }
 
     // Fetch shared rooms for each DM
-    const sharedRoomsPromises = dms.map(async (dm) => {
-      if (dm.participants.length > 2) return { dmId: dm.id, sharedRoomName: null }
-      const isMember = dm.participants.some((p) => p.user_id === session.user.id)
-      if (!isMember) return { dmId: dm.id, sharedRoomName: null }
-      const otherParticipant = dm.participants.find(p => p.user_id !== session.user.id);
-      if (!otherParticipant) return { dmId: dm.id, sharedRoomName: null };
-      
-      // Find shared rooms
-      const sharedRooms = await prisma.room.findMany({
-        where: {
-          type: 'group',
-          AND: [
-            { participants: { some: { user_id: session.user.id } } },
-            { participants: { some: { user_id: otherParticipant.user_id } } }
-          ]
-        },
-        select: { name: true }
-      });
-      
-      const sharedRoomNames = sharedRooms.map(r => r.name).filter(Boolean);
-      return { 
-        dmId: dm.id, 
-        sharedRoomName: sharedRoomNames.length > 0 ? sharedRoomNames.join(', ') : null 
-      };
+    const currentUserGroups = await prisma.room.findMany({
+      where: {
+        type: 'group',
+        participants: { some: { user_id: session.user.id } }
+      },
+      select: {
+        name: true,
+        participants: {
+          select: { user_id: true }
+        }
+      }
     });
-    
-    const sharedRoomsResults = await Promise.all(sharedRoomsPromises);
-    const sharedRoomsMap = sharedRoomsResults.reduce((acc, result) => {
-      acc[result.dmId] = result.sharedRoomName;
-      return acc;
-    }, {} as Record<string, string | null>);
+
+    const sharedRoomsMap: Record<string, string | null> = {};
+    for (const dm of dms) {
+      if (dm.participants.length > 2) {
+        sharedRoomsMap[dm.id] = null;
+        continue;
+      }
+      const isMember = dm.participants.some((p) => p.user_id === session.user.id);
+      if (!isMember) {
+        sharedRoomsMap[dm.id] = null;
+        continue;
+      }
+      const otherParticipant = dm.participants.find(p => p.user_id !== session.user.id);
+      if (!otherParticipant) {
+        sharedRoomsMap[dm.id] = null;
+        continue;
+      }
+      
+      const sharedRoomNames = currentUserGroups
+        .filter(g => g.participants.some(p => p.user_id === otherParticipant.user_id))
+        .map(g => g.name)
+        .filter(Boolean);
+        
+      sharedRoomsMap[dm.id] = sharedRoomNames.length > 0 ? sharedRoomNames.join(', ') : null;
+    }
 
     // Fetch parent rooms for each DM
     const parentRoomIds = dms.map(dm => dm.room_id).filter(Boolean) as string[]
@@ -622,25 +623,33 @@ export async function searchUsers(query: string = "") {
     const finalUsers = filteredUsers.slice(0, 50); // Always return up to 50 users
 
     // Fetch shared rooms for each user
-    const usersWithSharedRooms = await Promise.all(finalUsers.map(async (user) => {
-      const sharedRooms = await prisma.room.findMany({
-        where: {
-          type: 'group',
-          AND: [
-            { participants: { some: { user_id: session.user.id } } },
-            { participants: { some: { user_id: user.id } } }
-          ]
-        },
-        select: { name: true }
-      });
+    const currentUserGroups = await prisma.room.findMany({
+      where: {
+        type: 'group',
+        participants: { some: { user_id: session.user.id } }
+      },
+      select: {
+        name: true,
+        participants: {
+          select: { user_id: true }
+        }
+      }
+    });
+
+    const usersWithSharedRooms = finalUsers.map((user) => {
+      const sharedRooms = currentUserGroups
+        .filter(g => g.participants.some(p => p.user_id === user.id))
+        .map(g => g.name)
+        .filter(Boolean);
+
       return {
         ...user,
         preferred_language: user.preferred_language || "ru",
         created_at: user.created_at.toISOString(),
-        sharedRoomName: sharedRooms.map(r => r.name).filter(Boolean).join(', ') || null,
+        sharedRoomName: sharedRooms.join(', ') || null,
         lastActiveAt: user.last_active_at ? user.last_active_at.toISOString() : null
       };
-    }));
+    });
 
     return usersWithSharedRooms;
   } catch (error) {
