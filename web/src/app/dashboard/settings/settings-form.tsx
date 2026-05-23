@@ -263,6 +263,12 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
   const [editNameUserId, setEditNameUserId] = useState<string | null>(null)
   const [editNameUserLabel, setEditNameUserLabel] = useState<string>("")
   const [editNameValue, setEditNameValue] = useState<string>("")
+  const [editJobTitleOpen, setEditJobTitleOpen] = useState(false)
+  const [editJobTitleUserId, setEditJobTitleUserId] = useState<string | null>(null)
+  const [editJobTitleUserLabel, setEditJobTitleUserLabel] = useState<string>("")
+  const [editJobTitleRu, setEditJobTitleRu] = useState<string>("")
+  const [editJobTitleCn, setEditJobTitleCn] = useState<string>("")
+  const [isSavingJobTitle, setIsSavingJobTitle] = useState(false)
   const [editNameError, setEditNameError] = useState<string | null>(null)
   const [isSavingName, setIsSavingName] = useState(false)
   const [selectedRoles, setSelectedRoles] = useState<string[]>(() => {
@@ -357,6 +363,14 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
     setEditNameOpen(true)
   }
 
+  const openEditJobTitle = (u: any) => {
+    setEditJobTitleUserId(u.id)
+    setEditJobTitleUserLabel(u.full_name || u.email)
+    setEditJobTitleRu(u.job_title_ru || "")
+    setEditJobTitleCn(u.job_title_cn || "")
+    setEditJobTitleOpen(true)
+  }
+
   const handleSaveName = async () => {
     if (!editNameUserId) return
     const normalized = normalizeName(editNameValue)
@@ -368,7 +382,8 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
     setIsSavingName(true)
     setEditNameError(null)
     try {
-      const res = await updateUserName(editNameUserId, normalized)
+      const user = users.find(u => u.id === editNameUserId)
+      const res = await updateUserName(editNameUserId, normalized, user?.job_title_ru || "", user?.job_title_cn || "")
       if (res?.success) {
         setUsers(prev => prev.map(u => u.id === editNameUserId ? { ...u, full_name: normalized } : u))
         toast({
@@ -391,6 +406,38 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
       })
     } finally {
       setIsSavingName(false)
+    }
+  }
+
+  const handleSaveJobTitle = async () => {
+    if (!editJobTitleUserId) return
+    setIsSavingJobTitle(true)
+    try {
+      const user = users.find(u => u.id === editJobTitleUserId)
+      const normalizedName = user?.full_name || ""
+      const res = await updateUserName(editJobTitleUserId, normalizedName, editJobTitleRu, editJobTitleCn)
+      if (res?.success) {
+        setUsers(prev => prev.map(u => u.id === editJobTitleUserId ? { ...u, job_title_ru: editJobTitleRu, job_title_cn: editJobTitleCn } : u))
+        toast({
+          title: t("common.success"),
+          description: t("settings.users.editJobTitleSuccess") || "Должность успешно обновлена",
+        })
+        setEditJobTitleOpen(false)
+      } else {
+        toast({
+          title: t("common.error"),
+          description: res?.error || t("settings.users.editJobTitleError") || "Ошибка при обновлении должности",
+          variant: "destructive",
+        })
+      }
+    } catch (e) {
+      toast({
+        title: t("common.error"),
+        description: t("settings.users.editJobTitleError") || "Ошибка при обновлении должности",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSavingJobTitle(false)
     }
   }
 
@@ -494,16 +541,17 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
             <Table>
               <TableHeader className="bg-slate-50/80 border-b border-slate-100">
                 <TableRow className="hover:bg-transparent border-none">
-                  <TableHead className="pl-6 py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">{t('settings.users.user')}</TableHead>
-                  <TableHead className="hidden md:table-cell py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">{t('settings.users.email')}</TableHead>
-                  <TableHead className="py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">{t('settings.users.role')}</TableHead>
-                  <TableHead className="pr-6 py-4 text-right text-[10px] font-black text-slate-900 uppercase tracking-wider">{t('settings.users.actions')}</TableHead>
+                  <TableHead className="w-[40%] md:w-[25%] pl-6 py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">{t('settings.users.user')}</TableHead>
+                  <TableHead className="hidden md:table-cell md:w-[25%] py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">{t('settings.users.email')}</TableHead>
+                  <TableHead className="w-[30%] md:w-[25%] py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">{t('settings.users.jobTitleColumn') || "Должность"}</TableHead>
+                  <TableHead className="w-[20%] md:w-[15%] py-4 text-[10px] font-black text-slate-900 uppercase tracking-wider">{t('settings.users.role')}</TableHead>
+                  <TableHead className="w-[10%] md:w-[10%] pr-6 py-4 text-right text-[10px] font-black text-slate-900 uppercase tracking-wider">{t('settings.users.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-48 text-center">
+                    <TableCell colSpan={5} className="h-48 text-center">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <div className="p-4 bg-slate-50 rounded-full border border-slate-100">
                           <Search className="h-6 w-6 text-slate-300" />
@@ -519,7 +567,7 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
                     const canEditThisName = !!currentUserId && user.id !== currentUserId
                     return (
                       <TableRow key={user.id} className="group hover:bg-slate-50/50 border-slate-100 transition-colors">
-                        <TableCell className="pl-6 py-4">
+                        <TableCell className="w-[40%] md:w-[25%] pl-6 py-4">
                           <div className="flex items-center gap-4">
                             <div className="relative">
                               <Avatar className="h-10 w-10 rounded-lg border border-white shadow-md ring-1 ring-slate-200 transition-transform group-hover:scale-105 duration-300">
@@ -530,27 +578,46 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
                               </Avatar>
                               <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
                             </div>
-                            <div className="flex flex-col">
-                              <span className="text-sm font-black text-slate-900 leading-tight group-hover:text-blue-600 transition-colors">{user.full_name || t('settings.users.noName')}</span>
-                              <span className="text-[10px] text-slate-500 font-bold md:hidden">{user.email}</span>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-sm font-black text-slate-900 leading-tight group-hover:text-blue-600 transition-colors truncate">{user.full_name || t('settings.users.noName')}</span>
+                              <span className="text-[10px] text-slate-500 font-bold md:hidden truncate">{user.email}</span>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell py-4">
-                          <span className="text-sm font-bold text-slate-600">{user.email}</span>
+                        <TableCell className="hidden md:table-cell w-[25%] py-4">
+                          <span className="text-sm font-bold text-slate-600 truncate block">{user.email}</span>
                         </TableCell>
-                        <TableCell className="py-4">
+                        <TableCell className="w-[30%] md:w-[25%] py-4">
+                          <div className="flex flex-col gap-1">
+                            {user.job_title_ru && (
+                              <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-md w-fit whitespace-nowrap truncate max-w-full">
+                                <span className="text-[10px] text-slate-400 mr-1 uppercase">RU</span>{user.job_title_ru}
+                              </span>
+                            )}
+                            {user.job_title_cn && (
+                              <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded-md w-fit whitespace-nowrap truncate max-w-full">
+                                <span className="text-[10px] text-slate-400 mr-1 uppercase">CN</span>{user.job_title_cn}
+                              </span>
+                            )}
+                            {!user.job_title_ru && !user.job_title_cn && (
+                              <span className="text-xs font-medium text-slate-400 italic">
+                                —
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="w-[20%] md:w-[15%] py-4">
                           <div className="flex flex-col gap-1">
                             <div className={cn(
-                              "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-wider shadow-sm transition-all duration-300",
+                              "inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-wider shadow-sm transition-all duration-300 w-fit whitespace-nowrap",
                               roleColors[currentRole] || roleColors.client
                             )}>
-                              <RoleIcon className="h-3 w-3" />
-                              {roleLabels[currentRole] || t('roles.client')}
+                              <RoleIcon className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{roleLabels[currentRole] || t('roles.client')}</span>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="pr-6 py-4 text-right">
+                        <TableCell className="w-[10%] md:w-[10%] pr-6 py-4 text-right">
                             {isSaving && user.id === pendingChangesId ? (
                               <div className="flex justify-end p-2">
                                 <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
@@ -579,6 +646,24 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
                                       <Pencil className="h-4 w-4 text-slate-400" />
                                     </div>
                                     <span>{t("settings.users.editName")}</span>
+                                  </DropdownMenuItem>
+
+                                  <DropdownMenuItem
+                                    disabled={!canEditThisName}
+                                    onSelect={(e) => {
+                                      e.preventDefault()
+                                      if (!canEditThisName) return
+                                      openEditJobTitle(user)
+                                    }}
+                                    className={cn(
+                                      "flex items-center gap-3 rounded-xl transition-all py-2.5 px-3 text-sm font-bold mt-1",
+                                      canEditThisName ? "text-slate-700 hover:bg-slate-50 hover:text-slate-900 cursor-pointer" : "opacity-50 cursor-not-allowed"
+                                    )}
+                                  >
+                                    <div className="p-1.5 rounded-lg border bg-slate-50 border-slate-100">
+                                      <Briefcase className="h-4 w-4 text-slate-400" />
+                                    </div>
+                                    <span>{t("settings.users.editJobTitle")}</span>
                                   </DropdownMenuItem>
 
                                   {currentUserRole === "admin" && (
@@ -661,21 +746,23 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
               {t("settings.users.editNameDesc")} {editNameUserLabel ? `(${editNameUserLabel})` : ""}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
-            <Label className="text-xs font-black text-slate-700 uppercase tracking-wider">{t("settings.users.editNameLabel")}</Label>
-            <Input
-              value={editNameValue}
-              onChange={(e) => {
-                setEditNameValue(e.target.value)
-                if (editNameError) setEditNameError(null)
-              }}
-              placeholder={t("settings.users.editNamePlaceholder")}
-              className="h-11 bg-white border-2 border-slate-200 focus:border-slate-900 focus:ring-slate-900/5 rounded-xl text-sm font-bold transition-all shadow-sm placeholder:text-slate-400 placeholder:font-medium"
-              autoFocus
-            />
-            {editNameError && (
-              <div className="text-xs font-bold text-red-600">{editNameError}</div>
-            )}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-black text-slate-700 uppercase tracking-wider">{t("settings.users.editNameLabel")}</Label>
+              <Input
+                value={editNameValue}
+                onChange={(e) => {
+                  setEditNameValue(e.target.value)
+                  if (editNameError) setEditNameError(null)
+                }}
+                placeholder={t("settings.users.editNamePlaceholder")}
+                className="h-11 bg-white border-2 border-slate-200 focus:border-slate-900 focus:ring-slate-900/5 rounded-xl text-sm font-bold transition-all shadow-sm placeholder:text-slate-400 placeholder:font-medium"
+                autoFocus
+              />
+              {editNameError && (
+                <div className="text-xs font-bold text-red-600">{editNameError}</div>
+              )}
+            </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
@@ -694,6 +781,68 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
               disabled={isSavingName}
             >
               {isSavingName ? <Loader2 className="h-4 w-4 animate-spin" /> : t("common.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={editJobTitleOpen}
+        onOpenChange={(open) => {
+          setEditJobTitleOpen(open)
+          if (!open) {
+            setEditJobTitleUserId(null)
+            setEditJobTitleUserLabel("")
+            setEditJobTitleRu("")
+            setEditJobTitleCn("")
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-black/10 ring-1 ring-black/5">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-slate-900">{t("settings.users.editJobTitleTitle") || "Редактировать должность"}</DialogTitle>
+            <DialogDescription className="text-sm font-medium text-slate-600">
+              {t("settings.users.editJobTitleDesc") || "Измените должность пользователя"} {editJobTitleUserLabel ? `(${editJobTitleUserLabel})` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-black text-slate-700 uppercase tracking-wider">{t("settings.users.jobTitleRuLabel") || "Должность (RU)"}</Label>
+              <Input
+                value={editJobTitleRu}
+                onChange={(e) => setEditJobTitleRu(e.target.value)}
+                placeholder={t("settings.users.jobTitleRuPlaceholder") || "Например: Разработчик"}
+                className="h-11 bg-white border-2 border-slate-200 focus:border-slate-900 focus:ring-slate-900/5 rounded-xl text-sm font-bold transition-all shadow-sm placeholder:text-slate-400 placeholder:font-medium"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-black text-slate-700 uppercase tracking-wider">{t("settings.users.jobTitleCnLabel") || "Должность (CN)"}</Label>
+              <Input
+                value={editJobTitleCn}
+                onChange={(e) => setEditJobTitleCn(e.target.value)}
+                placeholder={t("settings.users.jobTitleCnPlaceholder") || "Например: 开发者"}
+                className="h-11 bg-white border-2 border-slate-200 focus:border-slate-900 focus:ring-slate-900/5 rounded-xl text-sm font-bold transition-all shadow-sm placeholder:text-slate-400 placeholder:font-medium"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-10 rounded-xl font-black text-slate-600 hover:bg-slate-100"
+              onClick={() => setEditJobTitleOpen(false)}
+              disabled={isSavingJobTitle}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="button"
+              className="h-10 rounded-xl font-black bg-slate-900 text-white hover:bg-slate-800"
+              onClick={handleSaveJobTitle}
+              disabled={isSavingJobTitle}
+            >
+              {isSavingJobTitle ? <Loader2 className="h-4 w-4 animate-spin" /> : t("common.save")}
             </Button>
           </DialogFooter>
         </DialogContent>

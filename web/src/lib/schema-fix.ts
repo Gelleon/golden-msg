@@ -50,6 +50,12 @@ export async function ensureSchemaFixed() {
       }
         
         if (isUserTable) {
+          await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "job_title_ru" TEXT;`).catch(() => {});
+          await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "job_title_ru" TEXT;`).catch(() => {});
+          
+          await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "job_title_cn" TEXT;`).catch(() => {});
+          await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "job_title_cn" TEXT;`).catch(() => {});
+
           await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "preferred_language" TEXT DEFAULT 'ru';`).catch(() => {});
           await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "preferred_language" TEXT DEFAULT 'ru';`).catch(() => {});
   

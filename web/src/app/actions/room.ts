@@ -791,6 +791,8 @@ export async function getRoomDetails(roomId: string) {
             full_name: true,
             avatar_url: true,
             role: true,
+            job_title_ru: true,
+            job_title_cn: true,
             last_active_at: true,
           },
         },
@@ -1256,6 +1258,8 @@ export async function searchUsersForRoomPaginated(roomId: string, query: string 
         email: true,
         avatar_url: true,
         role: true,
+        job_title_ru: true,
+        job_title_cn: true,
       },
       orderBy: {
         full_name: "asc",
@@ -1298,6 +1302,8 @@ export async function searchUsersForRoom(query: string = "") {
         email: true,
         avatar_url: true,
         role: true,
+        job_title_ru: true,
+        job_title_cn: true,
       },
       orderBy: {
         full_name: "asc",

@@ -1729,6 +1729,8 @@ export namespace Prisma {
     full_name: string | null
     avatar_url: string | null
     role: string | null
+    job_title_ru: string | null
+    job_title_cn: string | null
     preferred_language: string | null
     password_hash: string | null
     created_at: Date | null
@@ -1746,6 +1748,8 @@ export namespace Prisma {
     full_name: string | null
     avatar_url: string | null
     role: string | null
+    job_title_ru: string | null
+    job_title_cn: string | null
     preferred_language: string | null
     password_hash: string | null
     created_at: Date | null
@@ -1763,6 +1767,8 @@ export namespace Prisma {
     full_name: number
     avatar_url: number
     role: number
+    job_title_ru: number
+    job_title_cn: number
     preferred_language: number
     password_hash: number
     created_at: number
@@ -1782,6 +1788,8 @@ export namespace Prisma {
     full_name?: true
     avatar_url?: true
     role?: true
+    job_title_ru?: true
+    job_title_cn?: true
     preferred_language?: true
     password_hash?: true
     created_at?: true
@@ -1799,6 +1807,8 @@ export namespace Prisma {
     full_name?: true
     avatar_url?: true
     role?: true
+    job_title_ru?: true
+    job_title_cn?: true
     preferred_language?: true
     password_hash?: true
     created_at?: true
@@ -1816,6 +1826,8 @@ export namespace Prisma {
     full_name?: true
     avatar_url?: true
     role?: true
+    job_title_ru?: true
+    job_title_cn?: true
     preferred_language?: true
     password_hash?: true
     created_at?: true
@@ -1906,6 +1918,8 @@ export namespace Prisma {
     full_name: string | null
     avatar_url: string | null
     role: string
+    job_title_ru: string | null
+    job_title_cn: string | null
     preferred_language: string
     password_hash: string
     created_at: Date
@@ -1940,6 +1954,8 @@ export namespace Prisma {
     full_name?: boolean
     avatar_url?: boolean
     role?: boolean
+    job_title_ru?: boolean
+    job_title_cn?: boolean
     preferred_language?: boolean
     password_hash?: boolean
     created_at?: boolean
@@ -1966,6 +1982,8 @@ export namespace Prisma {
     full_name?: boolean
     avatar_url?: boolean
     role?: boolean
+    job_title_ru?: boolean
+    job_title_cn?: boolean
     preferred_language?: boolean
     password_hash?: boolean
     created_at?: boolean
@@ -1983,6 +2001,8 @@ export namespace Prisma {
     full_name?: boolean
     avatar_url?: boolean
     role?: boolean
+    job_title_ru?: boolean
+    job_title_cn?: boolean
     preferred_language?: boolean
     password_hash?: boolean
     created_at?: boolean
@@ -2025,6 +2045,8 @@ export namespace Prisma {
       full_name: string | null
       avatar_url: string | null
       role: string
+      job_title_ru: string | null
+      job_title_cn: string | null
       preferred_language: string
       password_hash: string
       created_at: Date
@@ -2440,6 +2462,8 @@ export namespace Prisma {
     readonly full_name: FieldRef<"User", 'String'>
     readonly avatar_url: FieldRef<"User", 'String'>
     readonly role: FieldRef<"User", 'String'>
+    readonly job_title_ru: FieldRef<"User", 'String'>
+    readonly job_title_cn: FieldRef<"User", 'String'>
     readonly preferred_language: FieldRef<"User", 'String'>
     readonly password_hash: FieldRef<"User", 'String'>
     readonly created_at: FieldRef<"User", 'DateTime'>
@@ -11034,6 +11058,8 @@ export namespace Prisma {
     full_name: 'full_name',
     avatar_url: 'avatar_url',
     role: 'role',
+    job_title_ru: 'job_title_ru',
+    job_title_cn: 'job_title_cn',
     preferred_language: 'preferred_language',
     password_hash: 'password_hash',
     created_at: 'created_at',
@@ -11233,6 +11259,8 @@ export namespace Prisma {
     full_name?: StringNullableFilter<"User"> | string | null
     avatar_url?: StringNullableFilter<"User"> | string | null
     role?: StringFilter<"User"> | string
+    job_title_ru?: StringNullableFilter<"User"> | string | null
+    job_title_cn?: StringNullableFilter<"User"> | string | null
     preferred_language?: StringFilter<"User"> | string
     password_hash?: StringFilter<"User"> | string
     created_at?: DateTimeFilter<"User"> | Date | string
@@ -11258,6 +11286,8 @@ export namespace Prisma {
     full_name?: SortOrderInput | SortOrder
     avatar_url?: SortOrderInput | SortOrder
     role?: SortOrder
+    job_title_ru?: SortOrderInput | SortOrder
+    job_title_cn?: SortOrderInput | SortOrder
     preferred_language?: SortOrder
     password_hash?: SortOrder
     created_at?: SortOrder
@@ -11286,6 +11316,8 @@ export namespace Prisma {
     full_name?: StringNullableFilter<"User"> | string | null
     avatar_url?: StringNullableFilter<"User"> | string | null
     role?: StringFilter<"User"> | string
+    job_title_ru?: StringNullableFilter<"User"> | string | null
+    job_title_cn?: StringNullableFilter<"User"> | string | null
     preferred_language?: StringFilter<"User"> | string
     password_hash?: StringFilter<"User"> | string
     created_at?: DateTimeFilter<"User"> | Date | string
@@ -11311,6 +11343,8 @@ export namespace Prisma {
     full_name?: SortOrderInput | SortOrder
     avatar_url?: SortOrderInput | SortOrder
     role?: SortOrder
+    job_title_ru?: SortOrderInput | SortOrder
+    job_title_cn?: SortOrderInput | SortOrder
     preferred_language?: SortOrder
     password_hash?: SortOrder
     created_at?: SortOrder
@@ -11334,6 +11368,8 @@ export namespace Prisma {
     full_name?: StringNullableWithAggregatesFilter<"User"> | string | null
     avatar_url?: StringNullableWithAggregatesFilter<"User"> | string | null
     role?: StringWithAggregatesFilter<"User"> | string
+    job_title_ru?: StringNullableWithAggregatesFilter<"User"> | string | null
+    job_title_cn?: StringNullableWithAggregatesFilter<"User"> | string | null
     preferred_language?: StringWithAggregatesFilter<"User"> | string
     password_hash?: StringWithAggregatesFilter<"User"> | string
     created_at?: DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -11971,6 +12007,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -11996,6 +12034,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -12021,6 +12061,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12046,6 +12088,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12071,6 +12115,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -12088,6 +12134,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12105,6 +12153,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12920,6 +12970,8 @@ export namespace Prisma {
     full_name?: SortOrder
     avatar_url?: SortOrder
     role?: SortOrder
+    job_title_ru?: SortOrder
+    job_title_cn?: SortOrder
     preferred_language?: SortOrder
     password_hash?: SortOrder
     created_at?: SortOrder
@@ -12937,6 +12989,8 @@ export namespace Prisma {
     full_name?: SortOrder
     avatar_url?: SortOrder
     role?: SortOrder
+    job_title_ru?: SortOrder
+    job_title_cn?: SortOrder
     preferred_language?: SortOrder
     password_hash?: SortOrder
     created_at?: SortOrder
@@ -12954,6 +13008,8 @@ export namespace Prisma {
     full_name?: SortOrder
     avatar_url?: SortOrder
     role?: SortOrder
+    job_title_ru?: SortOrder
+    job_title_cn?: SortOrder
     preferred_language?: SortOrder
     password_hash?: SortOrder
     created_at?: SortOrder
@@ -14922,6 +14978,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -14946,6 +15004,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -14986,6 +15046,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15010,6 +15072,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15034,6 +15098,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -15058,6 +15124,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -15098,6 +15166,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15122,6 +15192,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15146,6 +15218,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -15170,6 +15244,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -15210,6 +15286,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15234,6 +15312,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15387,6 +15467,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -15411,6 +15493,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -15588,6 +15672,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15612,6 +15698,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15668,6 +15756,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -15692,6 +15782,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -15771,6 +15863,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15795,6 +15889,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15954,6 +16050,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -15978,6 +16076,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -16122,6 +16222,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16146,6 +16248,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16215,6 +16319,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -16239,6 +16345,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -16318,6 +16426,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16342,6 +16452,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16411,6 +16523,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -16435,6 +16549,8 @@ export namespace Prisma {
     full_name?: string | null
     avatar_url?: string | null
     role?: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
     preferred_language?: string
     password_hash?: string
     created_at?: Date | string
@@ -16475,6 +16591,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16499,6 +16617,8 @@ export namespace Prisma {
     full_name?: NullableStringFieldUpdateOperationsInput | string | null
     avatar_url?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    job_title_ru?: NullableStringFieldUpdateOperationsInput | string | null
+    job_title_cn?: NullableStringFieldUpdateOperationsInput | string | null
     preferred_language?: StringFieldUpdateOperationsInput | string
     password_hash?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string

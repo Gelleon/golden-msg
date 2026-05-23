@@ -361,6 +361,8 @@ export async function updateMessage(messageId: string, content: string) {
             full_name: true,
             avatar_url: true,
             role: true,
+            job_title_ru: true,
+            job_title_cn: true,
           },
         },
         reply_to: {

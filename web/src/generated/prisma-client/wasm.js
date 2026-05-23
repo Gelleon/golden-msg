@@ -125,6 +125,8 @@ exports.Prisma.UserScalarFieldEnum = {
   full_name: 'full_name',
   avatar_url: 'avatar_url',
   role: 'role',
+  job_title_ru: 'job_title_ru',
+  job_title_cn: 'job_title_cn',
   preferred_language: 'preferred_language',
   password_hash: 'password_hash',
   created_at: 'created_at',

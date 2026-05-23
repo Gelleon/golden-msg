@@ -47,6 +47,8 @@ interface Message {
     full_name: string | null
     avatar_url: string | null
     role: string
+    job_title_ru?: string | null
+    job_title_cn?: string | null
   }
   reply_to?: {
     id: string
@@ -135,6 +137,10 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
   const [mounted, setMounted] = useState(false)
   const isMountedRef = useRef(false)
   const userOverrideViewModeRef = useRef(false)
+
+  const displayJobTitle = language === "cn" 
+    ? message.sender.job_title_cn || message.sender.job_title_ru 
+    : message.sender.job_title_ru || message.sender.job_title_cn;
   
   // To identify if the CURRENT user is an admin, we check the prop or fallback to localStorage
   const isCurrentUserAdmin = currentUserRole === "admin" || 
@@ -647,11 +653,16 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
               <div
                 data-testid="message-sender-name"
                 className={cn(
-                  "px-4 pb-1 text-[15px] md:text-[16px] leading-[16px] md:leading-[18px] font-semibold select-none truncate max-w-full",
+                  "px-4 pb-1 text-[15px] md:text-[16px] leading-[16px] md:leading-[18px] font-semibold select-none truncate max-w-full flex items-center gap-1.5",
                   senderNameColorClass
                 )}
               >
-                {message.sender.full_name}
+                <span className="truncate">{message.sender.full_name}</span>
+                {displayJobTitle && (
+                  <span className="text-[11px] md:text-xs font-normal opacity-80 bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded shrink-0">
+                    {displayJobTitle}
+                  </span>
+                )}
               </div>
             )}
             <div
@@ -716,11 +727,16 @@ export function MessageBubble({ roomId, message, isCurrentUser, onReply, onDelet
               <div
                 data-testid="message-sender-name"
                 className={cn(
-                  "px-4 pb-1 text-[15px] md:text-[16px] leading-[16px] md:leading-[18px] font-semibold select-none truncate max-w-full",
+                  "px-4 pb-1 text-[15px] md:text-[16px] leading-[16px] md:leading-[18px] font-semibold select-none truncate max-w-full flex items-center gap-1.5",
                   senderNameColorClass
                 )}
               >
-                {message.sender.full_name}
+                <span className="truncate">{message.sender.full_name}</span>
+                {displayJobTitle && (
+                  <span className="text-[11px] md:text-xs font-normal opacity-80 bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded shrink-0">
+                    {displayJobTitle}
+                  </span>
+                )}
               </div>
             )}
             

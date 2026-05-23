@@ -21,10 +21,12 @@ interface Participant {
   avatarUrl?: string | null;
   last_active_at?: string;
   last_read_at?: string;
+  job_title_ru?: string | null;
+  job_title_cn?: string | null;
 }
 
 export const RoomInfo = ({ roomId }: { roomId: string }) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [roomCreator, setRoomCreator] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<{id: string, role: string} | null>(null);
@@ -231,6 +233,10 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
           ? (now - new Date(participant.last_active_at).getTime() <= 2 * 60 * 1000)
           : false;
         
+        const displayJobTitle = language === "cn" 
+          ? participant.job_title_cn || participant.job_title_ru 
+          : participant.job_title_ru || participant.job_title_cn;
+        
         return (
           <div key={participant.id} className="flex items-center justify-between p-2 hover:bg-white/5 rounded-lg transition-colors group">
             <div className="flex items-center gap-3 min-w-0">
@@ -249,6 +255,12 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
                 <div className="flex items-center gap-2">
                   <div className="text-sm font-medium text-slate-200 truncate">{participant.name || participant.full_name || "Unknown"}</div>
                   
+                  {displayJobTitle && (
+                    <span className="text-[10px] font-medium text-slate-400 bg-white/5 px-1.5 py-0.5 rounded shrink-0">
+                      {displayJobTitle}
+                    </span>
+                  )}
+
                   <span className={`flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded ${getGlobalRoleBadgeClass(participant.role)}`}>
                     {getGlobalRoleBadgeIcon(participant.role)}
                     {getGlobalRoleText(participant.role)}
@@ -335,30 +347,43 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
               {isLoading && eligibleUsers.length === 0 ? (
                 <div className="text-slate-400 text-center p-4 text-xs">{t("roomInfo.loadingUsers") || "Загрузка..."}</div>
               ) : paginatedUsers.length > 0 ? (
-                paginatedUsers.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-2 hover:bg-white/5 rounded-lg border border-transparent hover:border-white/5 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.avatarUrl || user.avatar_url || undefined} alt={user.name || user.full_name || ""} />
-                        <AvatarFallback className="bg-slate-800 text-slate-400">
-                          {(user.name || user.full_name)?.charAt(0)?.toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="text-sm font-medium text-slate-200">{user.name || user.full_name}</div>
+                paginatedUsers.map((user) => {
+                  const displayJobTitle = language === "cn" 
+                    ? user.job_title_cn || user.job_title_ru 
+                    : user.job_title_ru || user.job_title_cn;
+
+                  return (
+                    <div key={user.id} className="flex items-center justify-between p-2 hover:bg-white/5 rounded-lg border border-transparent hover:border-white/5 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={user.avatarUrl || user.avatar_url || undefined} alt={user.name || user.full_name || ""} />
+                          <AvatarFallback className="bg-slate-800 text-slate-400">
+                            {(user.name || user.full_name)?.charAt(0)?.toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-medium text-slate-200">{user.name || user.full_name}</div>
+                            {displayJobTitle && (
+                              <span className="text-[10px] font-medium text-slate-400 bg-white/5 px-1.5 py-0.5 rounded shrink-0">
+                                {displayJobTitle}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleAddUser(user.id)}
+                        disabled={isLoading}
+                        className="h-8 w-8 p-0 text-amber-500 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleAddUser(user.id)}
-                      disabled={isLoading}
-                      className="h-8 w-8 p-0 text-amber-500 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="text-slate-500 text-center py-4 text-xs">
                   {t("roomInfo.noUsersFound") || "Нет доступных пользователей"}

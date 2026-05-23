@@ -14,6 +14,8 @@ model User {
   full_name                   String?
   avatar_url                  String?
   role                        String               @default("client")
+  job_title_ru                String?
+  job_title_cn                String?
   preferred_language          String               @default("ru")
   password_hash               String               @default("")
   created_at                  DateTime             @default(now())

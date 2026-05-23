@@ -22,6 +22,8 @@ export async function getUsers() {
         email: true,
         full_name: true,
         role: true,
+        job_title_ru: true,
+        job_title_cn: true,
         // @ts-ignore
         // preferred_language: true,
         avatar_url: true,
@@ -79,7 +81,7 @@ const validateUserName = (value: string) => {
   return { ok: true as const }
 }
 
-export async function updateUserName(userId: string, newFullName: string) {
+export async function updateUserName(userId: string, newFullName: string, jobTitleRu?: string, jobTitleCn?: string) {
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
 
@@ -91,28 +93,35 @@ export async function updateUserName(userId: string, newFullName: string) {
   const validation = validateUserName(normalized)
   if (!validation.ok) return { error: validation.error }
 
+  const cleanJobTitleRu = typeof jobTitleRu === "string" ? jobTitleRu.trim() : null
+  const cleanJobTitleCn = typeof jobTitleCn === "string" ? jobTitleCn.trim() : null
+
   try {
     await ensureSchemaFixed()
 
     const target = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, full_name: true, email: true, role: true },
+      select: { id: true, full_name: true, email: true, role: true, job_title_ru: true, job_title_cn: true },
     })
     if (!target) return { error: "User not found" }
 
-    if ((target.full_name || "") === normalized) {
-      return { success: true, user: { id: target.id, full_name: target.full_name } }
+    if ((target.full_name || "") === normalized && (target.job_title_ru || "") === (cleanJobTitleRu || "") && (target.job_title_cn || "") === (cleanJobTitleCn || "")) {
+      return { success: true, user: { id: target.id, full_name: target.full_name, job_title_ru: target.job_title_ru, job_title_cn: target.job_title_cn } }
     }
 
     await prisma.$transaction([
       prisma.user.update({
         where: { id: userId },
-        data: { full_name: normalized },
+        data: { 
+          full_name: normalized,
+          job_title_ru: cleanJobTitleRu,
+          job_title_cn: cleanJobTitleCn
+        },
       }),
       prisma.auditLog.create({
         data: {
           user_id: session.user.id,
-          action: "user_name_changed",
+          action: "user_info_changed",
           details: JSON.stringify({
             actor_id: session.user.id,
             actor_role: session.user.role,
@@ -121,6 +130,10 @@ export async function updateUserName(userId: string, newFullName: string) {
             target_role: target.role,
             old_full_name: target.full_name,
             new_full_name: normalized,
+            old_job_title_ru: target.job_title_ru,
+            new_job_title_ru: cleanJobTitleRu,
+            old_job_title_cn: target.job_title_cn,
+            new_job_title_cn: cleanJobTitleCn,
           }),
         },
       }),
@@ -130,10 +143,10 @@ export async function updateUserName(userId: string, newFullName: string) {
     revalidatePath("/dashboard/settings")
     revalidatePath("/dashboard/rooms")
 
-    return { success: true, user: { id: target.id, full_name: normalized } }
+    return { success: true, user: { id: target.id, full_name: normalized, job_title_ru: cleanJobTitleRu, job_title_cn: cleanJobTitleCn } }
   } catch (error) {
-    console.error("Update user name error:", error)
-    return { error: "Failed to update name" }
+    console.error("Update user info error:", error)
+    return { error: "Failed to update info" }
   }
 }
 
