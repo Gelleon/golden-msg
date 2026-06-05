@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useEffect, useState, useMemo, useCallback, useRef } from "react"
+import { useEffect, useState, useMemo, useCallback } from "react"
 import Link from "next/link"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -77,25 +77,6 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
   const [roomInfoDialogId, setRoomInfoDialogId] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
-  const dbgLastSigRef = useRef<string>("")
-
-  // #region debug-point H:init
-  const dbg = useCallback((hypothesisId: string, msg: string, data: Record<string, any> = {}, traceId?: string) => {
-    if (typeof window === "undefined") return
-    fetch("/api/trae-debug/event", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        runId: "pre",
-        hypothesisId,
-        location: "sidebar.tsx",
-        traceId,
-        msg: `[DEBUG] ${msg}`,
-        data,
-      }),
-    }).catch(() => {})
-  }, [])
-  // #endregion
 
   useEffect(() => {
     setMounted(true)
@@ -119,8 +100,9 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     setExpandedRooms(prev => ({ ...prev, [roomId]: !prev[roomId] }))
   }
 
-  const handleCreateSubRoom = (roomId: string) => {
-    setParentRoomIdForNewRoom(roomId)
+  const handleCreateSubRoom = (room: any) => {
+    if (room?.is_buffer) return
+    setParentRoomIdForNewRoom(room.id)
     setIsRoomDialogOpen(true)
   }
 
@@ -155,15 +137,6 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     }
 
     const roots = Array.from(map.values()).filter(n => !attached.has(n.id))
-
-    // #region debug-point H3:tree
-    const sig = `tree:${roomsList.length}:${roots.length}:${attached.size}`
-    if (roots.length === 0 && dbgLastSigRef.current !== sig) {
-      dbgLastSigRef.current = sig
-      dbg("H3", "buildTree produced no roots (fallback to flat list)", { rooms: roomsList.length, roots: roots.length, attached: attached.size })
-    }
-    // #endregion
-
     return roots.length > 0 ? roots : Array.from(map.values())
   }, [])
 
@@ -281,16 +254,16 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                 <Info className="mr-2 h-4 w-4 text-blue-400" />
                 <span>{t('roomInfo.title') || "Информация о комнате"}</span>
               </ContextMenuItem>
-              {canCreateRoom && (
+              {canCreateRoom && !room.is_buffer && (
                 <ContextMenuItem 
-                  onClick={() => handleCreateSubRoom(room.id)}
+                  onClick={() => handleCreateSubRoom(room)}
                   className="hover:bg-white/10 focus:bg-white/10 cursor-pointer"
                 >
                   <Plus className="mr-2 h-4 w-4 text-green-400" />
                   <span>{t('sidebar.createSubRoom') || "Создать подкомнату"}</span>
                 </ContextMenuItem>
               )}
-              {canEditRoom && (
+              {canEditRoom && !room.is_buffer && (
                 <>
                   <ContextMenuItem 
                     onClick={() => handleEditRoom(room)}
@@ -323,10 +296,6 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   }
 
   const fetchRoomsAndDMs = async () => {
-    // #region debug-point H2:fetch-start
-    const traceId = (globalThis as any)?.crypto?.randomUUID?.() || `${Date.now()}`
-    dbg("H2", "fetchRoomsAndDMs start", {}, traceId)
-    // #endregion
     try {
       const [fetchedRooms, fetchedDMs] = await Promise.all([
         getRooms(),
@@ -336,14 +305,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
       // Sort rooms by created_at or name if needed, or just set them
       setRooms(prev => (fetchedRooms.length === 0 && prev.length > 0 ? prev : fetchedRooms))
       setDms(prev => (fetchedDMs.length === 0 && prev.length > 0 ? prev : fetchedDMs))
-
-      // #region debug-point H2:fetch-ok
-      dbg("H2", "fetchRoomsAndDMs ok", { fetchedRooms: fetchedRooms.length, fetchedDMs: fetchedDMs.length }, traceId)
-      // #endregion
     } catch (error) {
-      // #region debug-point H2:fetch-err
-      dbg("H2", "fetchRoomsAndDMs error", { error: String(error) }, traceId)
-      // #endregion
       console.error("Error fetching rooms/DMs:", error)
     }
   }
@@ -432,11 +394,6 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     if (!newRoomName.trim()) return
 
     try {
-      // #region debug-point H2:create-start
-      const traceId = (globalThis as any)?.crypto?.randomUUID?.() || `${Date.now()}`
-      dbg("H2", "createRoom start", { name: newRoomName, parentRoomId: parentRoomIdForNewRoom }, traceId)
-      // #endregion
-
       const result = await createRoom(newRoomName, newRoomDescription, parentRoomIdForNewRoom || undefined)
 
       if (result.success && result.room) {
@@ -469,20 +426,6 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
           setExpandedRooms(prev => ({ ...prev, [parentRoomIdForNewRoom]: true }))
         }
 
-        // #region debug-point H1:body-style
-        dbg(
-          "H1",
-          "post-create DOM/body state",
-          {
-            bodyOverflowInline: document.body.style.overflow,
-            bodyPaddingRightInline: document.body.style.paddingRight,
-            bodyOverflowComputed: getComputedStyle(document.body).overflow,
-            bodyPaddingRightComputed: getComputedStyle(document.body).paddingRight,
-          },
-          traceId
-        )
-        // #endregion
-
         setNewRoomName("")
         setNewRoomDescription("")
         setParentRoomIdForNewRoom(null)
@@ -498,21 +441,11 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
           router.push(nextHref, { scroll: false })
           fetchRoomsAndDMs()
         }, 0)
-
-        // #region debug-point H2:create-ok
-        dbg("H2", "createRoom ok", { roomId: normalizedRoom.id, parentId: normalizedRoom.parent_id }, traceId)
-        // #endregion
       } else {
-        // #region debug-point H2:create-fail
-        dbg("H2", "createRoom failed", { error: result.error || null, details: (result as any).details || null }, traceId)
-        // #endregion
         console.error("Error creating room:", result.error, result.details)
         alert((result.error || "Failed to create room") + (result.details ? `: ${result.details}` : ""))
       }
     } catch (error: any) {
-      // #region debug-point H2:create-err
-      dbg("H2", "createRoom exception", { error: String(error) }, (globalThis as any)?.crypto?.randomUUID?.() || `${Date.now()}`)
-      // #endregion
       console.error("Failed to create room:", error)
       alert("Произошла ошибка при создании комнаты. Пожалуйста, попробуйте позже.")
     }
@@ -655,11 +588,15 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   }
 
   const handleEditRoom = (room: any) => {
+    if (room?.is_buffer) return
     setEditingRoom(room)
     setIsEditDialogOpen(true)
   }
 
   const handleDeleteRoom = async (roomId: string) => {
+    const roomToDelete = rooms.find(r => r.id === roomId)
+    if (roomToDelete?.is_buffer) return
+
     if (!confirm(t('sidebar.confirmDeleteRoom') || "Are you sure you want to delete this room?")) return
 
     const result = await deleteRoom(roomId)

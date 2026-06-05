@@ -384,6 +384,21 @@ export async function createRoom(name: string, description?: string, parent_id?:
   if (!name.trim()) return { error: "Name is required" }
 
   try {
+    if (parent_id) {
+      const parentRoom = await prisma.room.findUnique({
+        where: { id: parent_id },
+        select: { id: true, is_buffer: true, type: true },
+      })
+
+      if (!parentRoom || parentRoom.type !== "group") {
+        return { error: "Parent room not found" }
+      }
+
+      if (parentRoom.is_buffer) {
+        return { error: "Cannot create subrooms inside buffer room" }
+      }
+    }
+
     const room = await prisma.room.create({
       data: {
         name,
@@ -1421,6 +1436,19 @@ export async function updateRoom(roomId: string, data: {
   }
 
   try {
+    const existingRoom = await prisma.room.findUnique({
+      where: { id: roomId },
+      select: { id: true, is_buffer: true },
+    })
+
+    if (!existingRoom) {
+      return { error: "Room not found" }
+    }
+
+    if (existingRoom.is_buffer) {
+      return { error: "Buffer room cannot be edited" }
+    }
+
     const room = await prisma.room.update({
       where: { id: roomId },
       data: {
@@ -1462,11 +1490,15 @@ export async function deleteRoom(roomId: string) {
   
   const room = await prisma.room.findUnique({
     where: { id: roomId },
-    select: { type: true }
+    select: { type: true, is_buffer: true }
   })
 
   if (!room) {
     return { error: "Room not found" }
+  }
+
+  if (room.is_buffer) {
+    return { error: "Buffer room cannot be deleted" }
   }
 
   // Admins can delete any room. Managers can delete private chats (DMs).
