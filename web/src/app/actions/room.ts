@@ -262,7 +262,7 @@ export async function getRooms() {
       include: {
         participants: {
           where: { user_id: session.user.id },
-          select: { last_read_at: true }
+          select: { user_id: true, last_read_at: true }
         },
         _count: {
           select: {
@@ -284,7 +284,13 @@ export async function getRooms() {
 
     if (roomIds.length > 0) {
       const countPromises = rooms.map(async (room) => {
-        const lastReadAt = room.participants[0]?.last_read_at || new Date(0);
+        // If the user has a participant record, use last_read_at
+        // Otherwise, they haven't entered the room yet.
+        // For admins/managers who can see the room without joining, we treat all messages
+        // as unread (gt: new Date(0)), or we could just count all messages.
+        const participation = room.participants.find(p => p.user_id === session.user.id);
+        const lastReadAt = participation?.last_read_at || new Date(0);
+        
         const count = await prisma.message.count({
           where: {
             room_id: room.id,
@@ -303,7 +309,8 @@ export async function getRooms() {
     }
 
     const roomsWithCounts = rooms.map(room => {
-      const lastReadAt = room.participants[0]?.last_read_at || new Date(0)
+      const participation = room.participants.find(p => p.user_id === session.user.id);
+      const lastReadAt = participation?.last_read_at || new Date(0);
 
       return {
         id: room.id,

@@ -144,7 +144,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
 
     const totalUnread = getDeepUnreadCount(room);
     const hasUnread = totalUnread > 0;
-    const isDirectUnread = room.unreadCount > 0;
+    const isDirectUnread = (room.unreadCount || 0) > 0;
 
     return (
       <div key={room.id} className="w-full">
