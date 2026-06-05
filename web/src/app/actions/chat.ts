@@ -45,20 +45,25 @@ export async function markAsRead(roomId: string) {
       return { error: "You are not a member of this room" }
     }
 
-    if (participation) {
-      await prisma.roomParticipant.update({
-        where: {
-          room_id_user_id: {
-            user_id: session.user.id,
-            room_id: roomId
-          }
-        },
-        data: {
-          last_read_at: new Date(),
-          last_active_at: new Date()
+    await prisma.roomParticipant.upsert({
+      where: {
+        room_id_user_id: {
+          user_id: session.user.id,
+          room_id: roomId
         }
-      })
-    }
+      },
+      update: {
+        last_read_at: new Date(),
+        last_active_at: new Date()
+      },
+      create: {
+        user_id: session.user.id,
+        room_id: roomId,
+        last_read_at: new Date(),
+        last_active_at: new Date(),
+        role: isAdmin ? "admin" : "member"
+      }
+    })
 
     await prisma.user.update({
       where: { id: session.user.id },
@@ -102,19 +107,23 @@ export async function pingRoomActivity(roomId: string) {
       return { error: "You are not a member of this room" }
     }
 
-    if (participation) {
-      await prisma.roomParticipant.update({
-        where: {
-          room_id_user_id: {
-            user_id: session.user.id,
-            room_id: roomId
-          }
-        },
-        data: {
-          last_active_at: new Date()
+    await prisma.roomParticipant.upsert({
+      where: {
+        room_id_user_id: {
+          user_id: session.user.id,
+          room_id: roomId
         }
-      })
-    }
+      },
+      update: {
+        last_active_at: new Date()
+      },
+      create: {
+        user_id: session.user.id,
+        room_id: roomId,
+        last_active_at: new Date(),
+        role: isAdmin ? "admin" : "member"
+      }
+    })
 
     await prisma.user.update({
       where: { id: session.user.id },
