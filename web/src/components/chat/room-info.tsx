@@ -505,7 +505,7 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
                 >
                   <div className="flex flex-col items-start min-w-0 flex-1">
                     <span className="font-semibold text-slate-200 group-hover:text-amber-500 transition-colors truncate w-full text-left">
-                      {room.name}
+                      {room.is_buffer ? (t('room.bufferName') || room.name) : room.name}
                     </span>
                     {room.description && (
                       <span className="text-[10px] text-slate-500 truncate w-full text-left">

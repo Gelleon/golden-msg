@@ -68,7 +68,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
   const lastReadAt = participation?.last_read_at ?? null
 
   // Determine display name for the room
-    let displayName = room.name
+    let displayName = room.is_buffer ? (translations.room.bufferName || room.name) : room.name
     let displayAvatar = null
     let sharedRoomNames: string[] = []
 

@@ -209,7 +209,7 @@ export async function register(formData: FormData) {
         if (!bufferRoom) {
           bufferRoom = await prisma.room.create({
             data: {
-              name: "Лист ожидания",
+              name: "Комната ожидания",
               description: "Комната для новых пользователей",
               type: "group",
               is_buffer: true,

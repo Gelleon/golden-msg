@@ -284,6 +284,7 @@
     "interlocutor": "对话者",
     "private": "私聊",
     "group": "群组",
+    "bufferName": "等候室",
     "online": "在线",
     "lastSeen": "最后上线",
     "participantsCount": "人",

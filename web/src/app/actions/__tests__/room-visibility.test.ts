@@ -36,7 +36,7 @@ describe("room.getRooms visibility", () => {
     ;(getSession as jest.Mock).mockResolvedValue({ user: { id: adminId, role: "admin" } })
     ;(prisma.room.findMany as jest.Mock).mockResolvedValue([
       { id: "room-1", name: "General", type: "group", is_buffer: false, created_at: new Date(), participants: [] },
-      { id: "buffer-1", name: "Waiting List", type: "group", is_buffer: true, created_at: new Date(), participants: [] }
+      { id: "buffer-1", name: "Комната ожидания", type: "group", is_buffer: true, created_at: new Date(), participants: [] }
     ])
     ;(prisma.message.count as jest.Mock).mockResolvedValue(0)
     ;(prisma.room.findFirst as jest.Mock).mockResolvedValue({ id: "buffer-1", is_buffer: true })

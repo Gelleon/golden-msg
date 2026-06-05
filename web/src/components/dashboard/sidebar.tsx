@@ -198,7 +198,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                           hasUnread ? "font-bold text-white" : "font-medium"
                         )}>
                           {room.is_buffer && <ShieldCheck className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
-                          {room.name}
+                          {room.is_buffer ? (t('room.bufferName') || room.name) : room.name}
                         </span>
                         {showBadge && (
                           <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20 ml-2 animate-pulse">

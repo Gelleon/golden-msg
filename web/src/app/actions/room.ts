@@ -25,13 +25,20 @@ export async function ensureBufferRoomExists() {
     // We use a generic name, we can localize it in the UI later if needed
     bufferRoom = await prisma.room.create({
       data: {
-        name: "Лист ожидания",
+        name: "Комната ожидания",
         description: "Комната для новых пользователей",
         type: "group",
         is_buffer: true,
       }
     })
     console.log(`[SERVER] Created buffer room: ${bufferRoom.id}`)
+  } else if (bufferRoom.name === "Лист ожидания") {
+    // Automatically update name from old to new if it matches
+    bufferRoom = await prisma.room.update({
+      where: { id: bufferRoom.id },
+      data: { name: "Комната ожидания" }
+    })
+    console.log(`[SERVER] Renamed buffer room to: Комната ожидания`)
   }
 
   return bufferRoom
