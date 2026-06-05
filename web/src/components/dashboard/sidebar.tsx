@@ -261,7 +261,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                         </div>
                         {room.description && (
                           <span className={cn(
-                            "text-[10px] mt-0.5 line-clamp-1 text-left pr-2 break-words max-w-full overflow-hidden",
+                            "text-[10px] mt-0.5 truncate text-left pr-2 min-w-0 w-full",
                             hasUnread ? "text-slate-400 font-medium" : "text-slate-500 font-normal"
                           )}>
                             {room.description}
