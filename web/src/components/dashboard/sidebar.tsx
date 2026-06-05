@@ -108,20 +108,35 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   const buildTree = useCallback((roomsList: any[]) => {
     const map = new Map<string, any>()
     roomsList.forEach(r => map.set(r.id, { ...r, children: [] }))
-    const roots: any[] = []
-    roomsList.forEach(r => {
-      if (r.parent_id) {
-        const parent = map.get(r.parent_id)
-        if (parent) {
-          parent.children.push(map.get(r.id))
-        } else {
-          roots.push(map.get(r.id))
-        }
-      } else {
-        roots.push(map.get(r.id))
+
+    const attached = new Set<string>()
+
+    const wouldCreateCycle = (nodeId: string, parentId: string) => {
+      let currentId: string | null | undefined = parentId
+      let guard = 0
+      while (currentId && guard < 100) {
+        if (currentId === nodeId) return true
+        const current = map.get(currentId)
+        currentId = current?.parent_id
+        guard++
       }
-    })
-    return roots
+      return false
+    }
+
+    for (const r of roomsList) {
+      const node = map.get(r.id)
+      const parentId = r.parent_id
+      if (!parentId) continue
+      if (parentId === r.id) continue
+      const parent = map.get(parentId)
+      if (!parent) continue
+      if (wouldCreateCycle(r.id, parentId)) continue
+      parent.children.push(node)
+      attached.add(r.id)
+    }
+
+    const roots = Array.from(map.values()).filter(n => !attached.has(n.id))
+    return roots.length > 0 ? roots : Array.from(map.values())
   }, [])
 
   const rootRooms = useMemo(() => buildTree(rooms), [rooms, buildTree])
@@ -129,7 +144,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   const renderRoom = (room: any, depth: number = 0) => {
     const isExpanded = expandedRooms[room.id]
     const hasChildren = room.children && room.children.length > 0
-    const paddingLeft = depth * 16
+    const paddingLeft = Math.min(depth, 10) * 16
 
     // Calculate total unread including children
     const getDeepUnreadCount = (r: any): number => {
@@ -414,9 +429,17 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
         setNewRoomDescription("")
         setParentRoomIdForNewRoom(null)
         setIsRoomDialogOpen(false)
-        router.push(`/dashboard/rooms/${normalizedRoom.id}`)
-        onClose?.()
-        await fetchRoomsAndDMs()
+
+        const nextHref = `/dashboard/rooms/${normalizedRoom.id}`
+        setTimeout(() => {
+          document.body.style.overflow = ""
+          document.body.style.paddingRight = ""
+          document.documentElement.style.overflow = ""
+          document.body.removeAttribute("data-scroll-locked")
+          onClose?.()
+          router.push(nextHref)
+          fetchRoomsAndDMs()
+        }, 0)
       } else {
         console.error("Error creating room:", result.error, result.details)
         alert((result.error || "Failed to create room") + (result.details ? `: ${result.details}` : ""))
