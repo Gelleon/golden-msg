@@ -370,6 +370,8 @@ export async function createRoom(name: string, description?: string, parent_id?:
   const session = await getSession()
   if (!session?.user) return { error: "Unauthorized" }
 
+  await ensureSchemaFixed()
+
   const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { role: true },

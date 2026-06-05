@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo, useCallback } from "react"
 import Link from "next/link"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -105,7 +105,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     setIsRoomDialogOpen(true)
   }
 
-  const buildTree = (roomsList: any[]) => {
+  const buildTree = useCallback((roomsList: any[]) => {
     const map = new Map<string, any>()
     roomsList.forEach(r => map.set(r.id, { ...r, children: [] }))
     const roots: any[] = []
@@ -122,9 +122,9 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
       }
     })
     return roots
-  }
+  }, [])
 
-  const rootRooms = buildTree(rooms)
+  const rootRooms = useMemo(() => buildTree(rooms), [rooms, buildTree])
 
   const renderRoom = (room: any, depth: number = 0) => {
     const isExpanded = expandedRooms[room.id]
@@ -158,72 +158,77 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
         >
           <ContextMenu>
             <ContextMenuTrigger asChild className="sidebar-item-trigger">
-              <Link
-                href={`/dashboard/rooms/${room.id}`}
-                className="block"
-                onClick={onClose}
-              >
-                <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
-                  <div
-                    className={cn(
-                      buttonVariants({ variant: "ghost" }),
-                      "w-full justify-start font-medium transition-all duration-300 group rounded-xl px-3 h-auto min-h-[2.5rem] py-2 relative cursor-pointer",
-                      pathname === `/dashboard/rooms/${room.id}` 
-                        ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10" 
-                        : "text-slate-400 hover:text-white hover:bg-white/5"
-                    )}
-                    style={{ paddingLeft: `${12 + paddingLeft}px` }}
-                  >
-                    <div className="flex items-center absolute left-1" style={{ marginLeft: `${paddingLeft}px` }}>
-                      {hasChildren ? (
-                        <div
-                          onClick={(e) => toggleRoomExpansion(room.id, e)}
-                          className="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded cursor-pointer text-slate-500 hover:text-white transition-colors"
-                        >
-                          {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                        </div>
-                      ) : (
-                        <div className="w-5 h-5 flex items-center justify-center">
-                          <div className={cn(
-                            "w-1.5 h-1.5 rounded-full transition-all duration-300 shrink-0",
-                            pathname === `/dashboard/rooms/${room.id}` ? "bg-amber-500 scale-125" : "bg-slate-700 group-hover:bg-slate-500"
-                          )} />
-                        </div>
-                      )}
+              <div className="relative group">
+                {/* Toggle button - placed outside Link to avoid event conflicts */}
+                <div className="absolute left-1 top-1/2 -translate-y-1/2 z-20" style={{ marginLeft: `${paddingLeft}px` }}>
+                  {hasChildren ? (
+                    <button
+                      onClick={(e) => toggleRoomExpansion(room.id, e)}
+                      className="w-6 h-6 flex items-center justify-center hover:bg-white/10 rounded-md cursor-pointer text-slate-500 hover:text-white transition-colors outline-none focus:ring-1 focus:ring-white/20"
+                      aria-label={isExpanded ? "Collapse" : "Expand"}
+                    >
+                      {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                    </button>
+                  ) : (
+                    <div className="w-6 h-6 flex items-center justify-center pointer-events-none">
+                      <div className={cn(
+                        "w-1.5 h-1.5 rounded-full transition-all duration-300 shrink-0",
+                        pathname === `/dashboard/rooms/${room.id}` ? "bg-amber-500 scale-125" : "bg-slate-700 group-hover:bg-slate-500"
+                      )} />
                     </div>
-                    <div className="flex flex-col min-w-0 flex-1 ml-6">
-                      <div className="flex items-center">
-                        <span className={cn(
-                          "truncate flex-1 text-left transition-colors flex items-center gap-1.5",
-                          hasUnread ? "font-bold text-white" : "font-medium"
-                        )}>
-                          {room.is_buffer && <ShieldCheck className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
-                          {room.is_buffer ? (t('room.bufferName') || room.name) : room.name}
-                        </span>
-                        {showBadge && (
-                          <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20 ml-2 animate-pulse">
-                            {displayUnread}
+                  )}
+                </div>
+
+                <Link
+                  href={`/dashboard/rooms/${room.id}`}
+                  className="block"
+                  onClick={onClose}
+                >
+                  <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
+                    <div
+                      className={cn(
+                        buttonVariants({ variant: "ghost" }),
+                        "w-full justify-start font-medium transition-all duration-300 group rounded-xl px-3 h-auto min-h-[2.5rem] py-2 relative cursor-pointer",
+                        pathname === `/dashboard/rooms/${room.id}` 
+                          ? "bg-white/10 text-white shadow-sm ring-1 ring-white/10" 
+                          : "text-slate-400 hover:text-white hover:bg-white/5"
+                      )}
+                      style={{ paddingLeft: `${24 + paddingLeft}px` }}
+                    >
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <div className="flex items-center">
+                          <span className={cn(
+                            "truncate flex-1 text-left transition-colors flex items-center gap-1.5",
+                            hasUnread ? "font-bold text-white" : "font-medium"
+                          )}>
+                            {room.is_buffer && <ShieldCheck className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
+                            {room.is_buffer ? (t('room.bufferName') || room.name) : room.name}
+                          </span>
+                          {showBadge && (
+                            <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20 ml-2 animate-pulse">
+                              {displayUnread}
+                            </span>
+                          )}
+                          {pathname === `/dashboard/rooms/${room.id}` && (
+                            <motion.div 
+                              layoutId="activeRoomGlow"
+                              className="w-1.5 h-1.5 shrink-0 rounded-full bg-amber-500 animate-pulse ml-2" 
+                            />
+                          )}
+                        </div>
+                        {room.description && (
+                          <span className={cn(
+                            "text-[10px] mt-0.5 line-clamp-1 text-left pr-2",
+                            hasUnread ? "text-slate-400 font-medium" : "text-slate-500 font-normal"
+                          )}>
+                            {room.description}
                           </span>
                         )}
-                        {pathname === `/dashboard/rooms/${room.id}` && (
-                          <motion.div 
-                            layoutId="activeRoomGlow"
-                            className="w-1.5 h-1.5 shrink-0 rounded-full bg-amber-500 animate-pulse ml-2" 
-                          />
-                        )}
                       </div>
-                      {room.description && (
-                        <span className={cn(
-                          "text-[10px] mt-0.5 line-clamp-1 text-left pr-2",
-                          hasUnread ? "text-slate-400 font-medium" : "text-slate-500 font-normal"
-                        )}>
-                          {room.description}
-                        </span>
-                      )}
                     </div>
-                  </div>
-                </motion.div>
-              </Link>
+                  </motion.div>
+                </Link>
+              </div>
             </ContextMenuTrigger>
             <ContextMenuContent className="w-56 bg-[#1E293B] border-white/10 text-slate-200">
               <ContextMenuItem 
@@ -282,8 +287,8 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
       ])
       
       // Sort rooms by created_at or name if needed, or just set them
-      setRooms(fetchedRooms)
-      setDms(fetchedDMs)
+      if (fetchedRooms.length > 0 || rooms.length === 0) setRooms(fetchedRooms)
+      if (fetchedDMs.length > 0 || dms.length === 0) setDms(fetchedDMs)
     } catch (error) {
       console.error("Error fetching rooms/DMs:", error)
     }
@@ -314,6 +319,45 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     }
   }, [user.id])
 
+  // Auto-expand parents of active room
+  useEffect(() => {
+    if (!pathname || rootRooms.length === 0) return
+    
+    const currentRoomId = pathname.split("/").pop()
+    if (!currentRoomId) return
+
+    const toExpand: string[] = []
+
+    const findAndExpandParents = (roomsList: any[], targetId: string): boolean => {
+      for (const room of roomsList) {
+        if (room.id === targetId) return true;
+        if (room.children && room.children.length > 0) {
+          if (findAndExpandParents(room.children, targetId)) {
+            toExpand.push(room.id)
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
+    findAndExpandParents(rootRooms, currentRoomId)
+    
+    if (toExpand.length === 0) return
+
+    setExpandedRooms(prev => {
+      let changed = false
+      const next = { ...prev }
+      for (const id of toExpand) {
+        if (!next[id]) {
+          next[id] = true
+          changed = true
+        }
+      }
+      return changed ? next : prev
+    })
+  }, [pathname, rootRooms])
+
   useEffect(() => {
     if (!mounted) return;
     const totalUnread = rooms.reduce((acc, r) => acc + (r.unreadCount || 0), 0) + 
@@ -337,13 +381,42 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
       const result = await createRoom(newRoomName, newRoomDescription, parentRoomIdForNewRoom || undefined)
 
       if (result.success && result.room) {
+        const createdAt = typeof (result.room as any).created_at === "string"
+          ? (result.room as any).created_at
+          : new Date((result.room as any).created_at).toISOString()
+
+        const normalizedRoom = {
+          id: (result.room as any).id,
+          parent_id: parentRoomIdForNewRoom || (result.room as any).parent_id || null,
+          name: (result.room as any).name ?? newRoomName,
+          type: (result.room as any).type ?? "group",
+          description: (result.room as any).description ?? newRoomDescription ?? null,
+          created_at: createdAt,
+          unreadCount: 0,
+          lastReadAt: new Date(0).toISOString(),
+          is_buffer: (result.room as any).is_buffer ?? false,
+        }
+
+        setRooms(prev => {
+          const next = [normalizedRoom, ...prev.filter(r => r.id !== normalizedRoom.id)]
+          next.sort((a, b) => {
+            if (a.is_buffer && !b.is_buffer) return -1
+            if (!a.is_buffer && b.is_buffer) return 1
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          })
+          return next
+        })
+        if (parentRoomIdForNewRoom) {
+          setExpandedRooms(prev => ({ ...prev, [parentRoomIdForNewRoom]: true }))
+        }
+
         setNewRoomName("")
         setNewRoomDescription("")
         setParentRoomIdForNewRoom(null)
         setIsRoomDialogOpen(false)
-        fetchRoomsAndDMs()
-        router.push(`/dashboard/rooms/${result.room.id}`)
+        router.push(`/dashboard/rooms/${normalizedRoom.id}`)
         onClose?.()
+        await fetchRoomsAndDMs()
       } else {
         console.error("Error creating room:", result.error, result.details)
         alert((result.error || "Failed to create room") + (result.details ? `: ${result.details}` : ""))
@@ -501,6 +574,25 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     const result = await deleteRoom(roomId)
 
     if (result.success) {
+      const deletedIdSet = new Set<string>(result.deletedIds || [])
+
+      setRoomInfoDialogId(prev => (prev && deletedIdSet.has(prev) ? null : prev))
+      setExpandedRooms(prev => {
+        if (deletedIdSet.size === 0) return prev
+        const next = { ...prev }
+        deletedIdSet.forEach(id => {
+          delete next[id]
+        })
+        return next
+      })
+      if (selectedRoomId && deletedIdSet.has(selectedRoomId)) {
+        setSelectedRoomId(null)
+      }
+      if (editingRoom && deletedIdSet.has(editingRoom.id)) {
+        setIsEditDialogOpen(false)
+        setEditingRoom(null)
+      }
+
       fetchRoomsAndDMs()
       const currentRoomId = pathname.split('/').pop()
       if (result.deletedIds?.includes(currentRoomId || '') || pathname === `/dashboard/rooms/${roomId}`) {
