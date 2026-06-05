@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useEffect, useState, useMemo, useCallback } from "react"
+import { useEffect, useState, useMemo, useCallback, useRef } from "react"
 import Link from "next/link"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
@@ -77,6 +77,25 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null)
   const [roomInfoDialogId, setRoomInfoDialogId] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
+  const dbgLastSigRef = useRef<string>("")
+
+  // #region debug-point H:init
+  const dbg = useCallback((hypothesisId: string, msg: string, data: Record<string, any> = {}, traceId?: string) => {
+    if (typeof window === "undefined") return
+    fetch("/api/trae-debug/event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        runId: "pre",
+        hypothesisId,
+        location: "sidebar.tsx",
+        traceId,
+        msg: `[DEBUG] ${msg}`,
+        data,
+      }),
+    }).catch(() => {})
+  }, [])
+  // #endregion
 
   useEffect(() => {
     setMounted(true)
@@ -136,6 +155,15 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     }
 
     const roots = Array.from(map.values()).filter(n => !attached.has(n.id))
+
+    // #region debug-point H3:tree
+    const sig = `tree:${roomsList.length}:${roots.length}:${attached.size}`
+    if (roots.length === 0 && dbgLastSigRef.current !== sig) {
+      dbgLastSigRef.current = sig
+      dbg("H3", "buildTree produced no roots (fallback to flat list)", { rooms: roomsList.length, roots: roots.length, attached: attached.size })
+    }
+    // #endregion
+
     return roots.length > 0 ? roots : Array.from(map.values())
   }, [])
 
@@ -233,7 +261,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                         </div>
                         {room.description && (
                           <span className={cn(
-                            "text-[10px] mt-0.5 line-clamp-1 text-left pr-2",
+                            "text-[10px] mt-0.5 line-clamp-1 text-left pr-2 break-words max-w-full overflow-hidden",
                             hasUnread ? "text-slate-400 font-medium" : "text-slate-500 font-normal"
                           )}>
                             {room.description}
@@ -295,6 +323,10 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   }
 
   const fetchRoomsAndDMs = async () => {
+    // #region debug-point H2:fetch-start
+    const traceId = (globalThis as any)?.crypto?.randomUUID?.() || `${Date.now()}`
+    dbg("H2", "fetchRoomsAndDMs start", {}, traceId)
+    // #endregion
     try {
       const [fetchedRooms, fetchedDMs] = await Promise.all([
         getRooms(),
@@ -304,7 +336,14 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
       // Sort rooms by created_at or name if needed, or just set them
       setRooms(prev => (fetchedRooms.length === 0 && prev.length > 0 ? prev : fetchedRooms))
       setDms(prev => (fetchedDMs.length === 0 && prev.length > 0 ? prev : fetchedDMs))
+
+      // #region debug-point H2:fetch-ok
+      dbg("H2", "fetchRoomsAndDMs ok", { fetchedRooms: fetchedRooms.length, fetchedDMs: fetchedDMs.length }, traceId)
+      // #endregion
     } catch (error) {
+      // #region debug-point H2:fetch-err
+      dbg("H2", "fetchRoomsAndDMs error", { error: String(error) }, traceId)
+      // #endregion
       console.error("Error fetching rooms/DMs:", error)
     }
   }
@@ -393,6 +432,11 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     if (!newRoomName.trim()) return
 
     try {
+      // #region debug-point H2:create-start
+      const traceId = (globalThis as any)?.crypto?.randomUUID?.() || `${Date.now()}`
+      dbg("H2", "createRoom start", { name: newRoomName, parentRoomId: parentRoomIdForNewRoom }, traceId)
+      // #endregion
+
       const result = await createRoom(newRoomName, newRoomDescription, parentRoomIdForNewRoom || undefined)
 
       if (result.success && result.room) {
@@ -425,6 +469,20 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
           setExpandedRooms(prev => ({ ...prev, [parentRoomIdForNewRoom]: true }))
         }
 
+        // #region debug-point H1:body-style
+        dbg(
+          "H1",
+          "post-create DOM/body state",
+          {
+            bodyOverflowInline: document.body.style.overflow,
+            bodyPaddingRightInline: document.body.style.paddingRight,
+            bodyOverflowComputed: getComputedStyle(document.body).overflow,
+            bodyPaddingRightComputed: getComputedStyle(document.body).paddingRight,
+          },
+          traceId
+        )
+        // #endregion
+
         setNewRoomName("")
         setNewRoomDescription("")
         setParentRoomIdForNewRoom(null)
@@ -440,11 +498,21 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
           router.push(nextHref)
           fetchRoomsAndDMs()
         }, 0)
+
+        // #region debug-point H2:create-ok
+        dbg("H2", "createRoom ok", { roomId: normalizedRoom.id, parentId: normalizedRoom.parent_id }, traceId)
+        // #endregion
       } else {
+        // #region debug-point H2:create-fail
+        dbg("H2", "createRoom failed", { error: result.error || null, details: (result as any).details || null }, traceId)
+        // #endregion
         console.error("Error creating room:", result.error, result.details)
         alert((result.error || "Failed to create room") + (result.details ? `: ${result.details}` : ""))
       }
     } catch (error: any) {
+      // #region debug-point H2:create-err
+      dbg("H2", "createRoom exception", { error: String(error) }, (globalThis as any)?.crypto?.randomUUID?.() || `${Date.now()}`)
+      // #endregion
       console.error("Failed to create room:", error)
       alert("Произошла ошибка при создании комнаты. Пожалуйста, попробуйте позже.")
     }
