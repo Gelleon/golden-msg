@@ -263,17 +263,6 @@ export async function getRooms() {
         participants: {
           where: { user_id: session.user.id },
           select: { user_id: true, last_read_at: true }
-        },
-        _count: {
-          select: {
-            messages: {
-              where: {
-                created_at: {
-                  gt: new Date() // Placeholder, will be adjusted below
-                }
-              }
-            }
-          }
         }
       },
       orderBy: { created_at: "desc" },
@@ -421,34 +410,25 @@ export async function getDMs() {
     let unreadCounts: Record<string, number> = {}
 
     if (dmIds.length > 0) {
-      const currentParticipants = dms
-        .map(dm => ({ dmId: dm.id, p: dm.participants.find(p => p.user_id === session.user.id) }))
-        .filter(({ p }) => Boolean(p?.last_read_at))
-
-      const participatingDmIds = currentParticipants.map(({ dmId }) => dmId)
-      const minLastReadAt = currentParticipants.length > 0
-        ? new Date(Math.min(...currentParticipants.map(({ p }) => (p as any).last_read_at.getTime())))
-        : null
-
-      if (currentParticipants.length > 0) {
-        const countPromises = currentParticipants.map(async ({ dmId, p }) => {
-          const lastReadAt = (p as any).last_read_at;
-          const count = await prisma.message.count({
-            where: {
-              room_id: dmId,
-              sender_id: { not: session.user.id },
-              created_at: { gt: lastReadAt }
-            }
-          });
-          return { id: dmId, count };
+      const countPromises = dms.map(async (dm) => {
+        const currentUserParticipant = dm.participants.find(p => p.user_id === session.user.id);
+        const lastReadAt = currentUserParticipant?.last_read_at || new Date(0);
+        
+        const count = await prisma.message.count({
+          where: {
+            room_id: dm.id,
+            sender_id: { not: session.user.id },
+            created_at: { gt: lastReadAt }
+          }
         });
+        return { id: dm.id, count };
+      });
 
-        const counts = await Promise.all(countPromises);
-        unreadCounts = counts.reduce((acc, { id, count }) => {
-          acc[id] = count;
-          return acc;
-        }, {} as Record<string, number>);
-      }
+      const counts = await Promise.all(countPromises);
+      unreadCounts = counts.reduce((acc, { id, count }) => {
+        acc[id] = count;
+        return acc;
+      }, {} as Record<string, number>);
     }
 
     // Fetch shared rooms for each DM
