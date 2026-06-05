@@ -131,6 +131,21 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     const hasChildren = room.children && room.children.length > 0
     const paddingLeft = depth * 16
 
+    // Calculate total unread including children
+    const getDeepUnreadCount = (r: any): number => {
+      let count = r.unreadCount || 0;
+      if (r.children) {
+        for (const child of r.children) {
+          count += getDeepUnreadCount(child);
+        }
+      }
+      return count;
+    };
+
+    const totalUnread = getDeepUnreadCount(room);
+    const hasUnread = totalUnread > 0;
+    const isDirectUnread = room.unreadCount > 0;
+
     return (
       <div key={room.id} className="w-full">
         <motion.div
@@ -178,14 +193,17 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                       <div className="flex items-center">
                         <span className={cn(
                           "truncate flex-1 text-left transition-colors",
-                          room.unreadCount > 0 ? "font-bold text-white" : "font-medium"
+                          hasUnread ? "font-bold text-white" : "font-medium"
                         )}>
                           {room.name}
                         </span>
-                        {room.unreadCount > 0 && pathname !== `/dashboard/rooms/${room.id}` && (
+                        {isDirectUnread && pathname !== `/dashboard/rooms/${room.id}` && (
                           <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20 ml-2 animate-pulse">
                             {room.unreadCount}
                           </span>
+                        )}
+                        {hasUnread && !isDirectUnread && !isExpanded && (
+                          <span className="flex h-2 w-2 shrink-0 items-center justify-center rounded-full bg-amber-500 shadow-lg shadow-amber-500/20 ml-2 animate-pulse" />
                         )}
                         {pathname === `/dashboard/rooms/${room.id}` && (
                           <motion.div 
@@ -197,7 +215,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                       {room.description && (
                         <span className={cn(
                           "text-[10px] mt-0.5 line-clamp-1 text-left pr-2",
-                          room.unreadCount > 0 ? "text-slate-400 font-medium" : "text-slate-500 font-normal"
+                          hasUnread ? "text-slate-400 font-medium" : "text-slate-500 font-normal"
                         )}>
                           {room.description}
                         </span>

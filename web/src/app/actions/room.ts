@@ -283,31 +283,23 @@ export async function getRooms() {
     let unreadCounts: Record<string, number> = {}
 
     if (roomIds.length > 0) {
-      const roomsWithParticipation = rooms.filter((r) => r.participants[0]?.last_read_at)
-      const participatingRoomIds = roomsWithParticipation.map((r) => r.id)
-      const minLastReadAt = roomsWithParticipation.length > 0
-        ? new Date(Math.min(...roomsWithParticipation.map(r => r.participants[0].last_read_at.getTime())))
-        : null
-      
-      if (roomsWithParticipation.length > 0) {
-        const countPromises = roomsWithParticipation.map(async (room) => {
-          const lastReadAt = room.participants[0].last_read_at;
-          const count = await prisma.message.count({
-            where: {
-              room_id: room.id,
-              sender_id: { not: session.user.id },
-              created_at: { gt: lastReadAt }
-            }
-          });
-          return { id: room.id, count };
+      const countPromises = rooms.map(async (room) => {
+        const lastReadAt = room.participants[0]?.last_read_at || new Date(0);
+        const count = await prisma.message.count({
+          where: {
+            room_id: room.id,
+            sender_id: { not: session.user.id },
+            created_at: { gt: lastReadAt }
+          }
         });
+        return { id: room.id, count };
+      });
 
-        const counts = await Promise.all(countPromises);
-        unreadCounts = counts.reduce((acc, { id, count }) => {
-          acc[id] = count;
-          return acc;
-        }, {} as Record<string, number>);
-      }
+      const counts = await Promise.all(countPromises);
+      unreadCounts = counts.reduce((acc, { id, count }) => {
+        acc[id] = count;
+        return acc;
+      }, {} as Record<string, number>);
     }
 
     const roomsWithCounts = rooms.map(room => {
