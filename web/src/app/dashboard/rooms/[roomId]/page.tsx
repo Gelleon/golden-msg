@@ -54,7 +54,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
   ])
 
   if (!user) redirect("/")
-  if (!room) notFound()
+  if (!room) redirect("/dashboard")
 
   const lang = session.user.preferred_language === "cn" ? "cn" : "ru"
   const translations = lang === "ru" ? ru : cnTrans

@@ -287,8 +287,8 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
       ])
       
       // Sort rooms by created_at or name if needed, or just set them
-      if (fetchedRooms.length > 0 || rooms.length === 0) setRooms(fetchedRooms)
-      if (fetchedDMs.length > 0 || dms.length === 0) setDms(fetchedDMs)
+      setRooms(prev => (fetchedRooms.length === 0 && prev.length > 0 ? prev : fetchedRooms))
+      setDms(prev => (fetchedDMs.length === 0 && prev.length > 0 ? prev : fetchedDMs))
     } catch (error) {
       console.error("Error fetching rooms/DMs:", error)
     }
