@@ -145,6 +145,8 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     const totalUnread = getDeepUnreadCount(room);
     const hasUnread = totalUnread > 0;
     const isDirectUnread = (room.unreadCount || 0) > 0;
+    const displayUnread = (!isExpanded && hasChildren) ? totalUnread : (room.unreadCount || 0);
+    const showBadge = displayUnread > 0 && pathname !== `/dashboard/rooms/${room.id}`;
 
     return (
       <div key={room.id} className="w-full">
@@ -197,13 +199,10 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                         )}>
                           {room.name}
                         </span>
-                        {isDirectUnread && pathname !== `/dashboard/rooms/${room.id}` && (
+                        {showBadge && (
                           <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20 ml-2 animate-pulse">
-                            {room.unreadCount}
+                            {displayUnread}
                           </span>
-                        )}
-                        {hasUnread && !isDirectUnread && !isExpanded && (
-                          <span className="flex h-2 w-2 shrink-0 items-center justify-center rounded-full bg-amber-500 shadow-lg shadow-amber-500/20 ml-2 animate-pulse" />
                         )}
                         {pathname === `/dashboard/rooms/${room.id}` && (
                           <motion.div 
