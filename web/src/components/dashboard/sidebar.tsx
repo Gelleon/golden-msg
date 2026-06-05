@@ -5,7 +5,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { LogOut, Plus, Settings, User, MessageSquare, Users, Search, Building2, ChevronRight, ChevronDown, Hash, Edit, Trash2, Info, UserPlus } from "lucide-react"
+import { LogOut, Plus, Settings, User, MessageSquare, Users, Search, Building2, ChevronRight, ChevronDown, Hash, Edit, Trash2, Info, UserPlus, ShieldCheck } from "lucide-react"
 import { logout } from "@/app/actions/auth"
 import { getRooms, createRoom, getDMs, searchUsers, startDM, deleteRoom, addParticipant, addParticipants, searchUsersForRoomPaginated } from "@/app/actions/room"
 
@@ -194,9 +194,10 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                     <div className="flex flex-col min-w-0 flex-1 ml-6">
                       <div className="flex items-center">
                         <span className={cn(
-                          "truncate flex-1 text-left transition-colors",
+                          "truncate flex-1 text-left transition-colors flex items-center gap-1.5",
                           hasUnread ? "font-bold text-white" : "font-medium"
                         )}>
+                          {room.is_buffer && <ShieldCheck className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
                           {room.name}
                         </span>
                         {showBadge && (
@@ -1118,9 +1119,12 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                   <span className="text-slate-500 font-bold uppercase tracking-widest text-[9px] mt-1 flex items-center gap-1.5">
                     <span className={cn(
                       "w-1.5 h-1.5 rounded-full",
-                      profile?.role === 'admin' ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" : "bg-slate-600"
+                      profile?.role === 'admin' ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" : 
+                      profile?.role === 'manager' ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" :
+                      "bg-slate-600"
                     )} />
                     {roleLabels[profile?.role] || profile?.role}
+                    {profile?.is_buffer_accessible && <span className="text-amber-500/50 ml-1">✓</span>}
                   </span>
                 </div>
                 <Settings className="h-4 w-4 ml-2 text-slate-600 group-hover:text-slate-400 transition-colors" />

@@ -117,6 +117,9 @@ export async function ensureSchemaFixed() {
           
           await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "parent_id" TEXT;`).catch(() => {});
           await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "parent_id" TEXT;`).catch(() => {});
+
+          await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "is_buffer" BOOLEAN DEFAULT 0;`).catch(() => {});
+          await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "is_buffer" BOOLEAN DEFAULT 0;`).catch(() => {});
         }
       }
       await ensureLegacyDataMigrated()

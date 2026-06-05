@@ -13,6 +13,30 @@ import { sendSSEUpdate } from "@/lib/sse"
 export type RoomInviteValidationResult = { success: true; roomId: string } | { error: string }
 export type RoomInviteAcceptResult = { success: true; roomId: string } | { error: string }
 
+export async function ensureBufferRoomExists() {
+  await ensureSchemaFixed()
+  
+  let bufferRoom = await prisma.room.findFirst({
+    where: { is_buffer: true }
+  })
+
+  if (!bufferRoom) {
+    // Create the buffer room if it doesn't exist
+    // We use a generic name, we can localize it in the UI later if needed
+    bufferRoom = await prisma.room.create({
+      data: {
+        name: "Лист ожидания",
+        description: "Комната для новых пользователей",
+        type: "group",
+        is_buffer: true,
+      }
+    })
+    console.log(`[SERVER] Created buffer room: ${bufferRoom.id}`)
+  }
+
+  return bufferRoom
+}
+
 export async function createRoomInvite(roomId: string, role: "client" | "partner", maxUses: number = 1) {
   await ensureSchemaFixed()
   console.log(`[SERVER] Creating invite for room ${roomId}, role ${role}`)
@@ -247,16 +271,23 @@ export async function getRooms() {
   if (!session?.user) return []
 
   try {
-    const isAdmin = session.user.role === "admin"
+    const isAdminOrManager = session.user.role === "admin" || session.user.role === "manager"
+    
+    // Ensure buffer room exists for admins/managers so they can see it even if empty
+    if (isAdminOrManager) {
+      await ensureBufferRoomExists()
+    }
+
     const rooms = await prisma.room.findMany({
       where: {
         type: "group",
-        ...(!isAdmin ? {
+        ...(!isAdminOrManager ? {
           participants: {
             some: {
               user_id: session.user.id,
             },
           },
+          is_buffer: false,
         } : {}),
       },
       include: {
@@ -309,9 +340,17 @@ export async function getRooms() {
         description: room.description ?? null,
         created_at: room.created_at.toISOString(),
         unreadCount: unreadCounts[room.id] || 0,
-        lastReadAt: lastReadAt.toISOString()
+        lastReadAt: lastReadAt.toISOString(),
+        is_buffer: room.is_buffer
       }
     })
+
+    // Sort: buffer rooms first, then by created_at desc
+    roomsWithCounts.sort((a, b) => {
+      if (a.is_buffer && !b.is_buffer) return -1;
+      if (!a.is_buffer && b.is_buffer) return 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
     return roomsWithCounts
   } catch (error) {
@@ -745,7 +784,7 @@ export async function getRoomDetails(roomId: string) {
     await ensureSchemaFixed()
     const room = await prisma.room.findUnique({
       where: { id: roomId },
-      select: { created_by: true, type: true }
+      select: { created_by: true, type: true, is_buffer: true }
     })
     if (!room) return null
 
@@ -790,7 +829,11 @@ export async function getRoomDetails(roomId: string) {
     }))
 
     return {
-      room,
+      room: {
+        created_by: room.created_by,
+        type: room.type,
+        is_buffer: room.is_buffer
+      },
       currentUser,
       participants: mappedParticipants
     }
@@ -943,6 +986,51 @@ export async function removeParticipant(roomId: string, userId: string) {
   } catch (error) {
     console.error("Remove participant error:", error)
     return { error: "Failed to remove participant" }
+  }
+}
+
+export async function transferUser(userId: string, fromRoomId: string, toRoomId: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  })
+
+  if (!["admin", "manager"].includes(currentUser?.role || "")) {
+    return { error: "Permission denied" }
+  }
+
+  try {
+    await prisma.$transaction([
+      // Remove from source room
+      prisma.roomParticipant.delete({
+        where: {
+          room_id_user_id: {
+            room_id: fromRoomId,
+            user_id: userId,
+          },
+        },
+      }),
+      // Add to destination room
+      prisma.roomParticipant.create({
+        data: {
+          room_id: toRoomId,
+          user_id: userId,
+          role: "member",
+        },
+      }),
+    ])
+
+    revalidatePath(`/dashboard/rooms/${fromRoomId}`)
+    revalidatePath(`/dashboard/rooms/${toRoomId}`)
+    revalidatePath("/dashboard")
+
+    return { success: true }
+  } catch (error) {
+    console.error("Transfer user error:", error)
+    return { error: "Failed to transfer user" }
   }
 }
 

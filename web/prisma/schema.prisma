@@ -74,6 +74,7 @@ model Room {
   created_by   String?
   created_at   DateTime          @default(now())
   updated_at   DateTime          @default(now()) @updatedAt
+  is_buffer    Boolean           @default(false)
   room_id      String?
   parent_id    String?
   parent       Room?             @relation("RoomHierarchy", fields: [parent_id], references: [id], onDelete: Cascade)

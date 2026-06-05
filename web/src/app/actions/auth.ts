@@ -199,6 +199,41 @@ export async function register(formData: FormData) {
       data: userData,
     })
 
+    // Add user to buffer room if not admin
+    if (role !== "admin") {
+      try {
+        let bufferRoom = await prisma.room.findFirst({
+          where: { is_buffer: true }
+        });
+
+        if (!bufferRoom) {
+          bufferRoom = await prisma.room.create({
+            data: {
+              name: "Лист ожидания",
+              description: "Комната для новых пользователей",
+              type: "group",
+              is_buffer: true,
+            }
+          });
+        }
+
+        await prisma.roomParticipant.create({
+          data: {
+            room_id: bufferRoom.id,
+            user_id: user.id,
+            role: "member"
+          }
+        });
+
+        // Send SSE update to admins/managers about new user in buffer room
+        // We use a global update that triggers room list refresh
+        const { sendSSEUpdate } = await import("@/lib/sse");
+        sendSSEUpdate("global", { type: "unread_update" });
+      } catch (e) {
+        console.error("Error adding user to buffer room:", e);
+      }
+    }
+
     await logAuditAction({
       userId: user.id,
       action: "REGISTRATION_SUCCESS",

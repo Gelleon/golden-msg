@@ -5821,6 +5821,7 @@ export namespace Prisma {
     created_by: string | null
     created_at: Date | null
     updated_at: Date | null
+    is_buffer: boolean | null
     room_id: string | null
     parent_id: string | null
   }
@@ -5835,6 +5836,7 @@ export namespace Prisma {
     created_by: string | null
     created_at: Date | null
     updated_at: Date | null
+    is_buffer: boolean | null
     room_id: string | null
     parent_id: string | null
   }
@@ -5849,6 +5851,7 @@ export namespace Prisma {
     created_by: number
     created_at: number
     updated_at: number
+    is_buffer: number
     room_id: number
     parent_id: number
     _all: number
@@ -5873,6 +5876,7 @@ export namespace Prisma {
     created_by?: true
     created_at?: true
     updated_at?: true
+    is_buffer?: true
     room_id?: true
     parent_id?: true
   }
@@ -5887,6 +5891,7 @@ export namespace Prisma {
     created_by?: true
     created_at?: true
     updated_at?: true
+    is_buffer?: true
     room_id?: true
     parent_id?: true
   }
@@ -5901,6 +5906,7 @@ export namespace Prisma {
     created_by?: true
     created_at?: true
     updated_at?: true
+    is_buffer?: true
     room_id?: true
     parent_id?: true
     _all?: true
@@ -6002,6 +6008,7 @@ export namespace Prisma {
     created_by: string | null
     created_at: Date
     updated_at: Date
+    is_buffer: boolean
     room_id: string | null
     parent_id: string | null
     _count: RoomCountAggregateOutputType | null
@@ -6035,6 +6042,7 @@ export namespace Prisma {
     created_by?: boolean
     created_at?: boolean
     updated_at?: boolean
+    is_buffer?: boolean
     room_id?: boolean
     parent_id?: boolean
     parent?: boolean | Room$parentArgs<ExtArgs>
@@ -6056,6 +6064,7 @@ export namespace Prisma {
     created_by?: boolean
     created_at?: boolean
     updated_at?: boolean
+    is_buffer?: boolean
     room_id?: boolean
     parent_id?: boolean
     parent?: boolean | Room$parentArgs<ExtArgs>
@@ -6072,6 +6081,7 @@ export namespace Prisma {
     created_by?: boolean
     created_at?: boolean
     updated_at?: boolean
+    is_buffer?: boolean
     room_id?: boolean
     parent_id?: boolean
   }
@@ -6110,6 +6120,7 @@ export namespace Prisma {
       created_by: string | null
       created_at: Date
       updated_at: Date
+      is_buffer: boolean
       room_id: string | null
       parent_id: string | null
     }, ExtArgs["result"]["room"]>
@@ -6520,6 +6531,7 @@ export namespace Prisma {
     readonly created_by: FieldRef<"Room", 'String'>
     readonly created_at: FieldRef<"Room", 'DateTime'>
     readonly updated_at: FieldRef<"Room", 'DateTime'>
+    readonly is_buffer: FieldRef<"Room", 'Boolean'>
     readonly room_id: FieldRef<"Room", 'String'>
     readonly parent_id: FieldRef<"Room", 'String'>
   }
@@ -11119,6 +11131,7 @@ export namespace Prisma {
     created_by: 'created_by',
     created_at: 'created_at',
     updated_at: 'updated_at',
+    is_buffer: 'is_buffer',
     room_id: 'room_id',
     parent_id: 'parent_id'
   };
@@ -11569,6 +11582,7 @@ export namespace Prisma {
     created_by?: StringNullableFilter<"Room"> | string | null
     created_at?: DateTimeFilter<"Room"> | Date | string
     updated_at?: DateTimeFilter<"Room"> | Date | string
+    is_buffer?: BoolFilter<"Room"> | boolean
     room_id?: StringNullableFilter<"Room"> | string | null
     parent_id?: StringNullableFilter<"Room"> | string | null
     parent?: XOR<RoomNullableRelationFilter, RoomWhereInput> | null
@@ -11589,6 +11603,7 @@ export namespace Prisma {
     created_by?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
+    is_buffer?: SortOrder
     room_id?: SortOrderInput | SortOrder
     parent_id?: SortOrderInput | SortOrder
     parent?: RoomOrderByWithRelationInput
@@ -11612,6 +11627,7 @@ export namespace Prisma {
     created_by?: StringNullableFilter<"Room"> | string | null
     created_at?: DateTimeFilter<"Room"> | Date | string
     updated_at?: DateTimeFilter<"Room"> | Date | string
+    is_buffer?: BoolFilter<"Room"> | boolean
     room_id?: StringNullableFilter<"Room"> | string | null
     parent_id?: StringNullableFilter<"Room"> | string | null
     parent?: XOR<RoomNullableRelationFilter, RoomWhereInput> | null
@@ -11632,6 +11648,7 @@ export namespace Prisma {
     created_by?: SortOrderInput | SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
+    is_buffer?: SortOrder
     room_id?: SortOrderInput | SortOrder
     parent_id?: SortOrderInput | SortOrder
     _count?: RoomCountOrderByAggregateInput
@@ -11654,6 +11671,7 @@ export namespace Prisma {
     created_by?: StringNullableWithAggregatesFilter<"Room"> | string | null
     created_at?: DateTimeWithAggregatesFilter<"Room"> | Date | string
     updated_at?: DateTimeWithAggregatesFilter<"Room"> | Date | string
+    is_buffer?: BoolWithAggregatesFilter<"Room"> | boolean
     room_id?: StringNullableWithAggregatesFilter<"Room"> | string | null
     parent_id?: StringNullableWithAggregatesFilter<"Room"> | string | null
   }
@@ -12354,6 +12372,7 @@ export namespace Prisma {
     type?: string
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
     parent?: RoomCreateNestedOneWithoutChildrenInput
     children?: RoomCreateNestedManyWithoutParentInput
@@ -12373,6 +12392,7 @@ export namespace Prisma {
     created_by?: string | null
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
     parent_id?: string | null
     children?: RoomUncheckedCreateNestedManyWithoutParentInput
@@ -12390,6 +12410,7 @@ export namespace Prisma {
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
     parent?: RoomUpdateOneWithoutChildrenNestedInput
     children?: RoomUpdateManyWithoutParentNestedInput
@@ -12409,6 +12430,7 @@ export namespace Prisma {
     created_by?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
     parent_id?: NullableStringFieldUpdateOperationsInput | string | null
     children?: RoomUncheckedUpdateManyWithoutParentNestedInput
@@ -12427,6 +12449,7 @@ export namespace Prisma {
     created_by?: string | null
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
     parent_id?: string | null
   }
@@ -12440,6 +12463,7 @@ export namespace Prisma {
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -12453,6 +12477,7 @@ export namespace Prisma {
     created_by?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
     parent_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -13205,6 +13230,7 @@ export namespace Prisma {
     created_by?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
+    is_buffer?: SortOrder
     room_id?: SortOrder
     parent_id?: SortOrder
   }
@@ -13223,6 +13249,7 @@ export namespace Prisma {
     created_by?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
+    is_buffer?: SortOrder
     room_id?: SortOrder
     parent_id?: SortOrder
   }
@@ -13237,6 +13264,7 @@ export namespace Prisma {
     created_by?: SortOrder
     created_at?: SortOrder
     updated_at?: SortOrder
+    is_buffer?: SortOrder
     room_id?: SortOrder
     parent_id?: SortOrder
   }
@@ -14633,6 +14661,7 @@ export namespace Prisma {
     type?: string
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
     parent?: RoomCreateNestedOneWithoutChildrenInput
     children?: RoomCreateNestedManyWithoutParentInput
@@ -14650,6 +14679,7 @@ export namespace Prisma {
     type?: string
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
     parent_id?: string | null
     children?: RoomUncheckedCreateNestedManyWithoutParentInput
@@ -14907,6 +14937,7 @@ export namespace Prisma {
     created_by?: StringNullableFilter<"Room"> | string | null
     created_at?: DateTimeFilter<"Room"> | Date | string
     updated_at?: DateTimeFilter<"Room"> | Date | string
+    is_buffer?: BoolFilter<"Room"> | boolean
     room_id?: StringNullableFilter<"Room"> | string | null
     parent_id?: StringNullableFilter<"Room"> | string | null
   }
@@ -15341,6 +15372,7 @@ export namespace Prisma {
     type?: string
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
     parent?: RoomCreateNestedOneWithoutChildrenInput
     messages?: MessageCreateNestedManyWithoutRoomInput
@@ -15359,6 +15391,7 @@ export namespace Prisma {
     created_by?: string | null
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
     parent_id?: string | null
     messages?: MessageUncheckedCreateNestedManyWithoutRoomInput
@@ -15380,6 +15413,7 @@ export namespace Prisma {
     type?: string
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
     children?: RoomCreateNestedManyWithoutParentInput
     messages?: MessageCreateNestedManyWithoutRoomInput
@@ -15398,6 +15432,7 @@ export namespace Prisma {
     created_by?: string | null
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
     children?: RoomUncheckedCreateNestedManyWithoutParentInput
     messages?: MessageUncheckedCreateNestedManyWithoutRoomInput
@@ -15598,6 +15633,7 @@ export namespace Prisma {
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
     parent?: RoomUpdateOneWithoutChildrenNestedInput
     messages?: MessageUpdateManyWithoutRoomNestedInput
@@ -15616,6 +15652,7 @@ export namespace Prisma {
     created_by?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
     parent_id?: NullableStringFieldUpdateOperationsInput | string | null
     messages?: MessageUncheckedUpdateManyWithoutRoomNestedInput
@@ -15816,6 +15853,7 @@ export namespace Prisma {
     type?: string
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
     parent?: RoomCreateNestedOneWithoutChildrenInput
     children?: RoomCreateNestedManyWithoutParentInput
@@ -15834,6 +15872,7 @@ export namespace Prisma {
     created_by?: string | null
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
     parent_id?: string | null
     children?: RoomUncheckedCreateNestedManyWithoutParentInput
@@ -15929,6 +15968,7 @@ export namespace Prisma {
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
     parent?: RoomUpdateOneWithoutChildrenNestedInput
     children?: RoomUpdateManyWithoutParentNestedInput
@@ -15947,6 +15987,7 @@ export namespace Prisma {
     created_by?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
     parent_id?: NullableStringFieldUpdateOperationsInput | string | null
     children?: RoomUncheckedUpdateManyWithoutParentNestedInput
@@ -16110,6 +16151,7 @@ export namespace Prisma {
     type?: string
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
     parent?: RoomCreateNestedOneWithoutChildrenInput
     children?: RoomCreateNestedManyWithoutParentInput
@@ -16128,6 +16170,7 @@ export namespace Prisma {
     created_by?: string | null
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
     parent_id?: string | null
     children?: RoomUncheckedCreateNestedManyWithoutParentInput
@@ -16288,6 +16331,7 @@ export namespace Prisma {
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
     parent?: RoomUpdateOneWithoutChildrenNestedInput
     children?: RoomUpdateManyWithoutParentNestedInput
@@ -16306,6 +16350,7 @@ export namespace Prisma {
     created_by?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
     parent_id?: NullableStringFieldUpdateOperationsInput | string | null
     children?: RoomUncheckedUpdateManyWithoutParentNestedInput
@@ -16379,6 +16424,7 @@ export namespace Prisma {
     type?: string
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
     parent?: RoomCreateNestedOneWithoutChildrenInput
     children?: RoomCreateNestedManyWithoutParentInput
@@ -16397,6 +16443,7 @@ export namespace Prisma {
     created_by?: string | null
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
     parent_id?: string | null
     children?: RoomUncheckedCreateNestedManyWithoutParentInput
@@ -16492,6 +16539,7 @@ export namespace Prisma {
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
     parent?: RoomUpdateOneWithoutChildrenNestedInput
     children?: RoomUpdateManyWithoutParentNestedInput
@@ -16510,6 +16558,7 @@ export namespace Prisma {
     created_by?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
     parent_id?: NullableStringFieldUpdateOperationsInput | string | null
     children?: RoomUncheckedUpdateManyWithoutParentNestedInput
@@ -16697,6 +16746,7 @@ export namespace Prisma {
     type?: string
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
     parent_id?: string | null
   }
@@ -16886,6 +16936,7 @@ export namespace Prisma {
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
     parent?: RoomUpdateOneWithoutChildrenNestedInput
     children?: RoomUpdateManyWithoutParentNestedInput
@@ -16903,6 +16954,7 @@ export namespace Prisma {
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
     parent_id?: NullableStringFieldUpdateOperationsInput | string | null
     children?: RoomUncheckedUpdateManyWithoutParentNestedInput
@@ -16920,6 +16972,7 @@ export namespace Prisma {
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
     parent_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -16997,6 +17050,7 @@ export namespace Prisma {
     created_by?: string | null
     created_at?: Date | string
     updated_at?: Date | string
+    is_buffer?: boolean
     room_id?: string | null
   }
 
@@ -17048,6 +17102,7 @@ export namespace Prisma {
     type?: StringFieldUpdateOperationsInput | string
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
     children?: RoomUpdateManyWithoutParentNestedInput
     messages?: MessageUpdateManyWithoutRoomNestedInput
@@ -17066,6 +17121,7 @@ export namespace Prisma {
     created_by?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
     children?: RoomUncheckedUpdateManyWithoutParentNestedInput
     messages?: MessageUncheckedUpdateManyWithoutRoomNestedInput
@@ -17083,6 +17139,7 @@ export namespace Prisma {
     created_by?: NullableStringFieldUpdateOperationsInput | string | null
     created_at?: DateTimeFieldUpdateOperationsInput | Date | string
     updated_at?: DateTimeFieldUpdateOperationsInput | Date | string
+    is_buffer?: BoolFieldUpdateOperationsInput | boolean
     room_id?: NullableStringFieldUpdateOperationsInput | string | null
   }
 

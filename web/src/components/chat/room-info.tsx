@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { getRoomDetails, searchUsersForRoomPaginated, addParticipant, removeParticipant } from "@/app/actions/room";
+import { getRoomDetails, searchUsersForRoomPaginated, addParticipant, removeParticipant, getRooms, transferUser } from "@/app/actions/room";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, UserPlus, Shield, User, Crown, MoreVertical, Trash2, ShieldAlert, Briefcase, Handshake } from "lucide-react";
+import { Search, Plus, UserPlus, Shield, User, Crown, MoreVertical, Trash2, ShieldAlert, Briefcase, Handshake, ArrowRightLeft } from "lucide-react";
 import { useTranslation } from "@/lib/language-context";
 
 interface Participant {
@@ -29,8 +29,12 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
   const { t, language } = useTranslation();
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [roomCreator, setRoomCreator] = useState<string | null>(null);
+  const [isBufferRoom, setIsBufferRoom] = useState(false);
   const [currentUser, setCurrentUser] = useState<{id: string, role: string} | null>(null);
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
+  const [isTransferDialogOpen, setIsTransferDialogOpen] = useState(false);
+  const [transferTargetUser, setTransferTargetUser] = useState<Participant | null>(null);
+  const [availableRooms, setAvailableRooms] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [eligibleUsers, setEligibleUsers] = useState<Participant[]>([]);
   const [eligibleUsersTotal, setEligibleUsersTotal] = useState(0);
@@ -49,10 +53,12 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
         setError(null);
         setParticipants(data.participants);
         setRoomCreator(data.room?.created_by || null);
+        setIsBufferRoom(!!data.room?.is_buffer);
         setCurrentUser(data.currentUser);
       } else {
         setParticipants([]);
         setRoomCreator(null);
+        setIsBufferRoom(false);
         setCurrentUser(null);
         setError("Нет доступа к информации о комнате");
       }
@@ -155,6 +161,41 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
       }
     } catch {
       setError("Error removing user");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTransferClick = async (participant: Participant) => {
+    setTransferTargetUser(participant);
+    setIsLoading(true);
+    try {
+      const rooms = await getRooms();
+      // Filter out current room and buffer rooms
+      setAvailableRooms(rooms.filter((r: any) => r.id !== roomId && !r.is_buffer));
+      setIsTransferDialogOpen(true);
+    } catch {
+      setError("Failed to load rooms for transfer");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onTransferConfirm = async (targetRoomId: string) => {
+    if (!transferTargetUser) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await transferUser(transferTargetUser.id, roomId, targetRoomId);
+      if (result.success) {
+        setIsTransferDialogOpen(false);
+        setTransferTargetUser(null);
+        await fetchParticipants();
+      } else {
+        setError(result.error || "Failed to transfer user");
+      }
+    } catch {
+      setError("Error transferring user");
     } finally {
       setIsLoading(false);
     }
@@ -297,6 +338,17 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
                 <DropdownMenuContent align="end" className="bg-[#0F172A] border-white/10 text-white min-w-[160px]">
                   <DropdownMenuLabel className="text-xs text-slate-400">{t("roomInfo.manageTitle") || "Управление"}</DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-white/10" />
+                  
+                  {isBufferRoom && isGlobalAdminOrManager && (
+                    <DropdownMenuItem 
+                      className="text-xs text-amber-500 focus:text-amber-400 focus:bg-amber-500/10 cursor-pointer"
+                      onClick={() => handleTransferClick(participant)}
+                    >
+                      <ArrowRightLeft className="h-4 w-4 mr-2" />
+                      {t("roomInfo.transferUser") || "Перевести в другую комнату"}
+                    </DropdownMenuItem>
+                  )}
+
                   <DropdownMenuItem 
                     className="text-xs text-red-400 focus:text-red-300 focus:bg-red-500/10 cursor-pointer"
                     onClick={() => handleRemoveUser(participant.id)}
@@ -422,6 +474,59 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
             <Button 
               variant="ghost" 
               onClick={() => setIsAddUserDialogOpen(false)}
+              className="text-slate-400 hover:text-white hover:bg-white/5 rounded-xl"
+            >
+              {t("common.cancel") || "Отмена"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Transfer User Dialog */}
+      <Dialog open={isTransferDialogOpen} onOpenChange={setIsTransferDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-[#0F172A] border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">
+              {t("roomInfo.transferDialogTitle") || "Перевести пользователя"}
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              {t("roomInfo.transferDialogDesc") || "Выберите комнату, в которую хотите перевести пользователя"} <b>{transferTargetUser?.full_name || transferTargetUser?.email}</b>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4 max-h-[300px] overflow-y-auto pr-2">
+            {availableRooms.length > 0 ? (
+              availableRooms.map((room) => (
+                <Button
+                  key={room.id}
+                  variant="ghost"
+                  className="w-full justify-start h-auto py-3 px-4 hover:bg-white/5 rounded-xl border border-white/5 hover:border-amber-500/50 transition-all group"
+                  onClick={() => onTransferConfirm(room.id)}
+                >
+                  <div className="flex flex-col items-start min-w-0 flex-1">
+                    <span className="font-semibold text-slate-200 group-hover:text-amber-500 transition-colors truncate w-full text-left">
+                      {room.name}
+                    </span>
+                    {room.description && (
+                      <span className="text-[10px] text-slate-500 truncate w-full text-left">
+                        {room.description}
+                      </span>
+                    )}
+                  </div>
+                  <ArrowRightLeft className="h-4 w-4 ml-2 text-slate-600 group-hover:text-amber-500 group-hover:translate-x-1 transition-all" />
+                </Button>
+              ))
+            ) : (
+              <div className="text-center text-slate-500 text-sm py-8 italic">
+                {t("roomInfo.noRoomsAvailable") || "Нет доступных комнат для перевода"}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="ghost" 
+              onClick={() => setIsTransferDialogOpen(false)}
               className="text-slate-400 hover:text-white hover:bg-white/5 rounded-xl"
             >
               {t("common.cancel") || "Отмена"}
