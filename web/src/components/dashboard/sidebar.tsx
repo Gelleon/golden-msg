@@ -493,11 +493,9 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
           document.body.style.overflow = ""
           document.body.style.paddingRight = ""
           document.documentElement.style.overflow = ""
-          document.documentElement.scrollLeft = 0
-          document.body.scrollLeft = 0
           document.body.removeAttribute("data-scroll-locked")
           onClose?.()
-          router.push(nextHref)
+          router.push(nextHref, { scroll: false })
           fetchRoomsAndDMs()
         }, 0)
 
