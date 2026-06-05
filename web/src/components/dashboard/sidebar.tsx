@@ -493,6 +493,8 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
           document.body.style.overflow = ""
           document.body.style.paddingRight = ""
           document.documentElement.style.overflow = ""
+          document.documentElement.scrollLeft = 0
+          document.body.scrollLeft = 0
           document.body.removeAttribute("data-scroll-locked")
           onClose?.()
           router.push(nextHref)
@@ -742,7 +744,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     <motion.div 
       initial={{ x: -20, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      className={cn("w-72 bg-[#0F172A] text-slate-100 flex flex-col h-full border-r border-white/5 shadow-2xl relative z-10", className)}
+      className={cn("w-72 bg-[#0F172A] text-slate-100 flex flex-col h-full border-r border-white/5 shadow-2xl relative z-10 overflow-x-hidden", className)}
     >
       {/* Glow Effect */}
       <motion.div 
