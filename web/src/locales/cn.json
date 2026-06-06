@@ -136,6 +136,10 @@
       "resetSearch": "重置搜索",
       "changePrivileges": "更改权限",
       "deleteUser": "删除用户",
+      "deleteUserConfirmTitle": "删除用户？",
+      "deleteUserConfirmDesc": "此操作不可撤销。用户将从系统中永久删除。",
+      "deleteUserSuccess": "用户已删除",
+      "deleteUserError": "无法删除用户",
       "controlAccessDesc": "控制 Golden Russia 系统成员的访问权限和角色管理。"
     }
   },

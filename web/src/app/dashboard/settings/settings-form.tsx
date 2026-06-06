@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect, useCallback, useRef } from "react"
-import { getUsers, updateUserName, updateUserRole, updateProfile } from "@/app/actions/users"
+import { deleteUser, getUsers, updateUserName, updateUserRole, updateProfile } from "@/app/actions/users"
 import { uploadFile } from "@/app/actions/upload"
 import { NotificationManagementForm } from "./notification-management-form"
 import { NotificationSettingsForm } from "./notification-settings-form"
@@ -50,7 +50,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Loader2, User, Lock, Camera, Check, AlertCircle, Globe, Users, ShieldCheck, Briefcase, UserCheck, UserCog, Search, Filter, MoreHorizontal, ChevronDown, Save, Bell, BarChart3, Pencil } from "lucide-react"
+import { Loader2, User, Lock, Camera, Check, AlertCircle, Globe, Users, ShieldCheck, Briefcase, UserCheck, UserCog, Search, Filter, MoreHorizontal, ChevronDown, Save, Bell, BarChart3, Pencil, Trash2 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { motion, AnimatePresence } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -259,6 +259,10 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
   const [isSaving, setIsSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [pendingChangesId, setPendingChangesId] = useState<string | null>(null)
+  const [deleteUserOpen, setDeleteUserOpen] = useState(false)
+  const [deleteUserTargetId, setDeleteUserTargetId] = useState<string | null>(null)
+  const [deleteUserTargetLabel, setDeleteUserTargetLabel] = useState<string>("")
+  const [isDeletingUser, setIsDeletingUser] = useState(false)
   const [editNameOpen, setEditNameOpen] = useState(false)
   const [editNameUserId, setEditNameUserId] = useState<string | null>(null)
   const [editNameUserLabel, setEditNameUserLabel] = useState<string>("")
@@ -369,6 +373,45 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
     setEditJobTitleRu(u.job_title_ru || "")
     setEditJobTitleCn(u.job_title_cn || "")
     setEditJobTitleOpen(true)
+  }
+
+  const openDeleteUser = (u: any) => {
+    setDeleteUserTargetId(u.id)
+    setDeleteUserTargetLabel(u.full_name || u.email)
+    setDeleteUserOpen(true)
+  }
+
+  const handleConfirmDeleteUser = async () => {
+    if (!deleteUserTargetId) return
+    setIsDeletingUser(true)
+    try {
+      const result = await deleteUser(deleteUserTargetId)
+      if (result.success) {
+        setUsers(prev => prev.filter(u => u.id !== deleteUserTargetId))
+        toast({
+          title: t('common.success') || "Успешно",
+          description: t('settings.users.deleteUserSuccess') || "Пользователь удалён",
+        })
+        setDeleteUserOpen(false)
+        setDeleteUserTargetId(null)
+        setDeleteUserTargetLabel("")
+      } else {
+        toast({
+          title: t('common.error') || "Ошибка",
+          description: result.error || t('settings.users.deleteUserError') || "Не удалось удалить пользователя",
+          variant: "destructive",
+        })
+      }
+    } catch (e) {
+      console.error(e)
+      toast({
+        title: t('common.error') || "Ошибка",
+        description: t('settings.users.deleteUserError') || "Не удалось удалить пользователя",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeletingUser(false)
+    }
   }
 
   const handleSaveName = async () => {
@@ -565,6 +608,7 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
                     const currentRole = user.role
                     const RoleIcon = roleIcons[currentRole] || Users
                     const canEditThisName = !!currentUserId && user.id !== currentUserId
+                    const canDeleteThisUser = currentUserRole === "admin" && !!currentUserId && user.id !== currentUserId
                     return (
                       <TableRow key={user.id} className="group hover:bg-slate-50/50 border-slate-100 transition-colors">
                         <TableCell className="w-[40%] md:w-[25%] pl-6 py-4">
@@ -714,6 +758,29 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
                                       </div>
                                     </>
                                   )}
+
+                                  {currentUserRole === "admin" && (
+                                    <>
+                                      <DropdownMenuSeparator className="bg-slate-100 my-1.5 h-px rounded-full" />
+                                      <DropdownMenuItem
+                                        disabled={!canDeleteThisUser}
+                                        onSelect={(e) => {
+                                          e.preventDefault()
+                                          if (!canDeleteThisUser) return
+                                          openDeleteUser(user)
+                                        }}
+                                        className={cn(
+                                          "flex items-center gap-3 rounded-xl transition-all py-2.5 px-3 text-sm font-bold",
+                                          canDeleteThisUser ? "text-red-600 hover:bg-red-50 cursor-pointer" : "opacity-50 cursor-not-allowed"
+                                        )}
+                                      >
+                                        <div className="p-1.5 rounded-lg border bg-red-50 border-red-100">
+                                          <Trash2 className="h-4 w-4 text-red-600" />
+                                        </div>
+                                        <span>{t("settings.users.deleteUser")}</span>
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             )}
@@ -727,6 +794,45 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
           </div>
         )}
       </CardContent>
+      <Dialog
+        open={deleteUserOpen}
+        onOpenChange={(open) => {
+          setDeleteUserOpen(open)
+          if (!open) {
+            setDeleteUserTargetId(null)
+            setDeleteUserTargetLabel("")
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-black/10 ring-1 ring-black/5">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-slate-900">{t("settings.users.deleteUserConfirmTitle") || "Удалить пользователя?"}</DialogTitle>
+            <DialogDescription className="text-sm font-medium text-slate-600">
+              {t("settings.users.deleteUserConfirmDesc") || "Это действие необратимо. Пользователь будет удалён из системы."} {deleteUserTargetLabel ? `(${deleteUserTargetLabel})` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-10 rounded-xl font-black text-slate-600 hover:bg-slate-100"
+              onClick={() => setDeleteUserOpen(false)}
+              disabled={isDeletingUser}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              className="h-10 rounded-xl font-black"
+              onClick={handleConfirmDeleteUser}
+              disabled={isDeletingUser}
+            >
+              {isDeletingUser ? <Loader2 className="h-4 w-4 animate-spin" /> : t("settings.users.deleteUser")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog
         open={editNameOpen}
         onOpenChange={(open) => {

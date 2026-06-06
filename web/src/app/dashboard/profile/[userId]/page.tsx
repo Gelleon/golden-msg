@@ -5,6 +5,7 @@ import prisma from "@/lib/db"
 import { getSession } from "@/app/actions/auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { DeleteUserProfileAction } from "@/components/dashboard/delete-user-profile-action"
 
 interface ProfilePageProps {
   params: Promise<{
@@ -24,6 +25,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     where: { id: userId },
     select: {
       id: true,
+      email: true,
       full_name: true,
       avatar_url: true,
       role: true,
@@ -34,6 +36,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   if (!user) {
     notFound()
   }
+
+  const canDeleteUser = session.user.role === "admin" && session.user.id !== user.id
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50 p-4 md:p-8">
@@ -69,6 +73,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 В системе с {new Date(user.created_at).toLocaleDateString("ru-RU")}
               </span>
             </div>
+            {canDeleteUser && (
+              <div className="pt-2">
+                <DeleteUserProfileAction userId={user.id} userLabel={user.full_name || user.email} />
+              </div>
+            )}
           </div>
         </div>
       </div>

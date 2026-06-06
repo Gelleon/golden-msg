@@ -77,18 +77,18 @@ describe("users.updateUserName", () => {
 
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: "u1" },
-      data: { full_name: "New Name" },
+      data: { full_name: "New Name", job_title_ru: null, job_title_cn: null },
     })
     expect(prisma.auditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           user_id: "actor-1",
-          action: "user_name_changed",
+          action: "user_info_changed",
           details: expect.any(String),
         }),
       })
     )
-    expect(res).toEqual({ success: true, user: { id: "u1", full_name: "New Name" } })
+    expect(res).toEqual({ success: true, user: { id: "u1", full_name: "New Name", job_title_ru: null, job_title_cn: null } })
   })
 
   it("updates name and writes audit log (manager)", async () => {
@@ -103,7 +103,6 @@ describe("users.updateUserName", () => {
     ;(prisma.auditLog.create as jest.Mock).mockResolvedValue({ id: "log-2" })
 
     const res = await updateUserName("u2", "Анна")
-    expect(res).toEqual({ success: true, user: { id: "u2", full_name: "Анна" } })
+    expect(res).toEqual({ success: true, user: { id: "u2", full_name: "Анна", job_title_ru: null, job_title_cn: null } })
   })
 })
-

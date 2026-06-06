@@ -193,3 +193,71 @@ export async function updateProfile(formData: FormData) {
     return { error: "Failed to update profile" }
   }
 }
+
+export async function deleteUser(userId: string) {
+  const session = await getSession()
+  if (!session?.user) return { error: "Unauthorized" }
+
+  if (session.user.role !== "admin") {
+    return { error: "Permission denied" }
+  }
+
+  if (session.user.id === userId) {
+    return { error: "Cannot delete yourself" }
+  }
+
+  try {
+    await ensureSchemaFixed()
+
+    const target = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, role: true },
+    })
+
+    if (!target) return { error: "User not found" }
+
+    if (target.role === "admin") {
+      const adminCount = await prisma.user.count({ where: { role: "admin" } })
+      if (adminCount <= 1) {
+        return { error: "Cannot delete last admin" }
+      }
+    }
+
+    await prisma.$transaction([
+      prisma.room.updateMany({
+        where: { created_by: userId },
+        data: { created_by: null },
+      }),
+      prisma.auditLog.updateMany({
+        where: { user_id: userId },
+        data: { user_id: null },
+      }),
+      prisma.message.updateMany({
+        where: { reply_to: { sender_id: userId } },
+        data: { reply_to_id: null },
+      }),
+      prisma.user.delete({ where: { id: userId } }),
+      prisma.auditLog.create({
+        data: {
+          user_id: session.user.id,
+          action: "user_deleted",
+          details: JSON.stringify({
+            actor_id: session.user.id,
+            actor_role: session.user.role,
+            target_id: target.id,
+            target_email: target.email,
+            target_role: target.role,
+          }),
+        },
+      }),
+    ])
+
+    revalidatePath("/dashboard/settings")
+    revalidatePath("/dashboard/users")
+    revalidatePath("/dashboard")
+    return { success: true }
+  } catch (error) {
+    console.error("Delete user error:", error)
+    return { error: "Failed to delete user" }
+  }
+}

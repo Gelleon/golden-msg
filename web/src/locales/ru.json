@@ -136,6 +136,10 @@
       "resetSearch": "Сбросить поиск",
       "changePrivileges": "Смена привилегий",
       "deleteUser": "Удалить пользователя",
+      "deleteUserConfirmTitle": "Удалить пользователя?",
+      "deleteUserConfirmDesc": "Это действие необратимо. Пользователь будет удалён из системы.",
+      "deleteUserSuccess": "Пользователь удалён",
+      "deleteUserError": "Не удалось удалить пользователя",
       "controlAccessDesc": "Контроль доступа и управление ролями участников системы Golden Russia."
     }
   },
