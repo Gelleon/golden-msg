@@ -151,7 +151,10 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
 
     // Calculate total unread including children
     const getDeepUnreadCount = (r: any): number => {
-      let count = (r.unreadCount || 0) + (r.is_buffer ? (r.waitingCount || 0) : 0);
+      // If we are currently in this buffer room, don't count its waiting users towards the global title badge
+      // But we still want to show the badge in the sidebar list unless they move the user
+      const isCurrentBufferRoom = pathname === `/dashboard/rooms/${r.id}` && r.is_buffer;
+      let count = (r.unreadCount || 0) + (r.is_buffer && !isCurrentBufferRoom ? (r.waitingCount || 0) : 0);
       if (r.children) {
         for (const child of r.children) {
           count += getDeepUnreadCount(child);
@@ -168,8 +171,9 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     
     // For buffer room, show waiting users count instead of unread messages if there are any
     const isBufferWithWaiting = room.is_buffer && (room.waitingCount || 0) > 0;
+    const isCurrentRoom = pathname === `/dashboard/rooms/${room.id}`;
     const displayBadgeCount = isBufferWithWaiting ? room.waitingCount : displayUnread;
-    const showFinalBadge = isBufferWithWaiting || showBadge;
+    const showFinalBadge = (isBufferWithWaiting && !isCurrentRoom) || showBadge;
 
     return (
       <div key={room.id} className="w-full">
@@ -405,15 +409,20 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
 
   useEffect(() => {
     if (!mounted) return;
-    const totalUnread = rooms.reduce((acc, r) => acc + (r.unreadCount || 0) + (r.is_buffer ? (r.waitingCount || 0) : 0), 0) + 
-                        dms.reduce((acc, r) => acc + (r.unreadCount || 0), 0);
+    
+    // When calculating total for document title, exclude waiting count if we are currently IN the buffer room
+    const totalUnread = rooms.reduce((acc, r) => {
+      const isCurrentBufferRoom = pathname === `/dashboard/rooms/${r.id}` && r.is_buffer;
+      const waiting = (r.is_buffer && !isCurrentBufferRoom) ? (r.waitingCount || 0) : 0;
+      return acc + (r.unreadCount || 0) + waiting;
+    }, 0) + dms.reduce((acc, r) => acc + (r.unreadCount || 0), 0);
     
     if (totalUnread > 0) {
       document.title = `(${totalUnread}) Golden Russia`;
     } else {
       document.title = `Golden Russia`;
     }
-  }, [rooms, dms, mounted])
+  }, [rooms, dms, mounted, pathname])
 
   const handleSignOut = async () => {
     await logout()
