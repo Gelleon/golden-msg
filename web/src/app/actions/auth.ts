@@ -225,10 +225,56 @@ export async function register(formData: FormData) {
           }
         });
 
+        // Create system message
+        const sysMsg = await prisma.message.create({
+          data: {
+            room_id: bufferRoom.id,
+            sender_id: user.id,
+            content: `👋 Новый пользователь ${fullName || email} зарегистрировался и ожидает подтверждения.`,
+            message_type: 'system',
+            language_original: 'ru',
+            translation_status: 'completed'
+          },
+          select: {
+            id: true,
+            room_id: true,
+            content: true,
+            content_translated: true,
+            language_original: true,
+            message_type: true,
+            file_url: true,
+            voice_transcription: true,
+            created_at: true,
+            is_edited: true,
+            reply_to_id: true,
+            translation_status: true,
+            sender: {
+              select: {
+                id: true,
+                full_name: true,
+                avatar_url: true,
+                role: true,
+              }
+            }
+          }
+        });
+
+        const { sendSSEUpdate } = await import("@/lib/sse");
+        
+        // Notify the buffer room about the new message
+        sendSSEUpdate(bufferRoom.id, {
+          type: 'new_message',
+          message: sysMsg
+        });
+
         // Send SSE update to admins/managers about new user in buffer room
         // We use a global update that triggers room list refresh
-        const { sendSSEUpdate } = await import("@/lib/sse");
         sendSSEUpdate("global", { type: "unread_update" });
+        sendSSEUpdate("global", { 
+          type: "new_user_registered",
+          userName: fullName || email,
+          userId: user.id
+        });
       } catch (e) {
         console.error("Error adding user to buffer room:", e);
       }

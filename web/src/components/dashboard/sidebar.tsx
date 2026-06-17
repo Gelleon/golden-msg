@@ -42,6 +42,7 @@ import { EditRoomDialog } from "./edit-room-dialog"
 import { useTranslation } from "@/lib/language-context"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { RoomInfo } from "@/components/chat/room-info"
+import { useToast } from "@/components/ui/use-toast"
 
 interface SidebarProps {
   user: any
@@ -53,6 +54,7 @@ interface SidebarProps {
 export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
   const router = useRouter()
   const { t } = useTranslation()
+  const { toast } = useToast()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [rooms, setRooms] = useState<any[]>([])
@@ -149,7 +151,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
 
     // Calculate total unread including children
     const getDeepUnreadCount = (r: any): number => {
-      let count = r.unreadCount || 0;
+      let count = (r.unreadCount || 0) + (r.is_buffer ? (r.waitingCount || 0) : 0);
       if (r.children) {
         for (const child of r.children) {
           count += getDeepUnreadCount(child);
@@ -163,6 +165,11 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
     const isDirectUnread = (room.unreadCount || 0) > 0;
     const displayUnread = (!isExpanded && hasChildren) ? totalUnread : (room.unreadCount || 0);
     const showBadge = displayUnread > 0 && pathname !== `/dashboard/rooms/${room.id}`;
+    
+    // For buffer room, show waiting users count instead of unread messages if there are any
+    const isBufferWithWaiting = room.is_buffer && (room.waitingCount || 0) > 0;
+    const displayBadgeCount = isBufferWithWaiting ? room.waitingCount : displayUnread;
+    const showFinalBadge = isBufferWithWaiting || showBadge;
 
     return (
       <div key={room.id} className="w-full">
@@ -215,14 +222,17 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                         <div className="flex items-center">
                           <span className={cn(
                             "truncate flex-1 text-left transition-colors flex items-center gap-1.5",
-                            hasUnread ? "font-bold text-white" : "font-medium"
+                            (hasUnread || isBufferWithWaiting) ? "font-bold text-white" : "font-medium"
                           )}>
                             {room.is_buffer && <ShieldCheck className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
                             {room.is_buffer ? (t('room.bufferName') || room.name) : room.name}
                           </span>
-                          {showBadge && (
-                            <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/20 ml-2 animate-pulse">
-                              {displayUnread}
+                          {showFinalBadge && (
+                            <span className={cn(
+                              "flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white shadow-lg ml-2 animate-pulse",
+                              isBufferWithWaiting ? "bg-red-500 shadow-red-500/20" : "bg-amber-500 shadow-amber-500/20"
+                            )}>
+                              {isBufferWithWaiting ? `${displayBadgeCount} нов.` : displayBadgeCount}
                             </span>
                           )}
                           {pathname === `/dashboard/rooms/${room.id}` && (
@@ -235,7 +245,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
                         {room.description && (
                           <span className={cn(
                             "text-[10px] mt-0.5 truncate text-left pr-2 min-w-0 w-full",
-                            hasUnread ? "text-slate-400 font-medium" : "text-slate-500 font-normal"
+                            (hasUnread || isBufferWithWaiting) ? "text-slate-400 font-medium" : "text-slate-500 font-normal"
                           )}>
                             {room.description}
                           </span>
@@ -323,6 +333,25 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
         const data = JSON.parse(event.data);
         if (data.type === "unread_update") {
           fetchRoomsAndDMs();
+        } else if (data.type === "new_user_registered") {
+          fetchRoomsAndDMs();
+          if (profile?.role === "admin" || profile?.role === "manager") {
+            toast({
+              title: "Новая регистрация",
+              description: `Пользователь ${data.userName} зарегистрировался и ждет распределения.`,
+              variant: "default",
+              action: data.roomId ? (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => router.push(`/dashboard/rooms/${data.roomId}`)}
+                  className="bg-amber-500 hover:bg-amber-600 text-white border-0"
+                >
+                  Открыть
+                </Button>
+              ) : undefined,
+            });
+          }
         }
       } catch (e) {
         // Ignore parse errors
@@ -376,7 +405,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
 
   useEffect(() => {
     if (!mounted) return;
-    const totalUnread = rooms.reduce((acc, r) => acc + (r.unreadCount || 0), 0) + 
+    const totalUnread = rooms.reduce((acc, r) => acc + (r.unreadCount || 0) + (r.is_buffer ? (r.waitingCount || 0) : 0), 0) + 
                         dms.reduce((acc, r) => acc + (r.unreadCount || 0), 0);
     
     if (totalUnread > 0) {

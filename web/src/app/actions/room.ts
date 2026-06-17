@@ -308,6 +308,7 @@ export async function getRooms() {
 
     const roomIds = rooms.map(r => r.id)
     let unreadCounts: Record<string, number> = {}
+    let waitingCounts: Record<string, number> = {}
 
     if (roomIds.length > 0) {
       const countPromises = rooms.map(async (room) => {
@@ -325,12 +326,29 @@ export async function getRooms() {
             created_at: { gt: lastReadAt }
           }
         });
-        return { id: room.id, count };
+
+        let waitingCount = 0;
+        if (room.is_buffer) {
+          waitingCount = await prisma.roomParticipant.count({
+            where: {
+              room_id: room.id,
+              user: {
+                role: 'client'
+              }
+            }
+          });
+        }
+
+        return { id: room.id, count, waitingCount };
       });
 
       const counts = await Promise.all(countPromises);
       unreadCounts = counts.reduce((acc, { id, count }) => {
         acc[id] = count;
+        return acc;
+      }, {} as Record<string, number>);
+      waitingCounts = counts.reduce((acc, { id, waitingCount }) => {
+        acc[id] = waitingCount;
         return acc;
       }, {} as Record<string, number>);
     }
@@ -347,6 +365,7 @@ export async function getRooms() {
         description: room.description ?? null,
         created_at: room.created_at.toISOString(),
         unreadCount: unreadCounts[room.id] || 0,
+        waitingCount: waitingCounts[room.id] || 0,
         lastReadAt: lastReadAt.toISOString(),
         is_buffer: room.is_buffer
       }
