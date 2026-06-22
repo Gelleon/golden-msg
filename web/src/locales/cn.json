@@ -364,6 +364,14 @@
     "errorUnknown": "未知错误",
     "emailError": "电子邮件格式无效",
     "passwordError": "密码必须至少为 6 个字符",
+    "createAccount": "创建账号",
+    "registerSubtitle": "填写信息完成注册",
+    "emailNotVerified": "请先验证邮箱后再登录",
+    "verificationSent": "我们已向 {email} 发送确认邮件，请点击邮件中的链接完成验证。",
+    "verificationResend": "重新发送",
+    "verificationSuccess": "邮箱已验证",
+    "verificationExpired": "验证链接已过期",
+    "verificationInvalid": "验证链接无效",
     "forgotPassword": "忘记密码？",
     "brandName": "GOLDEN RUSSIA",
     "footer": "GOLDEN RUSSIA &copy; {year} • ELITE BUSINESS NETWORK",
@@ -406,6 +414,14 @@
       "emailSecurity": "如果您没有请求重置密码，请忽略此邮件。",
       "changeNotificationSubject": "您的密码已更改",
       "changeNotificationBody": "您的 Golden Russia 账户密码已成功更改。如果这不是您本人的操作，请立即联系支持团队。"
+    },
+    "verification": {
+      "emailSubject": "邮箱验证 — Golden Russia",
+      "emailHello": "您好！",
+      "emailBody": "感谢您注册 Golden Russia。请验证您的邮箱以开始使用。",
+      "emailAction": "验证邮箱",
+      "emailExpire": "该链接的有效期为 48 小时。",
+      "emailSecurity": "如果您没有注册账号，请忽略此邮件。"
     },
     "features": {
       "translation": {

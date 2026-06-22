@@ -122,7 +122,11 @@ describe('WelcomeScreen', () => {
 
   it('calls register action on successful form submission', async () => {
     const user = userEvent.setup()
-    ;(register as jest.Mock).mockResolvedValue({ success: true })
+    ;(register as jest.Mock).mockResolvedValue({
+      success: true,
+      requiresVerification: true,
+      email: 'test@example.com',
+    })
     
     render(<WelcomeScreen />)
     fireEvent.click(screen.getByText('welcome.russian'))
@@ -139,7 +143,32 @@ describe('WelcomeScreen', () => {
     
     await waitFor(() => {
       expect(register).toHaveBeenCalled()
-      expect(mockPush).toHaveBeenCalledWith('/dashboard')
+      expect(mockPush).not.toHaveBeenCalled()
+      expect(screen.getByText('welcome.verificationSent')).toBeInTheDocument()
+    })
+  })
+
+  it('shows verification pending screen after register requires verification', async () => {
+    const user = userEvent.setup()
+    ;(register as jest.Mock).mockResolvedValue({
+      success: true,
+      requiresVerification: true,
+      email: 'pending@example.com',
+    })
+
+    render(<WelcomeScreen />)
+    fireEvent.click(screen.getByText('welcome.russian'))
+    fireEvent.click(screen.getByText('welcome.toggleToRegister'))
+
+    await user.type(screen.getByLabelText('welcome.email'), 'pending@example.com')
+    await user.type(screen.getByLabelText('welcome.password'), 'password123')
+    await user.type(screen.getByLabelText('welcome.recovery.confirmPassword'), 'password123')
+
+    fireEvent.click(screen.getByText('welcome.submitRegister'))
+
+    await waitFor(() => {
+      expect(screen.getByText('welcome.verificationSent')).toBeInTheDocument()
+      expect(screen.getByText('welcome.createAccount')).toBeInTheDocument()
     })
   })
 

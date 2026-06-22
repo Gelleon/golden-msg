@@ -24,6 +24,7 @@ export function WelcomeScreen() {
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -111,6 +112,8 @@ export function WelcomeScreen() {
         const errorKey = `welcome.${result.error}`
         const translatedError = t(errorKey as any)
         setError(translatedError === errorKey ? result.error : translatedError)
+      } else if ("requiresVerification" in result && result.requiresVerification) {
+        setPendingVerificationEmail(result.email ?? data.email)
       } else {
         if (inviteRoomId && inviteToken) {
           const inviteResult = await acceptRoomInvite(inviteRoomId, inviteToken)
@@ -373,7 +376,29 @@ export function WelcomeScreen() {
             </div>
 
               <div className="max-w-md w-full mx-auto space-y-8 md:space-y-10">
-                {showForgotPassword ? (
+                {pendingVerificationEmail ? (
+                  <div className="space-y-6 text-center lg:text-left">
+                    <div className="space-y-2">
+                      <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+                        {t("welcome.createAccount")}
+                      </h2>
+                      <p className="text-slate-400 font-light text-sm md:text-base">
+                        {t("welcome.verificationSent").replace("{email}", pendingVerificationEmail)}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => {
+                        setPendingVerificationEmail(null)
+                        setIsLogin(true)
+                      }}
+                      className="w-full h-12 md:h-14 text-slate-400 hover:text-white hover:bg-white/5 rounded-2xl transition-all text-xs md:text-sm"
+                    >
+                      {t("welcome.toggleToLogin")}
+                    </Button>
+                  </div>
+                ) : showForgotPassword ? (
                   <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />
                 ) : (
                   <>

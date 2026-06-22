@@ -10,6 +10,7 @@ import { sendEmail } from "@/lib/email"
 import { logAuditAction, checkRateLimit, securityDelay, detectSuspiciousActivity } from "@/lib/security"
 import { headers } from "next/headers"
 import { ensureSchemaFixed } from "@/lib/schema-fix"
+import { parseEmail } from "@/lib/email-validation"
 
 import ru from '@/locales/ru.json'
 import cn from '@/locales/cn.json'
@@ -133,37 +134,119 @@ export async function login(formData: FormData) {
   }
 }
 
+function getAppBaseUrl(): string {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+  return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
+}
+
+async function sendVerificationEmail(user: { id: string; email: string; preferred_language?: string | null }) {
+  const token = crypto.randomBytes(32).toString('hex')
+  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000)
+
+  await prisma.emailVerificationToken.create({
+    data: {
+      token,
+      user_id: user.id,
+      expires_at: expiresAt,
+    },
+  })
+
+  const verifyUrl = `${getAppBaseUrl()}/auth/verify-email?token=${token}`
+  const lang = user.preferred_language === 'cn' ? 'cn' : 'ru'
+
+  await sendEmail({
+    to: user.email,
+    subject: t("welcome.verification.emailSubject", lang),
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${t("welcome.verification.emailSubject", lang)}</title>
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
+          <h2 style="color: #0f172a; margin-top: 0; margin-bottom: 24px; font-size: 24px; font-weight: 700; text-align: center;">Golden Russia</h2>
+          <p style="color: #334155; font-size: 16px; line-height: 24px; margin-bottom: 16px;">
+            ${t("welcome.verification.emailHello", lang)}
+          </p>
+          <p style="color: #334155; font-size: 16px; line-height: 24px; margin-bottom: 32px;">
+            ${t("welcome.verification.emailBody", lang)}
+          </p>
+          <div style="text-align: center; margin-bottom: 32px;">
+            <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin: 0 auto;">
+              <tr>
+                <td align="center" bgcolor="#0f172a" style="border-radius: 6px;">
+                  <a href="${verifyUrl}" target="_blank" style="display: inline-block; padding: 14px 28px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 6px; border: 1px solid #0f172a;">
+                    ${t("welcome.verification.emailAction", lang)}
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <p style="color: #64748b; font-size: 14px; line-height: 20px; margin-bottom: 8px;">
+            ${t("welcome.verification.emailExpire", lang)}
+          </p>
+          <p style="color: #64748b; font-size: 14px; line-height: 20px; margin-bottom: 32px;">
+            ${t("welcome.verification.emailSecurity", lang)}
+          </p>
+          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin-bottom: 24px;">
+          <p style="color: #94a3b8; font-size: 12px; text-align: center; margin: 0;">
+            GOLDEN RUSSIA &copy; ${new Date().getFullYear()}
+          </p>
+        </div>
+      </body>
+      </html>
+    `,
+  })
+}
+
 export async function register(formData: FormData) {
   await ensureSchemaFixed()
-  console.log("REGISTER ATTEMPT", formData.get("email"))
-  const email = formData.get("email") as string
+  const rawEmail = formData.get("email") as string
   const password = formData.get("password") as string
   const fullName = formData.get("fullName") as string
   const language = formData.get("language") as string
 
-  // Manual validation because safeParse was failing on optional fields or types
-  if (!email || !password || password.length < 6) {
+  const emailResult = parseEmail(rawEmail ?? "")
+  if (!emailResult.ok) {
+    return { error: emailResult.error }
+  }
+
+  const parsed = authSchema.safeParse({
+    email: emailResult.email,
+    password,
+    fullName: fullName || undefined,
+    language: language === "cn" ? "cn" : "ru",
+  })
+
+  if (!parsed.success) {
+    const passwordIssue = parsed.error.issues.find((issue) => issue.path[0] === "password")
+    if (passwordIssue) {
+      return { error: "passwordError" }
+    }
     return { error: "errorFieldsRequired" }
   }
+
+  const email = emailResult.email
+  const bypassVerification = process.env.EMAIL_VERIFICATION_BYPASS === "true"
 
   const headerList = await headers();
   const ip = headerList.get('x-forwarded-for') || 'unknown';
 
-  // Check rate limit for registration (max 3 per hour)
   const isAllowed = await checkRateLimit(ip, "REGISTRATION_ATTEMPT", 3, 60 * 60 * 1000);
   if (!isAllowed) {
     return { error: "welcome.recovery.errorRateLimit" };
   }
 
   try {
-    console.log("FINDING EXISTING USER", email)
     const existingUser = await prisma.user.findUnique({
       where: { email },
       select: { id: true },
     })
 
     if (existingUser) {
-      console.log("USER ALREADY EXISTS", email)
       await logAuditAction({
         action: "REGISTRATION_FAILED",
         ipAddress: ip,
@@ -172,32 +255,38 @@ export async function register(formData: FormData) {
       return { error: "errorUserExists" }
     }
 
-    console.log("HASHING PASSWORD")
     const hashedPassword = await bcrypt.hash(password, 10)
-
-    // Check if it's the first user
-    console.log("CHECKING USER COUNT")
     const userCount = await prisma.user.count()
     const role = userCount === 0 ? "admin" : "client"
+    const preferredLanguage = language === "cn" ? "cn" : "ru"
 
-    console.log("CREATING USER", email, role)
     const userData: any = {
       email,
       password_hash: hashedPassword,
       full_name: fullName,
-      role: role,
+      role,
+      preferred_language: preferredLanguage,
+      email_verified_at: bypassVerification ? new Date() : null,
     };
-
-    // Try to add preferred_language safely
-    try {
-      userData.preferred_language = language || "ru";
-    } catch (e) {
-      console.warn("Could not set preferred_language on user data", e);
-    }
 
     const user = await prisma.user.create({
       data: userData,
     })
+
+    if (!bypassVerification) {
+      try {
+        await sendVerificationEmail({
+          id: user.id,
+          email: user.email,
+          preferred_language: preferredLanguage,
+        })
+      } catch (emailError) {
+        console.error("Failed to send verification email:", emailError)
+        await prisma.emailVerificationToken.deleteMany({ where: { user_id: user.id } })
+        await prisma.user.delete({ where: { id: user.id } })
+        return { error: "errorRegistrationFailed" }
+      }
+    }
 
     // Add user to buffer room if not admin
     if (role !== "admin") {
@@ -286,18 +375,18 @@ export async function register(formData: FormData) {
       ipAddress: ip
     });
 
-    // Set session cookie
-    console.log("SETTING COOKIE", user.id)
-    const cookieStore = await cookies()
-    cookieStore.set("session_user_id", user.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24 * 7, // 1 week
-      path: "/",
-    })
+    if (bypassVerification) {
+      const cookieStore = await cookies()
+      cookieStore.set("session_user_id", user.id, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
+      })
+      return { success: true }
+    }
 
-    console.log("REGISTRATION SUCCESS")
-    return { success: true }
+    return { success: true, requiresVerification: true, email }
   } catch (error: any) {
     console.error("Registration error DETAILED:", error)
     return { error: "errorRegistrationFailed" }
@@ -424,7 +513,6 @@ export async function forgotPassword(formData: FormData) {
     // Ensure baseUrl doesn't end with a slash
     const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     const resetUrl = `${cleanBaseUrl}/auth/reset-password?token=${token}`;
-    console.log(`[AUTH] Generated reset token for ${email}. Token: ${token}, Expires: ${expiresAt}`);
     
     // Simple template selection based on user language
     // @ts-ignore

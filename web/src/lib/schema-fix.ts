@@ -58,6 +58,11 @@ export async function ensureSchemaFixed() {
 
           await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "preferred_language" TEXT DEFAULT 'ru';`).catch(() => {});
           await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "preferred_language" TEXT DEFAULT 'ru';`).catch(() => {});
+
+          await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "email_verified_at" DATETIME;`).catch(() => {});
+          await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "email_verified_at" DATETIME;`).catch(() => {});
+          await prisma.$executeRawUnsafe(`UPDATE ${table} SET "email_verified_at" = "created_at" WHERE "email_verified_at" IS NULL;`).catch(() => {});
+          await prisma.$executeRawUnsafe(`UPDATE "${table}" SET "email_verified_at" = "created_at" WHERE "email_verified_at" IS NULL;`).catch(() => {});
   
           const withNow = `ALTER TABLE ${table} ADD COLUMN "last_active_at" DATETIME DEFAULT CURRENT_TIMESTAMP;`
           const withNowQuoted = `ALTER TABLE "${table}" ADD COLUMN "last_active_at" DATETIME DEFAULT CURRENT_TIMESTAMP;`
@@ -122,6 +127,16 @@ export async function ensureSchemaFixed() {
           await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "is_buffer" BOOLEAN DEFAULT 0;`).catch(() => {});
         }
       }
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "EmailVerificationToken" (
+          "id" TEXT NOT NULL PRIMARY KEY,
+          "token" TEXT NOT NULL UNIQUE,
+          "user_id" TEXT NOT NULL,
+          "expires_at" DATETIME NOT NULL,
+          "created_at" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY ("user_id") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+        );
+      `).catch(() => {});
       await ensureLegacyDataMigrated()
     } catch (e) {
       console.warn("[DB FIX] Warning: Schema fix attempt failed:", e);

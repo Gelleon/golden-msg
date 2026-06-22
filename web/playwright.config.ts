@@ -55,6 +55,7 @@ export default defineConfig({
     env: {
       DATABASE_URL: e2eDatabaseUrl,
       E2E_DB_FILE: e2eDbFile,
+      EMAIL_VERIFICATION_BYPASS: 'true',
     },
   },
 });

@@ -135,7 +135,8 @@ exports.Prisma.UserScalarFieldEnum = {
   push_notifications_enabled: 'push_notifications_enabled',
   last_email_notification_at: 'last_email_notification_at',
   last_push_notification_at: 'last_push_notification_at',
-  last_password_reset_at: 'last_password_reset_at'
+  last_password_reset_at: 'last_password_reset_at',
+  email_verified_at: 'email_verified_at'
 };
 
 exports.Prisma.PushSubscriptionScalarFieldEnum = {
@@ -148,6 +149,14 @@ exports.Prisma.PushSubscriptionScalarFieldEnum = {
 };
 
 exports.Prisma.PasswordResetTokenScalarFieldEnum = {
+  id: 'id',
+  token: 'token',
+  user_id: 'user_id',
+  expires_at: 'expires_at',
+  created_at: 'created_at'
+};
+
+exports.Prisma.EmailVerificationTokenScalarFieldEnum = {
   id: 'id',
   token: 'token',
   user_id: 'user_id',
@@ -247,6 +256,7 @@ exports.Prisma.ModelName = {
   User: 'User',
   PushSubscription: 'PushSubscription',
   PasswordResetToken: 'PasswordResetToken',
+  EmailVerificationToken: 'EmailVerificationToken',
   AuditLog: 'AuditLog',
   Room: 'Room',
   RoomParticipant: 'RoomParticipant',

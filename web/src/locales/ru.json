@@ -364,6 +364,14 @@
     "errorUnknown": "Неизвестная ошибка",
     "emailError": "Неверный формат email",
     "passwordError": "Пароль должен быть не менее 6 символов",
+    "createAccount": "Создать аккаунт",
+    "registerSubtitle": "Заполните данные для регистрации",
+    "emailNotVerified": "Подтвердите email перед входом",
+    "verificationSent": "Мы отправили письмо на {email}. Перейдите по ссылке для подтверждения.",
+    "verificationResend": "Отправить повторно",
+    "verificationSuccess": "Email подтверждён",
+    "verificationExpired": "Ссылка подтверждения истекла",
+    "verificationInvalid": "Ссылка подтверждения недействительна",
     "forgotPassword": "Забыли пароль?",
     "brandName": "GOLDEN RUSSIA",
     "footer": "GOLDEN RUSSIA &copy; {year} • ELITE BUSINESS NETWORK",
@@ -406,6 +414,14 @@
       "emailSecurity": "Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.",
       "changeNotificationSubject": "Ваш пароль был изменен",
       "changeNotificationBody": "Пароль для вашего аккаунта Golden Russia был успешно изменен. Если это были не вы, немедленно свяжитесь с поддержкой."
+    },
+    "verification": {
+      "emailSubject": "Подтверждение email — Golden Russia",
+      "emailHello": "Здравствуйте!",
+      "emailBody": "Спасибо за регистрацию. Подтвердите ваш email, чтобы начать пользоваться Golden Russia.",
+      "emailAction": "Подтвердить email",
+      "emailExpire": "Срок действия ссылки — 48 часов.",
+      "emailSecurity": "Если вы не регистрировались, просто проигнорируйте это письмо."
     },
     "features": {
       "translation": {
