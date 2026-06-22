@@ -5,6 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DeleteUserProfileAction } from "@/components/dashboard/delete-user-profile-action"
 import { UserRegistrationDetails } from "@/components/dashboard/user-registration-details"
 import { ProfilePageHeader } from "@/components/dashboard/profile-page-header"
+import { ProfileUserTitle } from "@/components/dashboard/profile-user-title"
+import { ProfileUserMeta } from "@/components/dashboard/profile-user-meta"
 
 interface ProfilePageProps {
   params: Promise<{
