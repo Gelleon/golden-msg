@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm, type UseFormRegisterReturn } from "react-hook-form"
 import * as z from "zod"
 import { motion, AnimatePresence } from "framer-motion"
 import { Loader2, Globe, Building2, MessageSquare, ArrowRight, ShieldCheck, Languages } from "lucide-react"
@@ -13,9 +13,47 @@ import { useTranslation } from "@/lib/language-context"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { ChinaRussiaBackground } from "@/components/china-russia-background"
 import { ForgotPasswordForm } from "@/components/forgot-password-form"
+
+const registerTextareaClassName =
+  "min-h-12 md:min-h-14 max-h-48 resize-none overflow-y-auto bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-[height,border-color,box-shadow] placeholder:text-slate-500 text-sm md:text-base py-3 leading-relaxed"
+
+function resizeTextarea(target: HTMLTextAreaElement) {
+  target.style.height = "auto"
+  target.style.height = `${target.scrollHeight}px`
+}
+
+function AutoResizeTextarea({
+  id,
+  registration,
+  className,
+}: {
+  id: string
+  registration: UseFormRegisterReturn
+  className?: string
+}) {
+  const { ref, onChange, ...rest } = registration
+
+  return (
+    <Textarea
+      id={id}
+      rows={2}
+      {...rest}
+      ref={(element) => {
+        ref(element)
+        if (element) resizeTextarea(element)
+      }}
+      onChange={(event) => {
+        onChange(event)
+        resizeTextarea(event.target)
+      }}
+      className={className}
+    />
+  )
+}
 
 export function WelcomeScreen() {
   const { t, setLanguage, language } = useTranslation()
@@ -599,28 +637,28 @@ export function WelcomeScreen() {
 
                                 <div className="space-y-2">
                                   <Label htmlFor="bioShort" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.registerForm.bioShort")}</Label>
-                                  <Input
+                                  <AutoResizeTextarea
                                     id="bioShort"
-                                    {...form.register("bioShort")}
-                                    className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
+                                    registration={form.register("bioShort")}
+                                    className={registerTextareaClassName}
                                   />
                                 </div>
 
                                 <div className="space-y-2">
                                   <Label htmlFor="joinReason" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.registerForm.joinReason")}</Label>
-                                  <Input
+                                  <AutoResizeTextarea
                                     id="joinReason"
-                                    {...form.register("joinReason")}
-                                    className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
+                                    registration={form.register("joinReason")}
+                                    className={registerTextareaClassName}
                                   />
                                 </div>
 
                                 <div className="space-y-2">
                                   <Label htmlFor="referredBy" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.registerForm.referredBy")}</Label>
-                                  <Input
+                                  <AutoResizeTextarea
                                     id="referredBy"
-                                    {...form.register("referredBy")}
-                                    className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
+                                    registration={form.register("referredBy")}
+                                    className={registerTextareaClassName}
                                   />
                                 </div>
                               </div>
