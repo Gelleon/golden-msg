@@ -39,6 +39,11 @@ const authSchema = z.object({
   language: z.enum(["ru", "cn"]).optional(),
 })
 
+export type RegisterResult =
+  | { error: string }
+  | { success: true; requiresVerification: true; email: string }
+  | { success: true }
+
 export async function login(formData: FormData) {
   await ensureSchemaFixed()
   console.log("LOGIN ATTEMPT", formData.get("email"))
@@ -202,7 +207,7 @@ async function sendVerificationEmail(user: { id: string; email: string; preferre
   })
 }
 
-export async function register(formData: FormData) {
+export async function register(formData: FormData): Promise<RegisterResult> {
   await ensureSchemaFixed()
   const rawEmail = formData.get("email") as string
   const password = formData.get("password") as string

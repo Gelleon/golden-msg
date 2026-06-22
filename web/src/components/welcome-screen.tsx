@@ -100,22 +100,33 @@ export function WelcomeScreen() {
     formData.append("language", language)
 
     try {
-      let result
       if (isLogin) {
-        result = await login(formData)
-      } else {
-        result = await register(formData)
-      }
+        const result = await login(formData)
 
-      if (result.error) {
-        // Map error code to translation key if possible, otherwise use as is
-        const errorKey = `welcome.${result.error}`
-        const translatedError = t(errorKey as any)
-        setError(translatedError === errorKey ? result.error : translatedError)
-      } else if ("requiresVerification" in result && result.requiresVerification) {
-        setPendingVerificationEmail(result.email ?? data.email)
+        if (result.error) {
+          const errorKey = `welcome.${result.error}`
+          const translatedError = t(errorKey as any)
+          setError(translatedError === errorKey ? result.error : translatedError)
+        } else if (inviteRoomId && inviteToken) {
+          const inviteResult = await acceptRoomInvite(inviteRoomId, inviteToken)
+          if ("success" in inviteResult && inviteResult.success) {
+            router.push(`/dashboard/rooms/${inviteRoomId}`)
+          } else {
+            setError(("error" in inviteResult ? inviteResult.error : null) || "Invalid invite link")
+          }
+        } else {
+          router.push("/dashboard")
+        }
       } else {
-        if (inviteRoomId && inviteToken) {
+        const result = await register(formData)
+
+        if ("error" in result) {
+          const errorKey = `welcome.${result.error}`
+          const translatedError = t(errorKey as any)
+          setError(translatedError === errorKey ? result.error : translatedError)
+        } else if ("requiresVerification" in result && result.requiresVerification) {
+          setPendingVerificationEmail(result.email)
+        } else if (inviteRoomId && inviteToken) {
           const inviteResult = await acceptRoomInvite(inviteRoomId, inviteToken)
           if ("success" in inviteResult && inviteResult.success) {
             router.push(`/dashboard/rooms/${inviteRoomId}`)
