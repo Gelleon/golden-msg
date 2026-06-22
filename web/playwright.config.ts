@@ -3,6 +3,7 @@ import path from 'path'
 
 const e2eDbFile = path.join(process.cwd(), 'prisma', 'e2e.sqlite')
 const e2eDatabaseUrl = `file:${e2eDbFile.replace(/\\/g, '/')}`
+const useSystemChrome = process.env.PLAYWRIGHT_USE_SYSTEM_CHROME === '1'
 
 export default defineConfig({
   testDir: './e2e',
@@ -23,7 +24,10 @@ export default defineConfig({
     },
     {
       name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
+      use: {
+        ...devices['Pixel 5'],
+        ...(useSystemChrome ? { channel: 'chrome' as const } : {}),
+      },
     },
     {
       name: 'Mobile Safari',
@@ -32,6 +36,14 @@ export default defineConfig({
     {
       name: 'Mobile Safari - iPhone 12',
       use: { ...devices['iPhone 12'] },
+    },
+    {
+      name: 'Mobile Safari - iPhone SE',
+      use: { ...devices['iPhone SE'] },
+    },
+    {
+      name: 'Mobile Safari - iPhone 14 Pro Max',
+      use: { ...devices['iPhone 14 Pro Max'] },
     },
   ],
 

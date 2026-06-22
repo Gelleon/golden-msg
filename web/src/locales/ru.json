@@ -285,6 +285,7 @@
     "joining": "Вход..."
   },
   "room": {
+    "backToRooms": "К списку комнат",
     "interlocutor": "Собеседник",
     "private": "Личный",
     "group": "Группа",

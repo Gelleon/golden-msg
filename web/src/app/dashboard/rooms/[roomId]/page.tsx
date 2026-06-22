@@ -1,11 +1,10 @@
 import { notFound, redirect } from "next/navigation"
-import Link from "next/link"
 import prisma from "@/lib/db"
 import { getSession } from "@/app/actions/auth"
 import { ChatWindow } from "@/components/chat/chat-window"
 import { RoomSettingsDialog } from "@/components/chat/room-settings-dialog"
 import { PrivateRoomOnlineDot, PrivateRoomSubtitle } from "@/components/chat/private-room-presence"
-import { ChevronLeft } from "lucide-react"
+import { MobileRoomBackButton } from "@/components/chat/mobile-room-back-button"
 import { cn } from "@/lib/utils"
 import ru from "@/locales/ru.json"
 import cnTrans from "@/locales/cn.json"
@@ -113,10 +112,9 @@ export default async function RoomPage({ params }: RoomPageProps) {
       className="h-full flex flex-col bg-[#F8FAFC]"
     >
       <div className="h-[64px] md:h-[72px] border-b border-slate-200/60 bg-white/90 backdrop-blur-xl flex justify-between items-center px-3 md:px-6 sticky top-0 z-20 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
-        <div className="flex items-center gap-2 md:gap-4 overflow-hidden">
-            <Link href="/dashboard" className="md:hidden p-2 -ml-1 text-slate-500 hover:text-slate-900 transition-colors">
-              <ChevronLeft className="h-5 w-5" />
-            </Link>
+        <div className="flex items-center gap-1 md:gap-4 min-w-0 flex-1">
+          <MobileRoomBackButton />
+          <div className="flex items-center gap-2 md:gap-4 overflow-hidden min-w-0 flex-1" data-testid="room-header-info">
             <div className="relative group flex-shrink-0">
               {displayAvatar ? (
                   <div className="h-9 w-9 md:h-12 md:w-12 rounded-xl md:rounded-2xl overflow-hidden border-2 border-slate-100 shadow-sm transition-transform group-hover:scale-105">
@@ -148,6 +146,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
                     </span>
                   </div>
             </div>
+          </div>
         </div>
         <div className="flex items-center gap-1 md:gap-3 flex-shrink-0">
           <div className="h-6 md:h-8 w-[1px] bg-slate-200 mx-0.5 md:mx-1 hidden sm:block" />

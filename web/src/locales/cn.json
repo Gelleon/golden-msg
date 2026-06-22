@@ -285,6 +285,7 @@
     "joining": "正在加入..."
   },
   "room": {
+    "backToRooms": "返回房间列表",
     "interlocutor": "对话者",
     "private": "私聊",
     "group": "群组",
