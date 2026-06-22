@@ -32,12 +32,34 @@ function t(path: string, lang: string = 'ru'): string {
   return typeof result === 'string' ? result : path
 }
 
+const ENGLISH_NAME_REGEX = /^[A-Za-z]+(?:[ '.-][A-Za-z]+)*$/
+
 const authSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
-  fullName: z.string().optional(),
+  fullName: z.string().trim().min(1),
   language: z.enum(["ru", "cn"]).optional(),
+  phone: z.string().trim().optional(),
+  telegram: z.string().trim().optional(),
+  whatsapp: z.string().trim().optional(),
+  wechat: z.string().trim().optional(),
+  bioShort: z.string().trim().optional(),
+  joinReason: z.string().trim().optional(),
+  referredBy: z.string().trim().optional(),
+}).superRefine((data, ctx) => {
+  if (!ENGLISH_NAME_REGEX.test(data.fullName)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "registerForm.englishNameError",
+      path: ["fullName"],
+    })
+  }
 })
+
+function optionalField(value: FormDataEntryValue | null): string | undefined {
+  const trimmed = String(value ?? "").trim()
+  return trimmed || undefined
+}
 
 export type RegisterResult =
   | { error: string }
@@ -222,11 +244,22 @@ export async function register(formData: FormData): Promise<RegisterResult> {
   const parsed = authSchema.safeParse({
     email: emailResult.email,
     password,
-    fullName: fullName || undefined,
+    fullName: (fullName ?? "").trim(),
     language: language === "cn" ? "cn" : "ru",
+    phone: optionalField(formData.get("phone")),
+    telegram: optionalField(formData.get("telegram")),
+    whatsapp: optionalField(formData.get("whatsapp")),
+    wechat: optionalField(formData.get("wechat")),
+    bioShort: optionalField(formData.get("bioShort")),
+    joinReason: optionalField(formData.get("joinReason")),
+    referredBy: optionalField(formData.get("referredBy")),
   })
 
   if (!parsed.success) {
+    const englishNameIssue = parsed.error.issues.find((issue) => issue.path[0] === "fullName")
+    if (englishNameIssue) {
+      return { error: "registerForm.englishNameError" }
+    }
     const passwordIssue = parsed.error.issues.find((issue) => issue.path[0] === "password")
     if (passwordIssue) {
       return { error: "passwordError" }
@@ -268,10 +301,17 @@ export async function register(formData: FormData): Promise<RegisterResult> {
     const userData: any = {
       email,
       password_hash: hashedPassword,
-      full_name: fullName,
+      full_name: parsed.data.fullName,
       role,
       preferred_language: preferredLanguage,
       email_verified_at: bypassVerification ? new Date() : null,
+      phone: parsed.data.phone,
+      telegram: parsed.data.telegram,
+      whatsapp: parsed.data.whatsapp,
+      wechat: parsed.data.wechat,
+      bio_short: parsed.data.bioShort,
+      join_reason: parsed.data.joinReason,
+      referred_by: parsed.data.referredBy,
     };
 
     const user = await prisma.user.create({
@@ -324,7 +364,7 @@ export async function register(formData: FormData): Promise<RegisterResult> {
           data: {
             room_id: bufferRoom.id,
             sender_id: user.id,
-            content: `👋 Новый пользователь ${fullName || email} зарегистрировался и ожидает подтверждения.`,
+            content: `👋 Новый пользователь ${parsed.data.fullName || email} зарегистрировался и ожидает подтверждения.`,
             message_type: 'system',
             language_original: 'ru',
             translation_status: 'completed'
@@ -366,7 +406,7 @@ export async function register(formData: FormData): Promise<RegisterResult> {
         sendSSEUpdate("global", { type: "unread_update" });
         sendSSEUpdate("global", { 
           type: "new_user_registered",
-          userName: fullName || email,
+          userName: parsed.data.fullName || email,
           userId: user.id
         });
       } catch (e) {

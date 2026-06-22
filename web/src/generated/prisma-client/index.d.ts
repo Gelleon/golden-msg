@@ -1836,6 +1836,13 @@ export namespace Prisma {
     last_push_notification_at: Date | null
     last_password_reset_at: Date | null
     email_verified_at: Date | null
+    phone: string | null
+    telegram: string | null
+    whatsapp: string | null
+    wechat: string | null
+    bio_short: string | null
+    join_reason: string | null
+    referred_by: string | null
   }
 
   export type UserMaxAggregateOutputType = {
@@ -1856,6 +1863,13 @@ export namespace Prisma {
     last_push_notification_at: Date | null
     last_password_reset_at: Date | null
     email_verified_at: Date | null
+    phone: string | null
+    telegram: string | null
+    whatsapp: string | null
+    wechat: string | null
+    bio_short: string | null
+    join_reason: string | null
+    referred_by: string | null
   }
 
   export type UserCountAggregateOutputType = {
@@ -1876,6 +1890,13 @@ export namespace Prisma {
     last_push_notification_at: number
     last_password_reset_at: number
     email_verified_at: number
+    phone: number
+    telegram: number
+    whatsapp: number
+    wechat: number
+    bio_short: number
+    join_reason: number
+    referred_by: number
     _all: number
   }
 
@@ -1898,6 +1919,13 @@ export namespace Prisma {
     last_push_notification_at?: true
     last_password_reset_at?: true
     email_verified_at?: true
+    phone?: true
+    telegram?: true
+    whatsapp?: true
+    wechat?: true
+    bio_short?: true
+    join_reason?: true
+    referred_by?: true
   }
 
   export type UserMaxAggregateInputType = {
@@ -1918,6 +1946,13 @@ export namespace Prisma {
     last_push_notification_at?: true
     last_password_reset_at?: true
     email_verified_at?: true
+    phone?: true
+    telegram?: true
+    whatsapp?: true
+    wechat?: true
+    bio_short?: true
+    join_reason?: true
+    referred_by?: true
   }
 
   export type UserCountAggregateInputType = {
@@ -1938,6 +1973,13 @@ export namespace Prisma {
     last_push_notification_at?: true
     last_password_reset_at?: true
     email_verified_at?: true
+    phone?: true
+    telegram?: true
+    whatsapp?: true
+    wechat?: true
+    bio_short?: true
+    join_reason?: true
+    referred_by?: true
     _all?: true
   }
 
@@ -2031,6 +2073,13 @@ export namespace Prisma {
     last_push_notification_at: Date | null
     last_password_reset_at: Date | null
     email_verified_at: Date | null
+    phone: string | null
+    telegram: string | null
+    whatsapp: string | null
+    wechat: string | null
+    bio_short: string | null
+    join_reason: string | null
+    referred_by: string | null
     _count: UserCountAggregateOutputType | null
     _min: UserMinAggregateOutputType | null
     _max: UserMaxAggregateOutputType | null
@@ -2068,6 +2117,13 @@ export namespace Prisma {
     last_push_notification_at?: boolean
     last_password_reset_at?: boolean
     email_verified_at?: boolean
+    phone?: boolean
+    telegram?: boolean
+    whatsapp?: boolean
+    wechat?: boolean
+    bio_short?: boolean
+    join_reason?: boolean
+    referred_by?: boolean
     audit_logs?: boolean | User$audit_logsArgs<ExtArgs>
     messages_sent?: boolean | User$messages_sentArgs<ExtArgs>
     sent_notifications?: boolean | User$sent_notificationsArgs<ExtArgs>
@@ -2098,6 +2154,13 @@ export namespace Prisma {
     last_push_notification_at?: boolean
     last_password_reset_at?: boolean
     email_verified_at?: boolean
+    phone?: boolean
+    telegram?: boolean
+    whatsapp?: boolean
+    wechat?: boolean
+    bio_short?: boolean
+    join_reason?: boolean
+    referred_by?: boolean
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectScalar = {
@@ -2118,6 +2181,13 @@ export namespace Prisma {
     last_push_notification_at?: boolean
     last_password_reset_at?: boolean
     email_verified_at?: boolean
+    phone?: boolean
+    telegram?: boolean
+    whatsapp?: boolean
+    wechat?: boolean
+    bio_short?: boolean
+    join_reason?: boolean
+    referred_by?: boolean
   }
 
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2165,6 +2235,13 @@ export namespace Prisma {
       last_push_notification_at: Date | null
       last_password_reset_at: Date | null
       email_verified_at: Date | null
+      phone: string | null
+      telegram: string | null
+      whatsapp: string | null
+      wechat: string | null
+      bio_short: string | null
+      join_reason: string | null
+      referred_by: string | null
     }, ExtArgs["result"]["user"]>
     composites: {}
   }
@@ -2584,6 +2661,13 @@ export namespace Prisma {
     readonly last_push_notification_at: FieldRef<"User", 'DateTime'>
     readonly last_password_reset_at: FieldRef<"User", 'DateTime'>
     readonly email_verified_at: FieldRef<"User", 'DateTime'>
+    readonly phone: FieldRef<"User", 'String'>
+    readonly telegram: FieldRef<"User", 'String'>
+    readonly whatsapp: FieldRef<"User", 'String'>
+    readonly wechat: FieldRef<"User", 'String'>
+    readonly bio_short: FieldRef<"User", 'String'>
+    readonly join_reason: FieldRef<"User", 'String'>
+    readonly referred_by: FieldRef<"User", 'String'>
   }
     
 
@@ -12143,7 +12227,14 @@ export namespace Prisma {
     last_email_notification_at: 'last_email_notification_at',
     last_push_notification_at: 'last_push_notification_at',
     last_password_reset_at: 'last_password_reset_at',
-    email_verified_at: 'email_verified_at'
+    email_verified_at: 'email_verified_at',
+    phone: 'phone',
+    telegram: 'telegram',
+    whatsapp: 'whatsapp',
+    wechat: 'wechat',
+    bio_short: 'bio_short',
+    join_reason: 'join_reason',
+    referred_by: 'referred_by'
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -12358,6 +12449,13 @@ export namespace Prisma {
     last_push_notification_at?: DateTimeNullableFilter<"User"> | Date | string | null
     last_password_reset_at?: DateTimeNullableFilter<"User"> | Date | string | null
     email_verified_at?: DateTimeNullableFilter<"User"> | Date | string | null
+    phone?: StringNullableFilter<"User"> | string | null
+    telegram?: StringNullableFilter<"User"> | string | null
+    whatsapp?: StringNullableFilter<"User"> | string | null
+    wechat?: StringNullableFilter<"User"> | string | null
+    bio_short?: StringNullableFilter<"User"> | string | null
+    join_reason?: StringNullableFilter<"User"> | string | null
+    referred_by?: StringNullableFilter<"User"> | string | null
     audit_logs?: AuditLogListRelationFilter
     messages_sent?: MessageListRelationFilter
     sent_notifications?: NotificationLogListRelationFilter
@@ -12387,6 +12485,13 @@ export namespace Prisma {
     last_push_notification_at?: SortOrderInput | SortOrder
     last_password_reset_at?: SortOrderInput | SortOrder
     email_verified_at?: SortOrderInput | SortOrder
+    phone?: SortOrderInput | SortOrder
+    telegram?: SortOrderInput | SortOrder
+    whatsapp?: SortOrderInput | SortOrder
+    wechat?: SortOrderInput | SortOrder
+    bio_short?: SortOrderInput | SortOrder
+    join_reason?: SortOrderInput | SortOrder
+    referred_by?: SortOrderInput | SortOrder
     audit_logs?: AuditLogOrderByRelationAggregateInput
     messages_sent?: MessageOrderByRelationAggregateInput
     sent_notifications?: NotificationLogOrderByRelationAggregateInput
@@ -12419,6 +12524,13 @@ export namespace Prisma {
     last_push_notification_at?: DateTimeNullableFilter<"User"> | Date | string | null
     last_password_reset_at?: DateTimeNullableFilter<"User"> | Date | string | null
     email_verified_at?: DateTimeNullableFilter<"User"> | Date | string | null
+    phone?: StringNullableFilter<"User"> | string | null
+    telegram?: StringNullableFilter<"User"> | string | null
+    whatsapp?: StringNullableFilter<"User"> | string | null
+    wechat?: StringNullableFilter<"User"> | string | null
+    bio_short?: StringNullableFilter<"User"> | string | null
+    join_reason?: StringNullableFilter<"User"> | string | null
+    referred_by?: StringNullableFilter<"User"> | string | null
     audit_logs?: AuditLogListRelationFilter
     messages_sent?: MessageListRelationFilter
     sent_notifications?: NotificationLogListRelationFilter
@@ -12448,6 +12560,13 @@ export namespace Prisma {
     last_push_notification_at?: SortOrderInput | SortOrder
     last_password_reset_at?: SortOrderInput | SortOrder
     email_verified_at?: SortOrderInput | SortOrder
+    phone?: SortOrderInput | SortOrder
+    telegram?: SortOrderInput | SortOrder
+    whatsapp?: SortOrderInput | SortOrder
+    wechat?: SortOrderInput | SortOrder
+    bio_short?: SortOrderInput | SortOrder
+    join_reason?: SortOrderInput | SortOrder
+    referred_by?: SortOrderInput | SortOrder
     _count?: UserCountOrderByAggregateInput
     _max?: UserMaxOrderByAggregateInput
     _min?: UserMinOrderByAggregateInput
@@ -12474,6 +12593,13 @@ export namespace Prisma {
     last_push_notification_at?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     last_password_reset_at?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     email_verified_at?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+    phone?: StringNullableWithAggregatesFilter<"User"> | string | null
+    telegram?: StringNullableWithAggregatesFilter<"User"> | string | null
+    whatsapp?: StringNullableWithAggregatesFilter<"User"> | string | null
+    wechat?: StringNullableWithAggregatesFilter<"User"> | string | null
+    bio_short?: StringNullableWithAggregatesFilter<"User"> | string | null
+    join_reason?: StringNullableWithAggregatesFilter<"User"> | string | null
+    referred_by?: StringNullableWithAggregatesFilter<"User"> | string | null
   }
 
   export type PushSubscriptionWhereInput = {
@@ -13174,6 +13300,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogCreateNestedManyWithoutUserInput
     messages_sent?: MessageCreateNestedManyWithoutSenderInput
     sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
@@ -13203,6 +13336,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
     sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
@@ -13232,6 +13372,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
     messages_sent?: MessageUpdateManyWithoutSenderNestedInput
     sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
@@ -13261,6 +13408,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
@@ -13290,6 +13444,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
   }
 
   export type UserUpdateManyMutationInput = {
@@ -13310,6 +13471,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type UserUncheckedUpdateManyInput = {
@@ -13330,6 +13498,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PushSubscriptionCreateInput = {
@@ -14220,6 +14395,13 @@ export namespace Prisma {
     last_push_notification_at?: SortOrder
     last_password_reset_at?: SortOrder
     email_verified_at?: SortOrder
+    phone?: SortOrder
+    telegram?: SortOrder
+    whatsapp?: SortOrder
+    wechat?: SortOrder
+    bio_short?: SortOrder
+    join_reason?: SortOrder
+    referred_by?: SortOrder
   }
 
   export type UserMaxOrderByAggregateInput = {
@@ -14240,6 +14422,13 @@ export namespace Prisma {
     last_push_notification_at?: SortOrder
     last_password_reset_at?: SortOrder
     email_verified_at?: SortOrder
+    phone?: SortOrder
+    telegram?: SortOrder
+    whatsapp?: SortOrder
+    wechat?: SortOrder
+    bio_short?: SortOrder
+    join_reason?: SortOrder
+    referred_by?: SortOrder
   }
 
   export type UserMinOrderByAggregateInput = {
@@ -14260,6 +14449,13 @@ export namespace Prisma {
     last_push_notification_at?: SortOrder
     last_password_reset_at?: SortOrder
     email_verified_at?: SortOrder
+    phone?: SortOrder
+    telegram?: SortOrder
+    whatsapp?: SortOrder
+    wechat?: SortOrder
+    bio_short?: SortOrder
+    join_reason?: SortOrder
+    referred_by?: SortOrder
   }
 
   export type StringWithAggregatesFilter<$PrismaModel = never> = {
@@ -16367,6 +16563,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogCreateNestedManyWithoutUserInput
     messages_sent?: MessageCreateNestedManyWithoutSenderInput
     sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
@@ -16395,6 +16598,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
     sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
@@ -16439,6 +16649,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
     messages_sent?: MessageUpdateManyWithoutSenderNestedInput
     sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
@@ -16467,6 +16684,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
@@ -16495,6 +16719,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogCreateNestedManyWithoutUserInput
     messages_sent?: MessageCreateNestedManyWithoutSenderInput
     sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
@@ -16523,6 +16754,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
     sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
@@ -16567,6 +16805,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
     messages_sent?: MessageUpdateManyWithoutSenderNestedInput
     sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
@@ -16595,6 +16840,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
@@ -16623,6 +16875,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogCreateNestedManyWithoutUserInput
     messages_sent?: MessageCreateNestedManyWithoutSenderInput
     sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
@@ -16651,6 +16910,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
     sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
@@ -16695,6 +16961,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
     messages_sent?: MessageUpdateManyWithoutSenderNestedInput
     sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
@@ -16723,6 +16996,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
@@ -16751,6 +17031,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     messages_sent?: MessageCreateNestedManyWithoutSenderInput
     sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
     reset_tokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
@@ -16779,6 +17066,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
     sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
     reset_tokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
@@ -16823,6 +17117,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     messages_sent?: MessageUpdateManyWithoutSenderNestedInput
     sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
     reset_tokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
@@ -16851,6 +17152,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
     reset_tokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
@@ -17012,6 +17320,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogCreateNestedManyWithoutUserInput
     messages_sent?: MessageCreateNestedManyWithoutSenderInput
     sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
@@ -17040,6 +17355,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
     sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
@@ -17223,6 +17545,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
     messages_sent?: MessageUpdateManyWithoutSenderNestedInput
     sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
@@ -17251,6 +17580,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
@@ -17311,6 +17647,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogCreateNestedManyWithoutUserInput
     messages_sent?: MessageCreateNestedManyWithoutSenderInput
     sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
@@ -17339,6 +17682,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
     sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
@@ -17424,6 +17774,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
     messages_sent?: MessageUpdateManyWithoutSenderNestedInput
     sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
@@ -17452,6 +17809,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
@@ -17617,6 +17981,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogCreateNestedManyWithoutUserInput
     sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
     reset_tokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
@@ -17645,6 +18016,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
     reset_tokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
@@ -17795,6 +18173,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
     sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
     reset_tokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
@@ -17823,6 +18208,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
     reset_tokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
@@ -17898,6 +18290,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogCreateNestedManyWithoutUserInput
     messages_sent?: MessageCreateNestedManyWithoutSenderInput
     sent_notifications?: NotificationLogCreateNestedManyWithoutUserInput
@@ -17926,6 +18325,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
     sent_notifications?: NotificationLogUncheckedCreateNestedManyWithoutUserInput
@@ -18011,6 +18417,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
     messages_sent?: MessageUpdateManyWithoutSenderNestedInput
     sent_notifications?: NotificationLogUpdateManyWithoutUserNestedInput
@@ -18039,6 +18452,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     sent_notifications?: NotificationLogUncheckedUpdateManyWithoutUserNestedInput
@@ -18114,6 +18534,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogCreateNestedManyWithoutUserInput
     messages_sent?: MessageCreateNestedManyWithoutSenderInput
     reset_tokens?: PasswordResetTokenCreateNestedManyWithoutUserInput
@@ -18142,6 +18569,13 @@ export namespace Prisma {
     last_push_notification_at?: Date | string | null
     last_password_reset_at?: Date | string | null
     email_verified_at?: Date | string | null
+    phone?: string | null
+    telegram?: string | null
+    whatsapp?: string | null
+    wechat?: string | null
+    bio_short?: string | null
+    join_reason?: string | null
+    referred_by?: string | null
     audit_logs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     messages_sent?: MessageUncheckedCreateNestedManyWithoutSenderInput
     reset_tokens?: PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
@@ -18186,6 +18620,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUpdateManyWithoutUserNestedInput
     messages_sent?: MessageUpdateManyWithoutSenderNestedInput
     reset_tokens?: PasswordResetTokenUpdateManyWithoutUserNestedInput
@@ -18214,6 +18655,13 @@ export namespace Prisma {
     last_push_notification_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     last_password_reset_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     email_verified_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    telegram?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    wechat?: NullableStringFieldUpdateOperationsInput | string | null
+    bio_short?: NullableStringFieldUpdateOperationsInput | string | null
+    join_reason?: NullableStringFieldUpdateOperationsInput | string | null
+    referred_by?: NullableStringFieldUpdateOperationsInput | string | null
     audit_logs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     messages_sent?: MessageUncheckedUpdateManyWithoutSenderNestedInput
     reset_tokens?: PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput

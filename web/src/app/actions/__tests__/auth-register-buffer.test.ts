@@ -71,10 +71,23 @@ describe("auth.register with buffer room", () => {
     (prisma.emailVerificationToken.create as jest.Mock).mockResolvedValue({ id: "token-1" });
   });
 
+  it("returns registerForm.englishNameError for non-English name", async () => {
+    const formData = new FormData();
+    formData.append("email", "user@example.com");
+    formData.append("password", "password123");
+    formData.append("fullName", "Иван");
+
+    const result = await register(formData);
+
+    expect(result).toEqual({ error: "registerForm.englishNameError" });
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
+
   it("returns emailError for invalid email", async () => {
     const formData = new FormData();
     formData.append("email", "invalid-email");
     formData.append("password", "password123");
+    formData.append("fullName", "Test User");
 
     const result = await register(formData);
 
@@ -86,6 +99,7 @@ describe("auth.register with buffer room", () => {
     const formData = new FormData();
     formData.append("email", "Existing@Example.com");
     formData.append("password", "password123");
+    formData.append("fullName", "Existing User");
 
     (prisma.user.findUnique as jest.Mock).mockResolvedValue({ id: "existing-user" });
 
@@ -157,6 +171,7 @@ describe("auth.register with buffer room", () => {
     const formData = new FormData();
     formData.append("email", "bypass@example.com");
     formData.append("password", "password123");
+    formData.append("fullName", "Bypass User");
 
     (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
     (prisma.user.count as jest.Mock).mockResolvedValue(1);

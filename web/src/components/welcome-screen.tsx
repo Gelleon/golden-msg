@@ -41,18 +41,42 @@ export function WelcomeScreen() {
     if (mode === "login") setIsLogin(true)
   }, [searchParams])
 
+  const ENGLISH_NAME_REGEX = /^[A-Za-z]+(?:[ '.-][A-Za-z]+)*$/
+
   const authSchema = z.object({
     email: z.string().email(t("welcome.emailError")),
     password: z.string().min(6, t("welcome.passwordError")),
     confirmPassword: z.string().optional(),
     fullName: z.string().optional(),
+    phone: z.string().optional(),
+    telegram: z.string().optional(),
+    whatsapp: z.string().optional(),
+    wechat: z.string().optional(),
+    bioShort: z.string().optional(),
+    joinReason: z.string().optional(),
+    referredBy: z.string().optional(),
   }).superRefine((data, ctx) => {
-    if (!isLogin && data.password !== data.confirmPassword) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: t("welcome.recovery.confirmPasswordError") || "Passwords do not match",
-        path: ["confirmPassword"]
-      });
+    if (!isLogin) {
+      if (!data.fullName?.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: t("welcome.errorFieldsRequired"),
+          path: ["fullName"],
+        })
+      } else if (!ENGLISH_NAME_REGEX.test(data.fullName.trim())) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: t("welcome.registerForm.englishNameError"),
+          path: ["fullName"],
+        })
+      }
+      if (data.password !== data.confirmPassword) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: t("welcome.recovery.confirmPasswordError") || "Passwords do not match",
+          path: ["confirmPassword"]
+        });
+      }
     }
   })
 
@@ -65,6 +89,13 @@ export function WelcomeScreen() {
       password: "",
       confirmPassword: "",
       fullName: "",
+      phone: "",
+      telegram: "",
+      whatsapp: "",
+      wechat: "",
+      bioShort: "",
+      joinReason: "",
+      referredBy: "",
     },
     mode: "onChange",
   })
@@ -94,8 +125,15 @@ export function WelcomeScreen() {
     const formData = new FormData()
     formData.append("email", data.email)
     formData.append("password", data.password)
-    if (!isLogin && data.fullName) {
-      formData.append("fullName", data.fullName)
+    if (!isLogin) {
+      formData.append("fullName", data.fullName?.trim() || "")
+      if (data.phone?.trim()) formData.append("phone", data.phone.trim())
+      if (data.telegram?.trim()) formData.append("telegram", data.telegram.trim())
+      if (data.whatsapp?.trim()) formData.append("whatsapp", data.whatsapp.trim())
+      if (data.wechat?.trim()) formData.append("wechat", data.wechat.trim())
+      if (data.bioShort?.trim()) formData.append("bioShort", data.bioShort.trim())
+      if (data.joinReason?.trim()) formData.append("joinReason", data.joinReason.trim())
+      if (data.referredBy?.trim()) formData.append("referredBy", data.referredBy.trim())
     }
     formData.append("language", language)
 
@@ -433,8 +471,27 @@ export function WelcomeScreen() {
 
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 md:space-y-6">
                       <div className="space-y-4 md:space-y-5">
+                        {!isLogin && (
+                          <div className="space-y-2">
+                            <Label htmlFor="fullName" className="text-slate-300 text-xs md:text-sm font-medium ml-1">
+                              {t("welcome.registerForm.englishName")}
+                            </Label>
+                            <Input
+                              id="fullName"
+                              placeholder={t("welcome.registerForm.englishNamePlaceholder")}
+                              {...form.register("fullName")}
+                              className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
+                            />
+                            {form.formState.errors.fullName && (
+                              <p className="text-xs text-red-400 ml-1">{form.formState.errors.fullName.message as string}</p>
+                            )}
+                          </div>
+                        )}
+
                         <div className="space-y-2">
-                          <Label htmlFor="email" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.email")}</Label>
+                          <Label htmlFor="email" className="text-slate-300 text-xs md:text-sm font-medium ml-1">
+                            {isLogin ? t("welcome.email") : t("welcome.registerForm.emailLabel")}
+                          </Label>
                           <Input
                             id="email"
                             type="email"
@@ -442,6 +499,11 @@ export function WelcomeScreen() {
                             {...form.register("email")}
                             className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
                           />
+                          {!isLogin && (
+                            <p className="text-[11px] md:text-xs text-slate-500 ml-1 leading-relaxed">
+                              {t("welcome.registerForm.emailHint")}
+                            </p>
+                          )}
                           {form.formState.errors.email && (
                             <p className="text-xs text-red-400 ml-1">{form.formState.errors.email.message}</p>
                           )}
@@ -492,17 +554,81 @@ export function WelcomeScreen() {
                               )}
                             </div>
 
-                            <div className="space-y-2">
-                              <Label htmlFor="fullName" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.fullName")}</Label>
-                              <Input
-                                id="fullName"
-                                placeholder={t("welcome.fullNamePlaceholder")}
-                                {...form.register("fullName")}
-                                className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
-                              />
-                              {form.formState.errors.fullName && (
-                                <p className="text-xs text-red-400 ml-1">{form.formState.errors.fullName.message as string}</p>
-                              )}
+                            <div className="pt-2 border-t border-white/10">
+                              <p className="text-xs md:text-sm font-medium text-slate-400 mb-4 ml-1">
+                                {t("welcome.registerForm.optionalSection")}
+                              </p>
+
+                              <div className="space-y-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="phone" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.registerForm.phone")}</Label>
+                                  <Input
+                                    id="phone"
+                                    type="tel"
+                                    {...form.register("phone")}
+                                    className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
+                                  />
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                  <div className="space-y-2">
+                                    <Label htmlFor="telegram" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.registerForm.telegram")}</Label>
+                                    <Input
+                                      id="telegram"
+                                      {...form.register("telegram")}
+                                      className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="whatsapp" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.registerForm.whatsapp")}</Label>
+                                    <Input
+                                      id="whatsapp"
+                                      {...form.register("whatsapp")}
+                                      className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label htmlFor="wechat" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.registerForm.wechat")}</Label>
+                                    <Input
+                                      id="wechat"
+                                      {...form.register("wechat")}
+                                      className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label htmlFor="bioShort" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.registerForm.bioShort")}</Label>
+                                  <Input
+                                    id="bioShort"
+                                    {...form.register("bioShort")}
+                                    className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
+                                  />
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label htmlFor="joinReason" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.registerForm.joinReason")}</Label>
+                                  <Input
+                                    id="joinReason"
+                                    {...form.register("joinReason")}
+                                    className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
+                                  />
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label htmlFor="referredBy" className="text-slate-300 text-xs md:text-sm font-medium ml-1">{t("welcome.registerForm.referredBy")}</Label>
+                                  <Input
+                                    id="referredBy"
+                                    {...form.register("referredBy")}
+                                    className="h-12 md:h-14 bg-white/[0.05] border-white/10 text-white rounded-2xl focus:border-secondary focus:ring-secondary/20 transition-all placeholder:text-slate-500 text-sm md:text-base"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2 rounded-2xl bg-white/[0.03] border border-white/10 p-4 text-[11px] md:text-xs text-slate-500 leading-relaxed">
+                              <p>{t("welcome.registerForm.infoHelp")}</p>
+                              <p>{t("welcome.registerForm.inviteReminder")}</p>
                             </div>
                           </motion.div>
                         )}

@@ -82,7 +82,7 @@ describe('WelcomeScreen', () => {
     // Switch to register
     fireEvent.click(screen.getByText('welcome.toggleToRegister'))
     expect(screen.getByText('welcome.createAccount')).toBeInTheDocument()
-    expect(screen.getByLabelText('welcome.fullName')).toBeInTheDocument()
+    expect(screen.getByLabelText('welcome.registerForm.englishName')).toBeInTheDocument()
     
     // Switch back to login
     fireEvent.click(screen.getByText('welcome.toggleToLogin'))
@@ -134,8 +134,8 @@ describe('WelcomeScreen', () => {
     // Switch to register
     fireEvent.click(screen.getByText('welcome.toggleToRegister'))
     
-    await user.type(screen.getByLabelText('welcome.fullName'), 'Test User')
-    await user.type(screen.getByLabelText('welcome.email'), 'test@example.com')
+    await user.type(screen.getByLabelText('welcome.registerForm.englishName'), 'Test User')
+    await user.type(screen.getByLabelText('welcome.registerForm.emailLabel'), 'test@example.com')
     await user.type(screen.getByLabelText('welcome.password'), 'password123')
     await user.type(screen.getByLabelText('welcome.recovery.confirmPassword'), 'password123')
     
@@ -160,7 +160,8 @@ describe('WelcomeScreen', () => {
     fireEvent.click(screen.getByText('welcome.russian'))
     fireEvent.click(screen.getByText('welcome.toggleToRegister'))
 
-    await user.type(screen.getByLabelText('welcome.email'), 'pending@example.com')
+    await user.type(screen.getByLabelText('welcome.registerForm.englishName'), 'Pending User')
+    await user.type(screen.getByLabelText('welcome.registerForm.emailLabel'), 'pending@example.com')
     await user.type(screen.getByLabelText('welcome.password'), 'password123')
     await user.type(screen.getByLabelText('welcome.recovery.confirmPassword'), 'password123')
 
@@ -199,8 +200,8 @@ describe('WelcomeScreen', () => {
     // Switch to register
     fireEvent.click(screen.getByText('welcome.toggleToRegister'))
     
-    await user.type(screen.getByLabelText('welcome.fullName'), 'Test User')
-    await user.type(screen.getByLabelText('welcome.email'), 'existing@example.com')
+    await user.type(screen.getByLabelText('welcome.registerForm.englishName'), 'Test User')
+    await user.type(screen.getByLabelText('welcome.registerForm.emailLabel'), 'existing@example.com')
     await user.type(screen.getByLabelText('welcome.password'), 'password123')
     await user.type(screen.getByLabelText('welcome.recovery.confirmPassword'), 'password123')
     

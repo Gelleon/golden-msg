@@ -1,11 +1,10 @@
 import { notFound, redirect } from "next/navigation"
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
 import prisma from "@/lib/db"
 import { getSession } from "@/app/actions/auth"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import { DeleteUserProfileAction } from "@/components/dashboard/delete-user-profile-action"
+import { UserRegistrationDetails } from "@/components/dashboard/user-registration-details"
+import { ProfilePageHeader } from "@/components/dashboard/profile-page-header"
 
 interface ProfilePageProps {
   params: Promise<{
@@ -30,6 +29,13 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       avatar_url: true,
       role: true,
       created_at: true,
+      phone: true,
+      telegram: true,
+      whatsapp: true,
+      wechat: true,
+      bio_short: true,
+      join_reason: true,
+      referred_by: true,
     },
   })
 
@@ -38,17 +44,14 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   }
 
   const canDeleteUser = session.user.role === "admin" && session.user.id !== user.id
+  const canViewRegistrationInfo =
+    session.user.role === "admin" || session.user.role === "manager"
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50 p-4 md:p-8">
       <div className="mx-auto max-w-2xl">
         <div className="mb-4">
-          <Button asChild variant="ghost" className="gap-2">
-            <Link href="/dashboard">
-              <ArrowLeft className="h-4 w-4" />
-              Назад
-            </Link>
-          </Button>
+          <ProfilePageHeader />
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm">
@@ -60,19 +63,10 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-slate-900">
-                {user.full_name || "Unknown user"}
-              </h1>
+              <ProfileUserTitle fullName={user.full_name} />
               <p className="text-sm text-slate-500 mt-1">@{user.id.slice(0, 8)}</p>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-600">
-                {user.role}
-              </span>
-              <span className="text-xs text-slate-400">
-                В системе с {new Date(user.created_at).toLocaleDateString("ru-RU")}
-              </span>
-            </div>
+            <ProfileUserMeta role={user.role} createdAt={user.created_at.toISOString()} />
             {canDeleteUser && (
               <div className="pt-2">
                 <DeleteUserProfileAction userId={user.id} userLabel={user.full_name || user.email} />
@@ -80,6 +74,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             )}
           </div>
         </div>
+
+        {canViewRegistrationInfo && <UserRegistrationDetails user={user} />}
       </div>
     </div>
   )

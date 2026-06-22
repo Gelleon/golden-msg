@@ -136,7 +136,14 @@ exports.Prisma.UserScalarFieldEnum = {
   last_email_notification_at: 'last_email_notification_at',
   last_push_notification_at: 'last_push_notification_at',
   last_password_reset_at: 'last_password_reset_at',
-  email_verified_at: 'email_verified_at'
+  email_verified_at: 'email_verified_at',
+  phone: 'phone',
+  telegram: 'telegram',
+  whatsapp: 'whatsapp',
+  wechat: 'wechat',
+  bio_short: 'bio_short',
+  join_reason: 'join_reason',
+  referred_by: 'referred_by'
 };
 
 exports.Prisma.PushSubscriptionScalarFieldEnum = {

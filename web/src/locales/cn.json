@@ -366,6 +366,23 @@
     "passwordError": "密码必须至少为 6 个字符",
     "createAccount": "创建账号",
     "registerSubtitle": "填写信息完成注册",
+    "registerForm": {
+      "englishName": "请用英文填写您的姓名 *",
+      "englishNamePlaceholder": "Zhang San",
+      "englishNameError": "姓名请使用英文字母填写",
+      "emailLabel": "请填写与您手机常用账号关联的邮箱，系统通知将发送到此邮箱。",
+      "emailHint": "请确认邮箱地址填写无误。如未收到邮件，请检查「垃圾邮件」文件夹，并将我们的邮件标记为信任发件人。",
+      "optionalSection": "补充信息（选填）：",
+      "phone": "手机号",
+      "telegram": "Telegram",
+      "whatsapp": "WhatsApp",
+      "wechat": "WeChat/微信",
+      "bioShort": "简单介绍一下您自己",
+      "joinReason": "您加入的原因或想咨询的问题",
+      "referredBy": "推荐人",
+      "infoHelp": "这些信息将帮助我们更快了解您的需求，并将您加入合适的聊天室。",
+      "inviteReminder": "若您已收到某个聊天室的邀请链接，请在注册完成后再次点击该链接进入。"
+    },
     "emailNotVerified": "请先验证邮箱后再登录",
     "verificationSent": "我们已向 {email} 发送确认邮件，请点击邮件中的链接完成验证。",
     "verificationResend": "重新发送",
@@ -437,5 +454,20 @@
         "desc": "数据加密和安全性保障"
       }
     }
+  },
+  "profilePage": {
+    "back": "返回",
+    "unknownUser": "未知用户",
+    "memberSince": "加入时间",
+    "registrationInfo": "注册信息",
+    "email": "邮箱",
+    "phone": "手机号",
+    "telegram": "Telegram",
+    "whatsapp": "WhatsApp",
+    "wechat": "微信",
+    "bioShort": "个人简介",
+    "joinReason": "加入原因 / 咨询问题",
+    "referredBy": "推荐人",
+    "notProvided": "未填写"
   }
 }

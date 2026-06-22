@@ -53,6 +53,7 @@ describe("auth.register email verification", () => {
     const formData = new FormData();
     formData.append("email", "new@example.com");
     formData.append("password", "password123");
+    formData.append("fullName", "Test User");
     formData.append("language", "ru");
 
     (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
@@ -97,6 +98,7 @@ describe("auth.register email verification", () => {
     const formData = new FormData();
     formData.append("email", "fail@example.com");
     formData.append("password", "password123");
+    formData.append("fullName", "Fail User");
 
     (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
     (prisma.user.count as jest.Mock).mockResolvedValue(5);
