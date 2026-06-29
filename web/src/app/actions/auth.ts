@@ -93,6 +93,7 @@ export async function login(formData: FormData) {
         id: true,
         email: true,
         password_hash: true,
+        email_verified_at: true,
         // @ts-ignore
         // preferred_language: true, 
         role: true,
@@ -121,6 +122,16 @@ export async function login(formData: FormData) {
         details: { email, reason: "invalid_password" }
       });
       return { error: "errorInvalidPassword" }
+    }
+
+    if (!user.email_verified_at) {
+      await logAuditAction({
+        userId: user.id,
+        action: "LOGIN_FAILED",
+        ipAddress: ip,
+        details: { email, reason: "email_not_verified" }
+      });
+      return { error: "emailNotVerified" }
     }
 
     // Check for suspicious activity before final login
@@ -181,7 +192,7 @@ async function sendVerificationEmail(user: { id: string; email: string; preferre
   const verifyUrl = `${getAppBaseUrl()}/auth/verify-email?token=${token}`
   const lang = user.preferred_language === 'cn' ? 'cn' : 'ru'
 
-  await sendEmail({
+  const emailResult = await sendEmail({
     to: user.email,
     subject: t("welcome.verification.emailSubject", lang),
     html: `
@@ -227,6 +238,51 @@ async function sendVerificationEmail(user: { id: string; email: string; preferre
       </html>
     `,
   })
+
+  if (!emailResult.success) {
+    throw new Error(emailResult.error || "Failed to send verification email")
+  }
+}
+
+export async function verifyEmailToken(token: string) {
+  await ensureSchemaFixed()
+
+  if (!token) {
+    return { error: "verificationInvalid" }
+  }
+
+  try {
+    const verificationToken = await prisma.emailVerificationToken.findUnique({
+      where: { token },
+      select: {
+        token: true,
+        user_id: true,
+        expires_at: true,
+      },
+    })
+
+    if (!verificationToken) {
+      return { error: "verificationInvalid" }
+    }
+
+    if (verificationToken.expires_at < new Date()) {
+      await prisma.emailVerificationToken.deleteMany({ where: { token } })
+      return { error: "verificationExpired" }
+    }
+
+    await prisma.user.update({
+      where: { id: verificationToken.user_id },
+      data: { email_verified_at: new Date() },
+    })
+    await prisma.emailVerificationToken.deleteMany({
+      where: { user_id: verificationToken.user_id },
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error("Email verification error:", error)
+    return { error: "verificationInvalid" }
+  }
 }
 
 export async function register(formData: FormData): Promise<RegisterResult> {
@@ -465,6 +521,7 @@ export async function getSession() {
         avatar_url: true,
         role: true,
         created_at: true,
+        email_verified_at: true,
         // @ts-ignore
         preferred_language: true,
       }
@@ -472,6 +529,12 @@ export async function getSession() {
 
     if (!user) {
       console.log("[SERVER] getSession: user not found in DB for id:", userId)
+      return null
+    }
+
+    if (!user.email_verified_at) {
+      console.log("[SERVER] getSession: email is not verified for user id:", userId)
+      cookieStore.delete("session_user_id")
       return null
     }
 

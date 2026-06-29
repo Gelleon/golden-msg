@@ -32,7 +32,7 @@ jest.mock("bcryptjs", () => ({
 }));
 
 jest.mock("@/lib/email", () => ({
-  sendEmail: jest.fn().mockResolvedValue(undefined),
+  sendEmail: jest.fn().mockResolvedValue({ success: true, messageId: "message-1" }),
 }));
 
 jest.mock("@/lib/security", () => ({

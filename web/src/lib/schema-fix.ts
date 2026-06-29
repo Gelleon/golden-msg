@@ -61,9 +61,6 @@ export async function ensureSchemaFixed() {
 
           await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "email_verified_at" DATETIME;`).catch(() => {});
           await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "email_verified_at" DATETIME;`).catch(() => {});
-          await prisma.$executeRawUnsafe(`UPDATE ${table} SET "email_verified_at" = "created_at" WHERE "email_verified_at" IS NULL;`).catch(() => {});
-          await prisma.$executeRawUnsafe(`UPDATE "${table}" SET "email_verified_at" = "created_at" WHERE "email_verified_at" IS NULL;`).catch(() => {});
-
           for (const col of ["phone", "telegram", "whatsapp", "wechat", "bio_short", "join_reason", "referred_by"]) {
             await prisma.$executeRawUnsafe(`ALTER TABLE ${table} ADD COLUMN "${col}" TEXT;`).catch(() => {});
             await prisma.$executeRawUnsafe(`ALTER TABLE "${table}" ADD COLUMN "${col}" TEXT;`).catch(() => {});
