@@ -204,7 +204,8 @@
     "manageTitle": "Управление",
     "makeMember": "Сделать участником",
     "makeAdmin": "Сделать админом",
-    "removeUser": "Удалить"
+    "removeUser": "Удалить",
+    "transferUser": "Перевести в другую комнату"
   },
   "settings_status": {
     "success": "Успешно",
