@@ -254,6 +254,7 @@ export function SettingsForm({ user }: { user: any }) {
 
 function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, currentUserId, currentUserRole }: { toast: any, roleLabels: Record<string, string>, roleIcons: Record<string, any>, roleColors: Record<string, string>, currentUserId?: string, currentUserRole?: string }) {
   const { t } = useTranslation()
+  const router = useRouter()
   const [users, setUsers] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -674,6 +675,21 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-64 rounded-2xl border border-slate-200 shadow-xl p-3 bg-white/98 backdrop-blur-2xl">
+                                  <DropdownMenuItem
+                                    onSelect={(e) => {
+                                      e.preventDefault()
+                                      router.push(`/dashboard/profile/${user.id}`)
+                                    }}
+                                    className="flex items-center gap-3 rounded-xl transition-all py-2.5 px-3 text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 cursor-pointer"
+                                  >
+                                    <div className="p-1.5 rounded-lg border bg-slate-50 border-slate-100">
+                                      <User className="h-4 w-4 text-slate-400" />
+                                    </div>
+                                    <span>{t("settings.users.viewProfile")}</span>
+                                  </DropdownMenuItem>
+
+                                  <DropdownMenuSeparator className="bg-slate-100 my-1.5 h-px rounded-full" />
+
                                   <DropdownMenuItem
                                     disabled={!canEditThisName}
                                     onSelect={(e) => {

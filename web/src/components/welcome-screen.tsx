@@ -472,6 +472,9 @@ export function WelcomeScreen() {
                       <p className="text-slate-400 font-light text-sm md:text-base">
                         {t("welcome.verificationSent").replace("{email}", pendingVerificationEmail)}
                       </p>
+                      <p className="text-slate-500 font-light text-xs md:text-sm leading-relaxed">
+                        {t("welcome.registerForm.managerWaitInfo")}
+                      </p>
                     </div>
                     <Button
                       type="button"
@@ -666,6 +669,7 @@ export function WelcomeScreen() {
 
                             <div className="space-y-2 rounded-2xl bg-white/[0.03] border border-white/10 p-4 text-[11px] md:text-xs text-slate-500 leading-relaxed">
                               <p>{t("welcome.registerForm.infoHelp")}</p>
+                              <p>{t("welcome.registerForm.managerWaitInfo")}</p>
                               <p>{t("welcome.registerForm.inviteReminder")}</p>
                             </div>
                           </motion.div>

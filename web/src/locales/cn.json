@@ -140,6 +140,7 @@
       "deleteUserConfirmDesc": "此操作不可撤销。用户将从系统中永久删除。",
       "deleteUserSuccess": "用户已删除",
       "deleteUserError": "无法删除用户",
+      "viewProfile": "打开个人资料",
       "controlAccessDesc": "控制 Golden Russia 系统成员的访问权限和角色管理。"
     }
   },
@@ -382,6 +383,7 @@
       "joinReason": "您加入的原因或想咨询的问题",
       "referredBy": "推荐人",
       "infoHelp": "这些信息将帮助我们更快了解您的需求，并将您加入合适的聊天室。",
+      "managerWaitInfo": "请等待经理与您联系。由于俄罗斯和中国之间有 5 小时时差，回复可能不会立即到达。",
       "inviteReminder": "若您已收到某个聊天室的邀请链接，请在注册完成后再次点击该链接进入。"
     },
     "emailNotVerified": "请先验证邮箱后再登录",

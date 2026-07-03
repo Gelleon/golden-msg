@@ -420,7 +420,7 @@ export async function register(formData: FormData): Promise<RegisterResult> {
           data: {
             room_id: bufferRoom.id,
             sender_id: user.id,
-            content: `👋 Новый пользователь ${parsed.data.fullName || email} зарегистрировался и ожидает подтверждения.`,
+            content: `👋 Новый пользователь ${parsed.data.fullName || email} зарегистрировался и ожидает подтверждения. Пожалуйста, ожидайте связи с менеджером: из-за разницы во времени между Россией и Китаем (5 часов) ответ может прийти не сразу.`,
             message_type: 'system',
             language_original: 'ru',
             translation_status: 'completed'
