@@ -25,7 +25,8 @@
     "account": "Аккаунт",
     "copy": "Копировать",
     "copied": "Скопировано",
-    "textCopiedToClipboard": "Текст скопирован в буфер обмена"
+    "textCopiedToClipboard": "Текст скопирован в буфер обмена",
+    "close": "Закрыть"
   },
   "roles": {
     "admin": "Администратор",

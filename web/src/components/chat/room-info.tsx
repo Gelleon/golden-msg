@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { getRoomDetails, searchUsersForRoomPaginated, addParticipant, removeParticipant, getRooms, transferUser } from "@/app/actions/room";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -24,11 +23,17 @@ interface Participant {
   last_read_at?: string;
   job_title_ru?: string | null;
   job_title_cn?: string | null;
+  phone?: string | null;
+  telegram?: string | null;
+  whatsapp?: string | null;
+  wechat?: string | null;
+  bio_short?: string | null;
+  join_reason?: string | null;
+  referred_by?: string | null;
 }
 
 export const RoomInfo = ({ roomId }: { roomId: string }) => {
   const { t, language } = useTranslation();
-  const router = useRouter();
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [roomCreator, setRoomCreator] = useState<string | null>(null);
   const [isBufferRoom, setIsBufferRoom] = useState(false);
@@ -41,6 +46,7 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
   const [eligibleUsers, setEligibleUsers] = useState<Participant[]>([]);
   const [eligibleUsersTotal, setEligibleUsersTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [expandedRegistrationUserId, setExpandedRegistrationUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -250,6 +256,17 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
     }
   };
 
+  const registrationRows = (participant: Participant) => [
+    { label: t("profilePage.email") || "Email", value: participant.email },
+    { label: t("profilePage.phone") || "Телефон", value: participant.phone },
+    { label: t("profilePage.telegram") || "Telegram", value: participant.telegram },
+    { label: t("profilePage.whatsapp") || "WhatsApp", value: participant.whatsapp },
+    { label: t("profilePage.wechat") || "WeChat", value: participant.wechat },
+    { label: t("profilePage.bioShort") || "Коротко о себе", value: participant.bio_short },
+    { label: t("profilePage.joinReason") || "Вопрос / причина присоединения", value: participant.join_reason },
+    { label: t("profilePage.referredBy") || "Рекомендация", value: participant.referred_by },
+  ];
+
   return (
     <div className="p-4 h-full flex flex-col space-y-4">
       <header className="flex items-center justify-between mb-4">
@@ -281,94 +298,121 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
           : participant.job_title_ru || participant.job_title_cn;
         
         return (
-          <div key={participant.id} className="flex items-center justify-between p-2 hover:bg-white/5 rounded-lg transition-colors group">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="relative">
-                <Avatar className="h-8 w-8 border border-white/10">
-                  <AvatarImage src={participant.avatarUrl || participant.avatar_url || undefined} alt={participant.name || participant.full_name || "User"} />
-                  <AvatarFallback className="bg-slate-800 text-xs text-slate-400">
-                    {(participant.name || participant.full_name)?.charAt(0)?.toUpperCase() || <User className="h-4 w-4" />}
-                  </AvatarFallback>
-                </Avatar>
-                {isOnline && (
-                  <div className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-[#0F172A]" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <div className="text-sm font-medium text-slate-200 truncate">{participant.name || participant.full_name || "Unknown"}</div>
-                  
-                  {displayJobTitle && (
-                    <span className="text-[10px] font-medium text-slate-400 bg-white/5 px-1.5 py-0.5 rounded shrink-0">
-                      {displayJobTitle}
-                    </span>
-                  )}
-
-                  <span className={`flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded ${getGlobalRoleBadgeClass(participant.role)}`}>
-                    {getGlobalRoleBadgeIcon(participant.role)}
-                    {getGlobalRoleText(participant.role)}
-                  </span>
-
-                  {isParticipantCreator && (
-                    <span className="flex items-center text-[10px] font-medium text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
-                      <Crown className="h-3 w-3 mr-1" />
-                      {t("roomInfo.roleCreator") || "Создатель"}
-                    </span>
-                  )}
-                  {!isParticipantCreator && isParticipantAdmin && (
-                    <span className="flex items-center text-[10px] font-medium text-blue-400 bg-blue-400/10 px-1.5 py-0.5 rounded">
-                      <ShieldAlert className="h-3 w-3 mr-1" />
-                      {t("roomInfo.roleAdmin") || "Админ"}
-                    </span>
-                  )}
-                  {participant.id === currentUser?.id && (
-                    <span className="text-[10px] font-medium text-slate-500 ml-1">
-                      {t("roomInfo.you") || "(Вы)"}
-                    </span>
+          <div key={participant.id} className="space-y-2">
+            <div className="flex items-center justify-between p-2 hover:bg-white/5 rounded-lg transition-colors group">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="relative">
+                  <Avatar className="h-8 w-8 border border-white/10">
+                    <AvatarImage src={participant.avatarUrl || participant.avatar_url || undefined} alt={participant.name || participant.full_name || "User"} />
+                    <AvatarFallback className="bg-slate-800 text-xs text-slate-400">
+                      {(participant.name || participant.full_name)?.charAt(0)?.toUpperCase() || <User className="h-4 w-4" />}
+                    </AvatarFallback>
+                  </Avatar>
+                  {isOnline && (
+                    <div className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-[#0F172A]" />
                   )}
                 </div>
-              </div>
-            </div>
-            
-            {canManageRoom && !isParticipantCreator && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-[#0F172A] border-white/10 text-white min-w-[160px]">
-                  <DropdownMenuLabel className="text-xs text-slate-400">{t("roomInfo.manageTitle") || "Управление"}</DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-white/10" />
-                  
-                  {isBufferRoom && isGlobalAdminOrManager && (
-                    <>
-                      <DropdownMenuItem 
-                        className="text-xs text-slate-200 focus:text-white focus:bg-white/10 cursor-pointer"
-                        onClick={() => router.push(`/dashboard/profile/${participant.id}`)}
-                      >
-                        <User className="h-4 w-4 mr-2" />
-                        {t("roomInfo.viewProfile") || "Открыть профиль"}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="text-xs text-amber-500 focus:text-amber-400 focus:bg-amber-500/10 cursor-pointer"
-                        onClick={() => handleTransferClick(participant)}
-                      >
-                        <ArrowRightLeft className="h-4 w-4 mr-2" />
-                        {t("roomInfo.transferUser") || "Перевести в другую комнату"}
-                      </DropdownMenuItem>
-                    </>
-                  )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-medium text-slate-200 truncate">{participant.name || participant.full_name || "Unknown"}</div>
+                    
+                    {displayJobTitle && (
+                      <span className="text-[10px] font-medium text-slate-400 bg-white/5 px-1.5 py-0.5 rounded shrink-0">
+                        {displayJobTitle}
+                      </span>
+                    )}
 
-                  <DropdownMenuItem 
-                    className="text-xs text-red-400 focus:text-red-300 focus:bg-red-500/10 cursor-pointer"
-                    onClick={() => handleRemoveUser(participant.id)}
+                    <span className={`flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded ${getGlobalRoleBadgeClass(participant.role)}`}>
+                      {getGlobalRoleBadgeIcon(participant.role)}
+                      {getGlobalRoleText(participant.role)}
+                    </span>
+
+                    {isParticipantCreator && (
+                      <span className="flex items-center text-[10px] font-medium text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                        <Crown className="h-3 w-3 mr-1" />
+                        {t("roomInfo.roleCreator") || "Создатель"}
+                      </span>
+                    )}
+                    {!isParticipantCreator && isParticipantAdmin && (
+                      <span className="flex items-center text-[10px] font-medium text-blue-400 bg-blue-400/10 px-1.5 py-0.5 rounded">
+                        <ShieldAlert className="h-3 w-3 mr-1" />
+                        {t("roomInfo.roleAdmin") || "Админ"}
+                      </span>
+                    )}
+                    {participant.id === currentUser?.id && (
+                      <span className="text-[10px] font-medium text-slate-500 ml-1">
+                        {t("roomInfo.you") || "(Вы)"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {canManageRoom && !isParticipantCreator && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-[#0F172A] border-white/10 text-white min-w-[160px]">
+                    <DropdownMenuLabel className="text-xs text-slate-400">{t("roomInfo.manageTitle") || "Управление"}</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-white/10" />
+                    
+                    {isBufferRoom && isGlobalAdminOrManager && (
+                      <>
+                        <DropdownMenuItem 
+                          className="text-xs text-slate-200 focus:text-white focus:bg-white/10 cursor-pointer"
+                          onClick={() => setExpandedRegistrationUserId(prev => prev === participant.id ? null : participant.id)}
+                        >
+                          <User className="h-4 w-4 mr-2" />
+                          {t("roomInfo.viewProfile") || "Открыть профиль"}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className="text-xs text-amber-500 focus:text-amber-400 focus:bg-amber-500/10 cursor-pointer"
+                          onClick={() => handleTransferClick(participant)}
+                        >
+                          <ArrowRightLeft className="h-4 w-4 mr-2" />
+                          {t("roomInfo.transferUser") || "Перевести в другую комнату"}
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
+                    <DropdownMenuItem 
+                      className="text-xs text-red-400 focus:text-red-300 focus:bg-red-500/10 cursor-pointer"
+                      onClick={() => handleRemoveUser(participant.id)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {t("roomInfo.removeUser") || "Удалить участника"}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+
+            {expandedRegistrationUserId === participant.id && isBufferRoom && isGlobalAdminOrManager && (
+              <div className="ml-11 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs text-slate-300 shadow-lg shadow-black/10">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <h4 className="font-semibold text-white">{t("profilePage.registrationInfo") || "Данные регистрации"}</h4>
+                  <button
+                    type="button"
+                    className="text-slate-500 hover:text-white transition-colors"
+                    onClick={() => setExpandedRegistrationUserId(null)}
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {t("roomInfo.removeUser") || "Удалить участника"}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    {t("common.close") || "Закрыть"}
+                  </button>
+                </div>
+                <dl className="space-y-2">
+                  {registrationRows(participant).map((row) => (
+                    <div key={row.label} className="border-t border-white/10 pt-2 first:border-t-0 first:pt-0">
+                      <dt className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{row.label}</dt>
+                      <dd className="mt-1 whitespace-pre-wrap break-words text-slate-200">
+                        {row.value?.trim() || t("profilePage.notProvided") || "Не указано"}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
             )}
           </div>
         );
