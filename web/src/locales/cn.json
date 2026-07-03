@@ -206,6 +206,7 @@
     "makeMember": "设为成员",
     "makeAdmin": "设为管理员",
     "removeUser": "移除",
+    "viewProfile": "打开个人资料",
     "transferUser": "转移到其他房间"
   },
   "settings_status": {

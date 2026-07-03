@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { getRoomDetails, searchUsersForRoomPaginated, addParticipant, removeParticipant, getRooms, transferUser } from "@/app/actions/room";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ interface Participant {
 
 export const RoomInfo = ({ roomId }: { roomId: string }) => {
   const { t, language } = useTranslation();
+  const router = useRouter();
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [roomCreator, setRoomCreator] = useState<string | null>(null);
   const [isBufferRoom, setIsBufferRoom] = useState(false);
@@ -340,13 +342,22 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
                   <DropdownMenuSeparator className="bg-white/10" />
                   
                   {isBufferRoom && isGlobalAdminOrManager && (
-                    <DropdownMenuItem 
-                      className="text-xs text-amber-500 focus:text-amber-400 focus:bg-amber-500/10 cursor-pointer"
-                      onClick={() => handleTransferClick(participant)}
-                    >
-                      <ArrowRightLeft className="h-4 w-4 mr-2" />
-                      {t("roomInfo.transferUser") || "Перевести в другую комнату"}
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem 
+                        className="text-xs text-slate-200 focus:text-white focus:bg-white/10 cursor-pointer"
+                        onClick={() => router.push(`/dashboard/profile/${participant.id}`)}
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        {t("roomInfo.viewProfile") || "Открыть профиль"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="text-xs text-amber-500 focus:text-amber-400 focus:bg-amber-500/10 cursor-pointer"
+                        onClick={() => handleTransferClick(participant)}
+                      >
+                        <ArrowRightLeft className="h-4 w-4 mr-2" />
+                        {t("roomInfo.transferUser") || "Перевести в другую комнату"}
+                      </DropdownMenuItem>
+                    </>
                   )}
 
                   <DropdownMenuItem 

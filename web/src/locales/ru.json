@@ -206,6 +206,7 @@
     "makeMember": "Сделать участником",
     "makeAdmin": "Сделать админом",
     "removeUser": "Удалить",
+    "viewProfile": "Открыть профиль",
     "transferUser": "Перевести в другую комнату"
   },
   "settings_status": {
