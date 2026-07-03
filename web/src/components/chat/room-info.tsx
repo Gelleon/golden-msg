@@ -450,7 +450,7 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
               />
             </div>
             
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar custom-scrollbar-white">
               {isLoading && eligibleUsers.length === 0 ? (
                 <div className="text-slate-400 text-center p-4 text-xs">{t("roomInfo.loadingUsers") || "Загрузка..."}</div>
               ) : paginatedUsers.length > 0 ? (
@@ -549,7 +549,7 @@ export const RoomInfo = ({ roomId }: { roomId: string }) => {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4 max-h-[300px] overflow-y-auto pr-2">
+          <div className="space-y-4 py-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar custom-scrollbar-white">
             {availableRooms.length > 0 ? (
               availableRooms.map((room) => (
                 <Button

@@ -1356,7 +1356,7 @@ export function Sidebar({ user, profile, className, onClose }: SidebarProps) {
             <DialogTitle className="sr-only">{t('roomInfo.title') || "Информация о комнате"}</DialogTitle>
           </DialogHeader>
           {roomInfoDialogId && (
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto custom-scrollbar custom-scrollbar-white">
               <RoomInfo roomId={roomInfoDialogId} />
             </div>
           )}
