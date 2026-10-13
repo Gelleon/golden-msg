@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect, useCallback, useRef } from "react"
-import { deleteUser, getUsers, updateUserName, updateUserRole, updateProfile } from "@/app/actions/users"
+import { adminResetUserPassword, deleteUser, getUsers, updateUserName, updateUserRole, updateProfile } from "@/app/actions/users"
 import { uploadFile } from "@/app/actions/upload"
 import { NotificationManagementForm } from "./notification-management-form"
 import { NotificationSettingsForm } from "./notification-settings-form"
@@ -50,7 +50,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Loader2, User, Lock, Camera, Check, AlertCircle, Globe, Users, ShieldCheck, Briefcase, UserCheck, UserCog, Search, Filter, MoreHorizontal, ChevronDown, Save, Bell, BarChart3, Pencil, Trash2 } from "lucide-react"
+import { Loader2, User, Lock, Camera, Check, AlertCircle, Globe, Users, ShieldCheck, Briefcase, UserCheck, UserCog, Search, Filter, MoreHorizontal, ChevronDown, Save, Bell, BarChart3, Pencil, Trash2, KeyRound } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { motion, AnimatePresence } from "framer-motion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -264,6 +264,10 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
   const [deleteUserTargetId, setDeleteUserTargetId] = useState<string | null>(null)
   const [deleteUserTargetLabel, setDeleteUserTargetLabel] = useState<string>("")
   const [isDeletingUser, setIsDeletingUser] = useState(false)
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false)
+  const [resetPasswordTargetId, setResetPasswordTargetId] = useState<string | null>(null)
+  const [resetPasswordTargetLabel, setResetPasswordTargetLabel] = useState<string>("")
+  const [isResettingPassword, setIsResettingPassword] = useState(false)
   const [editNameOpen, setEditNameOpen] = useState(false)
   const [editNameUserId, setEditNameUserId] = useState<string | null>(null)
   const [editNameUserLabel, setEditNameUserLabel] = useState<string>("")
@@ -380,6 +384,44 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
     setDeleteUserTargetId(u.id)
     setDeleteUserTargetLabel(u.full_name || u.email)
     setDeleteUserOpen(true)
+  }
+
+  const openResetPassword = (u: { id: string; email: string; full_name?: string | null }) => {
+    setResetPasswordTargetId(u.id)
+    setResetPasswordTargetLabel(u.full_name || u.email)
+    setResetPasswordOpen(true)
+  }
+
+  const handleConfirmResetPassword = async () => {
+    if (!resetPasswordTargetId) return
+    setIsResettingPassword(true)
+    try {
+      const result = await adminResetUserPassword(resetPasswordTargetId)
+      if (result.success) {
+        toast({
+          title: t('common.success') || "Успешно",
+          description: t('settings.users.resetPasswordSuccess') || "Новый пароль отправлен пользователю на email",
+        })
+        setResetPasswordOpen(false)
+        setResetPasswordTargetId(null)
+        setResetPasswordTargetLabel("")
+      } else {
+        toast({
+          title: t('common.error') || "Ошибка",
+          description: result.error || t('settings.users.resetPasswordError') || "Не удалось отправить новый пароль",
+          variant: "destructive",
+        })
+      }
+    } catch (e) {
+      console.error(e)
+      toast({
+        title: t('common.error') || "Ошибка",
+        description: t('settings.users.resetPasswordError') || "Не удалось отправить новый пароль",
+        variant: "destructive",
+      })
+    } finally {
+      setIsResettingPassword(false)
+    }
   }
 
   const handleConfirmDeleteUser = async () => {
@@ -609,6 +651,7 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
                     const currentRole = user.role
                     const RoleIcon = roleIcons[currentRole] || Users
                     const canEditThisName = !!currentUserId && user.id !== currentUserId
+                    const canResetPassword = currentUserRole === "admin" && !!currentUserId && user.id !== currentUserId
                     const canDeleteThisUser = currentUserRole === "admin" && !!currentUserId && user.id !== currentUserId
                     return (
                       <TableRow key={user.id} className="group hover:bg-slate-50/50 border-slate-100 transition-colors">
@@ -779,6 +822,23 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
                                     <>
                                       <DropdownMenuSeparator className="bg-slate-100 my-1.5 h-px rounded-full" />
                                       <DropdownMenuItem
+                                        disabled={!canResetPassword}
+                                        onSelect={(e) => {
+                                          e.preventDefault()
+                                          if (!canResetPassword) return
+                                          openResetPassword(user)
+                                        }}
+                                        className={cn(
+                                          "flex items-center gap-3 rounded-xl transition-all py-2.5 px-3 text-sm font-bold",
+                                          canResetPassword ? "text-slate-700 hover:bg-slate-50 hover:text-slate-900 cursor-pointer" : "opacity-50 cursor-not-allowed"
+                                        )}
+                                      >
+                                        <div className="p-1.5 rounded-lg border bg-slate-50 border-slate-100">
+                                          <KeyRound className="h-4 w-4 text-slate-400" />
+                                        </div>
+                                        <span>{t("settings.users.resetPassword") || "Выслать новый пароль"}</span>
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
                                         disabled={!canDeleteThisUser}
                                         onSelect={(e) => {
                                           e.preventDefault()
@@ -845,6 +905,44 @@ function UsersManagementForm({ toast, roleLabels, roleIcons, roleColors, current
               disabled={isDeletingUser}
             >
               {isDeletingUser ? <Loader2 className="h-4 w-4 animate-spin" /> : t("settings.users.deleteUser")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={resetPasswordOpen}
+        onOpenChange={(open) => {
+          setResetPasswordOpen(open)
+          if (!open) {
+            setResetPasswordTargetId(null)
+            setResetPasswordTargetLabel("")
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-black/10 ring-1 ring-black/5">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-slate-900">{t("settings.users.resetPasswordConfirmTitle") || "Выслать новый пароль?"}</DialogTitle>
+            <DialogDescription className="text-sm font-medium text-slate-600">
+              {t("settings.users.resetPasswordConfirmDesc") || "Текущий пароль пользователя будет заменён. Новый пароль будет отправлен на email."} {resetPasswordTargetLabel ? `(${resetPasswordTargetLabel})` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-10 rounded-xl font-black text-slate-600 hover:bg-slate-100"
+              onClick={() => setResetPasswordOpen(false)}
+              disabled={isResettingPassword}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="button"
+              className="h-10 rounded-xl font-black bg-slate-900 text-white hover:bg-slate-800"
+              onClick={handleConfirmResetPassword}
+              disabled={isResettingPassword}
+            >
+              {isResettingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : t("settings.users.resetPassword")}
             </Button>
           </DialogFooter>
         </DialogContent>
